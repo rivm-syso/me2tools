@@ -86,8 +86,7 @@ epa_plot_profile <- function(F_matrix,
                              disp.errorbar.color = "orange",
                              show.plot = TRUE,
                              expand.mult = c(0.015,0.005),
-                             rm.grid.x = FALSE,
-                             ...) {
+                             rm.grid.x = FALSE) {
 
   # The EPA factor profile plot consists of a dual-axis plot containing the
   # log10 concentrations and the percentage of each species in a plot. At first

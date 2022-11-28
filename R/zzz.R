@@ -62,7 +62,8 @@ if (getRversion() >= "2.15.1") {
     "ITIME", "FDATE", "FTIME", "LATR", "LONR", "lat", "lon", "Datestart.",
     "Time", "Dateend.", "Time.1", "Tzone", "X0", "date.start.org", 
     "time.start.org", "date.end.org", "time.end.org", "tzone", "Begin", 
-    "Length", "End", "run_type","value", "numeric_x", "DISP_min", "DISP_max"
+    "Length", "End", "run_type","value", "numeric_x", "DISP_min", "DISP_max",
+    "PANEL", "metcor.ne.graticules"
   )
   
   # Squash the notes

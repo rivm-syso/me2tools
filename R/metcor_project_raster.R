@@ -30,7 +30,7 @@ metcor_project_raster <- function(raster,
                                   projection = "ESRI:102017",
                                   method = "bilinear",
                                   na.rm = TRUE) {
-  if (class(raster) != "SpatRaster") {
+  if (!"SpatRaster" %in% class(raster)) {
     cli_abort(c(
       "{.var raster} must be of a class {.cls SpatRaster}:",
       "x" = "You've supplied a {.cls {class(raster)}} raster."

@@ -25,8 +25,7 @@ epa_plot_profile(
   disp.errorbar.color = "orange",
   show.plot = TRUE,
   expand.mult = c(0.015, 0.005),
-  rm.grid.x = FALSE,
-  ...
+  rm.grid.x = FALSE
 )
 }
 \arguments{

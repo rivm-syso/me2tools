@@ -10,13 +10,13 @@ temporal_contributions(
   type = "default",
   group = NA,
   na.rm = TRUE,
-  whisk.lim = NULL,
   xlab = NA,
   ylab = NA,
   auto.text = TRUE,
   txt.x.rm = FALSE,
   txt.y.rm = FALSE,
   cols = "hue",
+  whisk.lim = NULL,
   point.size = 1.25,
   line.size = 1,
   facet.col = 2,
@@ -51,12 +51,6 @@ plot all sites together in each panel.}
 \item{na.rm}{A logical evaluating to TRUE or FALSE indicating whether NA
 values should be stripped before the computation proceeds.}
 
-\item{whisk.lim}{User defined limits for the whiskers. Default is
-\code{NULL}, in this case the whiskers calculated by \dQuote{geom_boxplot}
-are used. In other cases a vector should be provided with two values
-between 0..1 denoting the percentile (i.e., \code{c(0.05, 0.95)} will use
-the P05 and P95 for the whisker limits).}
-
 \item{xlab}{x-axis label.}
 
 \item{ylab}{y-axis label.}
@@ -78,6 +72,12 @@ y-axis tick labels should be removed.}
 function for more details. For user defined the user can supply a list of
 colour names recognised by R (type \code{colours()} to see the full list).
 An example would be \code{cols = c("yellow", "green", "blue")}}
+
+\item{whisk.lim}{User defined limits for the whiskers. Default is
+\code{NULL}, in this case the whiskers calculated by \dQuote{geom_boxplot}
+are used. In other cases a vector should be provided with two values
+between 0..1 denoting the percentile (i.e., \code{c(0.05, 0.95)} will use
+the P05 and P95 for the whisker limits).}
 
 \item{point.size}{The size of the points. Defaults to 1.25.}
 
