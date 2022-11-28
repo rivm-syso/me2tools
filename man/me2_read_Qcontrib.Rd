@@ -13,6 +13,10 @@ me2_read_Qcontrib(
 \arguments{
 \item{me2_txt_file}{ME2 output file (.txt), containing the results and
 auxiliary information.}
+
+\item{block_boundaries}{A list containing the \dQuote{start} and
+\dQuote{end} string used to identify the boundaries of the block
+containing the Qmain values.}
 }
 \value{
 tibble containing Qmain and contributions to Qmain for multiple runs

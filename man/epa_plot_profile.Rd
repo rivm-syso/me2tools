@@ -38,14 +38,18 @@ results from a single run should be provided.}
 your labels are long, \code{45} degrees can be useful, which is also the
 default.}
 
-\item{xlabel.vjust}{vertical justification of the xlabel, between \link{0,1}.}
+\item{xlabel.vjust}{vertical justification of the xlabel, between [0,1].}
 
-\item{xlabel.hjust}{horizontal justification of the xlabel, between \link{0,1}.}
+\item{xlabel.hjust}{horizontal justification of the xlabel, between [0,1].}
 
 \item{xlabel.order}{The labels containing the species on the x-axis are
 plotted based on the factor levels. This parameter can contain the levels
 and the species are transformed to factors using these levels. N.B. these
 levels can contain code for expressions.}
+
+\item{y_min}{The minimum value for the y-axis, which is used to cut-off the
+logarithmic scale. The default setting is \code{-5}, which corresponds to
+1xE-5.}
 
 \item{ylab}{Primary y-axis label.}
 
@@ -95,10 +99,6 @@ and the right by \code{expand.mult[2]}.}
 there are a lot of species, causing the vertical grid lines to clutter the
 plot. If set to \code{TRUE} these lines are removed. Defaults to
 \code{FALSE}.}
-
-\item{ymin}{The minimum value for the y-axis, which is used to cut-off the
-logarithmic scale. The default setting is \code{-5}, which corresponds to
-1xE-5.}
 }
 \value{
 me2tools list containing the ggplot2 with segment and point

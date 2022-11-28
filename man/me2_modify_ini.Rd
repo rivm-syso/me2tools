@@ -46,7 +46,12 @@ file where the output is written to.}
 
 \item{c3}{value for c3}
 
-\item{em}{the error model used in ME-2}
+\item{em}{the error model used in ME-2
+
+In the example a "template.ini" is used. This is basically an ini file that
+contains most of the parameters for the run we want to do. We can use the
+function to modify the ini, save it as a new file and use that as input
+for ME-2.}
 }
 \value{
 overwriting the provided \code{ini} file with the updated version.
@@ -57,11 +62,6 @@ programmatically changed using this function. Not all information can be
 changed yet.
 }
 \examples{
-In this example a "template.ini" is used. This is basically an ini file that
-contains most of the parameters for the run we want to do. We can use the
-\code{me2_modify.ini} function to modify the ini, save it as a new file and 
-use that as input for ME-2.
-
 \dontrun{
 factors <- c(5,6,7,8)
 

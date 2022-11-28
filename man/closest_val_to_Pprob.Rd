@@ -13,7 +13,7 @@ closest_val_to_Pprob(x, value)
 to be determined}
 }
 \value{
-probability \link{0,1} which can be used in polarPlot (multiply by 100)
+probability [0,1] which can be used in polarPlot (multiply by 100)
 }
 \description{
 The polarPlot function from openair requires a probability between 0 and 100.

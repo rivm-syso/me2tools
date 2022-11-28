@@ -44,6 +44,9 @@ With this parameter set to \code{TRUE} each factor is multiplied by
 1/avg(factor), so that the G factors are scaled to unity again. Default:
 FALSE}
 
+\item{threshold_unity}{The threshold which needs to be exceeded to provide
+a warning message. Default: 0.01}
+
 \item{tz}{Parameter to control the time zone when parameter \dQuote{dates} is
 not used. Default: 'Etc/GMT-1'}
 }

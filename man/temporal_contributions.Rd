@@ -19,7 +19,7 @@ temporal_contributions(
   cols = "hue",
   point.size = 1.25,
   line.size = 1,
-  facet_col = 2,
+  facet.col = 2,
   ...
 )
 }
@@ -79,6 +79,12 @@ function for more details. For user defined the user can supply a list of
 colour names recognised by R (type \code{colours()} to see the full list).
 An example would be \code{cols = c("yellow", "green", "blue")}}
 
+\item{point.size}{The size of the points. Defaults to 1.25.}
+
+\item{line.size}{The size of the lines. Defaults to 1.}
+
+\item{facet.col}{The number of columns for the faceted plot. Defaults to 2.}
+
 \item{...}{Other parameters passed onto \code{cutData}. For example, in the
 case of \code{cutData} the option \code{hemisphere = "southern"}.}
 }
@@ -93,10 +99,11 @@ rework the original plot or undertake further analysis.
 
 An me2tools output can be manipulated using a number of generic operations,
 including \code{print}, \code{plot} and \code{summary}.
-
-@seealso \code{\link[ggplot2]{geom_boxplot}}, \code{\link[openair]{cutData}}
 }
 \description{
 This function can create temporal plots for the factors in the G-contribution
 matrix. Default uses all statistics as calculated by geom_boxplot.
+}
+\seealso{
+\code{\link[ggplot2]{geom_boxplot}}, \code{\link[openair]{cutData}}
 }
