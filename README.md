@@ -1,5 +1,6 @@
 # **me2tools** <a href='https://github.com/rivm-syso/me2tools'><img src='man/figures/logo.png' align="right" height="131.5" /></a>
 
+[![R-CMD-check](https://github.com/rivm-syso/me2tools/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rivm-syso/me2tools/actions/workflows/R-CMD-check.yaml)
 [![Lifecycle Status](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
 
 ## Introduction
