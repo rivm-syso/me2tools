@@ -9,15 +9,17 @@
 #' @export
 #'
 #' @import stringr
+#' @importFrom utils installed.packages
+#' @importFrom utils packageDescription
 #'
 me2tools_check_packages <- function() {
-  my_packages <- packageDescription("me2tools")
+  my_packages <- utils::packageDescription("me2tools")
 
   my_packages <- stringr::str_split(my_packages$Imports,
                                         pattern = ",\n",
                                         simplify = TRUE)
 
-  not_installed <- my_packages[!(my_packages %in% installed.packages()[ , "Package"])]
+  not_installed <- my_packages[!(my_packages %in% utils::installed.packages()[ , "Package"])]
 
   all_installed <- TRUE
   if(length(not_installed) > 0) {

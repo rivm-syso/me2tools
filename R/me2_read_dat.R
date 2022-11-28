@@ -42,6 +42,8 @@
 #'   With this parameter set to \code{TRUE} each factor is multiplied by
 #'   1/avg(factor), so that the G factors are scaled to unity again. Default:
 #'   FALSE
+#' @param threshold_unity The threshold which needs to be exceeded to provide
+#'   a warning message. Default: 0.01
 #' @param tz Parameter to control the time zone when parameter \dQuote{dates} is
 #'   not used. Default: 'Etc/GMT-1'
 #'
@@ -93,6 +95,10 @@
 #' @import tibble
 #' @import cli
 #' @import dplyr
+#' @importFrom utils setTxtProgressBar
+#' @importFrom utils txtProgressBar
+#' @importFrom utils read.table
+#' 
 me2_read_dat <- function (me2_dat_file,
                           nrow_factor_mass = NA,
                           dates = NA,
@@ -126,7 +132,7 @@ me2_read_dat <- function (me2_dat_file,
   splitfilelines <- split.vec(filelines, sep = "")
 
   listoutput <- lapply(splitfilelines,
-                       function(x) read.table(textConnection(paste(x, collapse = "\n"))))
+                       function(x) utils::read.table(textConnection(paste(x, collapse = "\n"))))
 
   ##################################################################
   ##                 Creating necessary variables                 ##
@@ -135,7 +141,7 @@ me2_read_dat <- function (me2_dat_file,
   # To make sure we have the right data, we always use the index, not the named
   # number
 
-  pb = txtProgressBar(min = 0, max = length(listoutput), initial = 0)
+  pb = utils::txtProgressBar(min = 0, max = length(listoutput), initial = 0)
   progress_i = 1
 
   num_of_runs <- length(listoutput)/2
@@ -210,7 +216,7 @@ me2_read_dat <- function (me2_dat_file,
     }
     run_number <- run_number+1
     progress_i <- progress_i+1
-    setTxtProgressBar(pb,progress_i)
+    utils::setTxtProgressBar(pb,progress_i)
   }
 
   #################################################################
@@ -313,7 +319,7 @@ me2_read_dat <- function (me2_dat_file,
     }
     run_number <- run_number+1
     progress_i <- progress_i+1
-    setTxtProgressBar(pb,progress_i)
+    utils::setTxtProgressBar(pb,progress_i)
   }
   close(pb)
 

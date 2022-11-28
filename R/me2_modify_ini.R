@@ -19,12 +19,12 @@
 #' @param c3 value for c3
 #' @param em the error model used in ME-2
 #'
-#' @examples
-#' In this example a "template.ini" is used. This is basically an ini file that
+#' In the example a "template.ini" is used. This is basically an ini file that
 #' contains most of the parameters for the run we want to do. We can use the
-#' \code{me2_modify.ini} function to modify the ini, save it as a new file and 
-#' use that as input for ME-2.
-#'
+#' function to modify the ini, save it as a new file and use that as input 
+#' for ME-2.
+#' 
+#' @examples
 #' \dontrun{
 #' factors <- c(5,6,7,8)
 #'

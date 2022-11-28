@@ -20,11 +20,12 @@
 #' @importFrom terra rast
 #' @importFrom terra values
 #' @importFrom terra trim
+#' @importFrom utils read.table
 #'
 metcor_import <- function(file, na.rm = TRUE) {
 
   # read grid data from file
-  metcor.data <- read.table(file,
+  metcor.data <- utils::read.table(file,
     header = FALSE,
     sep = "\t",
     skip = 6

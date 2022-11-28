@@ -46,6 +46,9 @@
 #'   are used. In other cases a vector should be provided with two values
 #'   between 0..1 denoting the percentile (i.e., \code{c(0.05, 0.95)} will use
 #'   the P05 and P95 for the whisker limits).
+#' @param point.size The size of the points. Defaults to 1.25.
+#' @param line.size The size of the lines. Defaults to 1.
+#' @param facet.col The number of columns for the faceted plot. Defaults to 2.
 #' @param ... Other parameters passed onto \code{cutData}. For example, in the
 #'   case of \code{cutData} the option \code{hemisphere = "southern"}.
 #'
@@ -60,7 +63,17 @@
 #'   An me2tools output can be manipulated using a number of generic operations,
 #'   including \code{print}, \code{plot} and \code{summary}.
 #'
-#'   @seealso \code{\link[ggplot2]{geom_boxplot}}, \code{\link[openair]{cutData}}
+#' @seealso \code{\link[ggplot2]{geom_boxplot}}, \code{\link[openair]{cutData}}
+#'   
+#' @importFrom grDevices adjustcolor
+#' @import cli
+#' @import openair
+#' @import grDevices
+#' @import ggplot2
+#' @import dplyr
+#' @importFrom stats reformulate
+#' @importFrom stats quantile
+#' 
 temporal_contributions <- function(mydata,
                                    factor = NA,
                                    type = "default",
@@ -75,7 +88,7 @@ temporal_contributions <- function(mydata,
                                    cols = "hue",
                                    point.size = 1.25,
                                    line.size = 1,
-                                   facet_col = 2,
+                                   facet.col = 2,
                                    ...) {
 
   ## extra.args setup
@@ -162,7 +175,7 @@ temporal_contributions <- function(mydata,
   }
   # create the colors
   myColors <- openair::openColours(cols, ngroup)
-  boxplotColor <- adjustcolor(myColors, alpha.f = 0.5)
+  boxplotColor <- grDevices::adjustcolor(myColors, alpha.f = 0.5)
 
   # cut the data
   mydata <- openair::cutData(mydata, type = vars)
@@ -206,8 +219,8 @@ temporal_contributions <- function(mydata,
         dplyr::select(!!vars, !!factor) %>%
         dplyr::group_by(dplyr::across(all_of(vars))) %>%
         dplyr::summarise(
-          n_wllimit = quantile(!!sym(factor), probs = min(whisk.lim), na.rm = na.rm),
-          n_wulimit = quantile(!!sym(factor), probs = max(whisk.lim), na.rm = na.rm),
+          n_wllimit = stats::quantile(!!sym(factor), probs = min(whisk.lim), na.rm = na.rm),
+          n_wulimit = stats::quantile(!!sym(factor), probs = max(whisk.lim), na.rm = na.rm),
           .groups = "drop_last"
         )
       # combine with the boxplot data
@@ -306,7 +319,7 @@ temporal_contributions <- function(mydata,
       ggplot2::geom_boxplot(color = "black", outlier.shape = NA, na.rm = TRUE) +
       ggplot2::theme_bw() +
       ggplot2::theme(legend.position = "none") +
-      ggplot2::facet_wrap(reformulate(group), ncol = facet_col)
+      ggplot2::facet_wrap(reformulate(group), ncol = facet.col)
 
     # then we grab the data
     box.data <- ggplot2::layer_data(box.plot)
@@ -338,8 +351,8 @@ temporal_contributions <- function(mydata,
         dplyr::select(!!vars, !!factor) %>%
         dplyr::group_by(dplyr::across(all_of(vars))) %>%
         dplyr::summarise(
-          n_wllimit = quantile(!!sym(factor), probs = min(whisk.lim), na.rm = na.rm),
-          n_wulimit = quantile(!!sym(factor), probs = max(whisk.lim), na.rm = na.rm),
+          n_wllimit = stats::quantile(!!sym(factor), probs = min(whisk.lim), na.rm = na.rm),
+          n_wulimit = stats::quantile(!!sym(factor), probs = max(whisk.lim), na.rm = na.rm),
           .groups = "drop_last"
         )
       # combine with the boxplot data
@@ -386,7 +399,7 @@ temporal_contributions <- function(mydata,
       geom_boxplot(stat = "identity", color = "white") +
       ggplot2::theme_bw() +
       ggplot2::theme(legend.position = "none") +
-      ggplot2::facet_wrap(reformulate(group), ncol = facet_col)
+      ggplot2::facet_wrap(reformulate(group), ncol = facet.col)
 
     # create the colors
     iqrColor <- adjustcolor(myColors, alpha.f = 0.5)

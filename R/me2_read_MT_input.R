@@ -33,6 +33,7 @@
 #' @import cli
 #' @import lubridate
 #' @import tibble
+#' @importFrom utils read.table
 #'
 me2_read_MT_input <- function(file, tz = "Etc/GMT-1") {
 
@@ -46,7 +47,7 @@ me2_read_MT_input <- function(file, tz = "Etc/GMT-1") {
 
   # we need to add the species names and datetime to the residuals.
   # This information can be extracted from the input file.
-  input.data.org <- read.table(
+  input.data.org <- utils::read.table(
     file = file,
     header = TRUE,
     sep = "\t",

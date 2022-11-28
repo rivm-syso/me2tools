@@ -61,6 +61,8 @@
 #' @importFrom sf st_transform
 #' @importFrom sf st_make_grid
 #' @importFrom sf st_set_crs
+#' @importFrom stats na.omit
+#' @importFrom stats density
 #' @importFrom terra classify
 #' @importFrom terra disagg
 #' @importFrom terra ext
@@ -71,6 +73,7 @@
 #' @importFrom pals kovesi.rainbow
 #' @importFrom raster extent
 #' @importFrom ggtext element_markdown
+#' @importFrom ggnewscale new_scale_color
 #' @import rnaturalearth
 #' @import rnaturalearthdata
 #' @import cli
@@ -318,8 +321,8 @@ metcor_plot <- function(metcor.raster,
     )
 
     # find the peak in the lat and lon distribution
-    x_center <- density(metcor.raster.tibble$x)$x[which.max(density(metcor.raster.tibble$x)$y)]
-    y_center <- density(metcor.raster.tibble$y)$x[which.max(density(metcor.raster.tibble$y)$y)]
+    x_center <- stats::density(metcor.raster.tibble$x)$x[which.max(density(metcor.raster.tibble$x)$y)]
+    y_center <- stats::density(metcor.raster.tibble$y)$x[which.max(density(metcor.raster.tibble$y)$y)]
     # create a simple feature from this
     zoom_to_xy <- sf::st_transform(sf::st_sfc(sf::st_point(c(x_center, y_center)),
       crs = terra::crs(metcor.raster)
@@ -453,7 +456,7 @@ metcor_plot <- function(metcor.raster,
         ))
       }
       metcor.plot.options$raster$discrete.breaks <- classInt::classIntervals(
-        var = na.omit(as.vector(values(metcor.raster))),
+        var = stats::na.omit(as.vector(values(metcor.raster))),
         n = 5,
         style = metcor.plot.options$raster$discrete.breaks
       )
@@ -591,7 +594,7 @@ metcor_plot <- function(metcor.raster,
               stroke = 1.5,
               shape = 21
             ) +
-            scale_color_gradient(low = "#008000", high = "#000000", guide="none") +
+            ggplot2::scale_color_gradient(low = "#008000", high = "#000000", guide="none") +
             ggnewscale::new_scale_color()
 
         } else {

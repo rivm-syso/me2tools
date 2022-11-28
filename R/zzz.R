@@ -47,3 +47,25 @@
   
   packageStartupMessage(startup_msg)
 }
+
+
+################################################################################
+## Fix
+
+if (getRversion() >= "2.15.1") {
+  
+  # What variables are causing issues?
+  variables <- c(
+    ".", ":=", "!!", "species", "factor_profile", "model_run", "model_type", 
+    "identifier", "plot.data", "ymin", "ymax", "y", "x", "xmax", "xmin",
+    "middle", "upper", "lower", "n_wllimit", "n_wulimit", "lyr.1", "IDATE",
+    "ITIME", "FDATE", "FTIME", "LATR", "LONR", "lat", "lon", "Datestart.",
+    "Time", "Dateend.", "Time.1", "Tzone", "X0", "date.start.org", 
+    "time.start.org", "date.end.org", "time.end.org", "tzone", "Begin", 
+    "Length", "End", "run_type","value", "numeric_x", "DISP_min", "DISP_max"
+  )
+  
+  # Squash the notes
+  utils::globalVariables(variables)
+  
+}

@@ -11,6 +11,9 @@
 #'
 #' @param me2_txt_file ME2 output file (.txt), containing the results and
 #'   auxiliary information.
+#' @param block_boundaries A list containing the \dQuote{start} and 
+#'   \dQuote{end} string used to identify the boundaries of the block 
+#'   containing the Qmain values.
 #'
 #' @return tibble containing Qmain and contributions to Qmain for multiple runs
 #'

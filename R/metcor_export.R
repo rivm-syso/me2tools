@@ -47,7 +47,11 @@
 #' @import cli
 #' @import dplyr
 #' @import lubridate
-
+#' @importFrom stats median
+#' @importFrom utils head
+#' @importFrom utils tail
+#' @importFrom utils write.table
+#' 
 metcor_export <- function(G_matrix,
                           file,
                           time_res = "auto",
@@ -77,8 +81,8 @@ metcor_export <- function(G_matrix,
 
   # get the resolution from the data if time_res = "auto"
   if (time_res == "auto") {
-    diff_minutes <- as.numeric(difftime(tail(G_matrix$date, -1),
-      head(G_matrix$date, -1),
+    diff_minutes <- as.numeric(difftime(utils::tail(G_matrix$date, -1),
+      utils::head(G_matrix$date, -1),
       units = "mins"
     ))
     if (min(diff_minutes) == max(diff_minutes)) {
@@ -87,7 +91,7 @@ metcor_export <- function(G_matrix,
     } else {
       # some date/time is missing, leading to larger time resolutions
       # use the median
-      time_res <- median(diff_minutes)
+      time_res <- stats::median(diff_minutes)
       cli::cli_warn(c(
         "Time resolution in {.var G_matrix} is not constant:",
         "i" = "Some samples might have been intentionally left out. The time
@@ -129,8 +133,8 @@ metcor_export <- function(G_matrix,
     ) %>%
     select(IDATE, ITIME, FDATE, FTIME, LATR, LONR, all_of(factor_names)) %>%
     replace(is.na(.), 0)
-  file <- "test.txt"
-  write.table(metcor.set,
+
+  utils::write.table(metcor.set,
     file = file,
     sep = "\t",
     row.names = FALSE,

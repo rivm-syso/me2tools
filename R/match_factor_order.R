@@ -36,6 +36,9 @@
 #'
 #' @export
 #'
+#' @import cli
+#' @import dplyr
+#' @importFrom stats cor
 match_factor_order <- function(base,
                                source,
                                F.profile = "percentage_of_species_sum",
@@ -159,7 +162,7 @@ match_factor_order <- function(base,
 
 
   # calculate the correlations
-  cor_matrix <- cor(source %>%
+  cor_matrix <- stats::cor(source %>%
                       select(-contains("factor_profile")) %>%
                       select(contains("factor_")) %>%
                       select_if(~sum(!is.na(.)) > 0),

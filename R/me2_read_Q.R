@@ -11,9 +11,9 @@
 #' @param me2_txt_file ME2 output file (.txt), containing the results and
 #'   auxiliary information.
 #' @param block_boundaries A list containing the \dQuote{start} string used to
-#'   identify the boundaries of the block containing the values for the
-#'   residuals. For residuals the \dQuote{end} string is automatically derived
-#'   based on the \dQuote{start} string for the next block.
+#'   identify the boundaries of the block containing the Q values. The 
+#'   \dQuote{end} string is automatically derived as the Q values is typically
+#'   the last block in the file.
 #'
 #' @return tibble containing the Q values for each run.
 #'

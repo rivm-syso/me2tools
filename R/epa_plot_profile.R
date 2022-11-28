@@ -11,13 +11,13 @@
 #' @param xlabel.angle What angle should the x-axis labels be presented in? If
 #'   your labels are long, \code{45} degrees can be useful, which is also the
 #'   default.
-#' @param xlabel.vjust vertical justification of the xlabel, between [0,1].
-#' @param xlabel.hjust horizontal justification of the xlabel, between [0,1].
+#' @param xlabel.vjust vertical justification of the xlabel, between \[0,1\].
+#' @param xlabel.hjust horizontal justification of the xlabel, between \[0,1\].
 #' @param xlabel.order The labels containing the species on the x-axis are
 #'   plotted based on the factor levels. This parameter can contain the levels
 #'   and the species are transformed to factors using these levels. N.B. these
 #'   levels can contain code for expressions.
-#' @param ymin The minimum value for the y-axis, which is used to cut-off the
+#' @param y_min The minimum value for the y-axis, which is used to cut-off the
 #'   logarithmic scale. The default setting is \code{-5}, which corresponds to
 #'   1xE-5.
 #' @param xlab x-axis label.

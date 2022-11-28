@@ -37,10 +37,10 @@ Breaking changes of existing code will be documented in [NEWS](NEWS.md). If you 
 ## Example usage
 
 ### ME-2 data files
-For the examples we use the multitime demo file provided with the ME-2 package from Dr. Paatero. We ran the "2wmtdemo.ini" with numtaks = 10, generating results for 10 runs in the output files. It should be noted, as mentioned in the accompaying description, that this analysis should not be regarded as fully optimal, it is only offered in order to illustrate the overall setup and for example purposes.
+For the examples we use the multitime demo file provided with the ME-2 package from Dr. Paatero. We ran the "2wmtdemo.ini" with numtaks = 10, generating results for 10 runs in the output files. It should be noted, as mentioned in the accompaying description of the original demo package, that this analysis should not be regarded as fully optimal, it is only offered in order to illustrate the overall setup and for example purposes.
 
 > **Note**
-> The initial "2wmtdemo.ini" featured two similar blocks before printing the F and G matrix. In this version we have commented out lines 513 - 534 in the ini file to prevent the inclusion of the duplicate block of data to make it easier to read the data into R.
+> The initial "2wmtdemo.ini" featured two similar blocks of data before printing the F and G matrix. In this version we have commented out lines 513 - 534 in the ini file to prevent the inclusion of the duplicate block of data to make it easier to read the data into R.
 
 ```R
 # Load packages

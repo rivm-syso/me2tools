@@ -10,7 +10,7 @@
 #' @param value cut off value for which the closest percentile in vector x needs
 #' to be determined
 #'
-#' @return probability [0,1] which can be used in polarPlot (multiply by 100)
+#' @return probability \[0,1\] which can be used in polarPlot (multiply by 100)
 #'
 #' @export
 #'
