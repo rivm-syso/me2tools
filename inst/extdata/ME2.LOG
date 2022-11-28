@@ -1,0 +1,1821 @@
+ 
+ 
+ Size of the opened file 2wmtdemo.ini   22448
+ 
+  ##ME-2 script for 2-way PMF with variable timing. Licence:   \me2\me2key.key
+ 
+ 
+   Multilinear Engine ME-2   (Nov 17, 2010) vers. 1.345
+           Copyright 1998, 2006 Pentti Paatero
+ 
+ Trying to open the named key file \me2\me2key.key
+ Size of the opened file \me2\me2key.key     135
+ Key file opened
+ 
+      LICENCE: Ing. D.Mooibroek, Natl.Inst.Publ.Health&Env RIVM, The Netherlands
+ 
+        ME-2 optimized for Pentium 4. Compiled by Gnu fortran.
+ 
+ 
+                Date and time: 2022-11-28     11:46:01
+ 
+ 
+  **** Compiling first section (definitions) of ME-2 script ****
+ 
+    3 % Released by Pentti Paatero on Sept. 27, 2004
+    4 % Modified by ???            on ???
+    5 
+    6 $listing -1
+   99 
+  100 section> defines;    %%%%% Beginning the first section "defines" %%%%%%
+  101 
+  102 version=1.10;
+  103 monitor=5;
+  104 stabilizer=0.0;
+  105 
+  106 robust=1;                % =1 for computing in the robust mode
+  107 
+  108 posoutdist=2; negoutdist=2;
+  109 
+  110 missdatlim=-7.7E17;      % use -7.7E17 if neg data are not "missing"
+  111                          % use -990, say, if -999 denotes missing data
+  112 bdlneg=0;                % must be =1 if all neg values represent BDL
+  113 
+  114 
+  115 % Convergence tests and other parameters for the three
+  116 % iteration levels.             %-- Not used yet. --
+  117 convtests                       %Reserved for future
+  118   0.1000,       20,       500,        0,      0,      0.00001,   %level 1
+  119   0.0010,       40,      1000,        0,      0,      0.00001,   %level 2
+  120   0.0002,      90,       3000,        0,      0,      0.00001;   %level 3
+  121 % deltaQ   consecut.   max cumul.     not     not     gg2 norm
+  122 %   test      steps    step count    used    used       test
+  123 
+  124 
+  125 % Shortest and longest allowed CG sequence (basic length),
+  126 % and four coefficients that modify the basic length.
+  127 cgresets  15,  80,  1,  1,  1,  1;
+  128 
+  129 precmode=10; numtasks=10;
+  130 
+  131 
+  132 variables
+  133   'wriplotfil'=0,  % =1: write data file in matlab form for plotting and stop
+  134                    % =0: normal run
+  135   'c3Cr'=0.07,     % Special c3 values are loaded at the end of
+  136   'c3Mn'=0.06,     % section "equations", using the
+  137                    % following numerical indices:
+  138   'numCr'=6,       % variable number for Chromium
+  139   'numMn'=9,       % variable number for Manganese
+  140   'nadjust'=13,    % variables (1:1:nadjust) need adjustment factors
+  141   'ntextcols'=5,   % number of text columns in table
+  142   'numidcol'=3,    % the (first) id (identifier) column among these
+  143   'numid2col'=4,   % the second id column,  or =0 if no 2nd id column
+  144   'stdwithxx'=1,   % =1 if conc. columns are followed by std cols
+  145                    % =0 if concentrations table does not contain std
+  146   'aasmooc1'=2.5,  % C1 for equations that fix under-determined
+  147                    % time factor (AA) elements by imposing smoothness
+  148                    % on the time series.
+  149   'aasmooc3'=0.07, % C3 for time series smoothness equations
+  150   'alowlims'=0.0,  % Used as low limit for AA factor elements
+  151   'blowlims'=0.0,  % Used as low limit for BB factor elements
+  152   'seed1'=8,       % for initializing random numbers for initial
+  153                    % factor values
+  154   'normc1'=0.02,   % Std-dev coefficient C1 for AA normalization equs
+  155   'contrun'=0;     % =0: start from random initial factor values
+  156                    % =1: start from factor values read from a file
+  157 
+  158 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  159 % Set dimensions of the model:                     # of text
+  160 %  # of time     # of        # of         # of      columns
+  161 %    units     samples    variables     factors    in table
+  162     n1=720;    ns=1135;     n2=24;       np=5;    ntextcols=5;
+  163 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  164 %  std-dev coefficients and errormodel code for the main equations
+  165            c2=0.0;   c3=0.05;     em=-14;
+  166 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  167 
+  168 
+  169  defarr scriptdata,  XX[ns, n2];
+  170             % original data array, one row per sample
+  171             % (average concentrations, averaged over sampling periods)
+  172  defarr scriptdata,  XXC1[ns, n2];
+  173             % original C1 values for data array (input from table)
+  174  defarr scriptdata,  MINXXC1[n2];
+  175             % lower limits for C1, overriding the table values
+  176             % input from end of script file
+  177  defarr maindata,   XXX[ns, n2];
+  178             % scaled data array, rows multiplied by lengths of sampling
+  179             % periods, in order to allow for more efficient computations
+  180  defarr scriptdata,  TIME[ns, 3];
+  181             % col 1: number of first time unit in sample
+  182             % col 2: number of time units in sample
+  183             % col 3: number of last  time unit in sample
+  184  defarr scriptdata,  SAMPLEOK[ns];  % =1 if sample contains good data
+  185                                     % =0: sample is ignored
+  186 
+  187  defarr auxdata,  NORMS[1, np];     % Normalize time factors to average =1
+  188  defarr auxdata,  AASMOO[n1,np];    % Smooth time factors AA
+  189 
+  190  defarr freefact, AA[n1, np];   % AA: concentrations for each "minute"
+  191                                            %    = "left" factor matrix
+  192  defarr freefact, BB[n2, np];   % BB is the "right" factor matrix
+  193 
+  194  defarr freefact, ADJUST[nadjust];   % Adjust "tracer element" fitting
+  195                                 % to be compatible with other data
+  196 
+  197  defarr sefact,   AAA[ns, np];  % AAA: AA summed over sampling periods
+  198 
+  199  defarr scriptdata,  COLUMNAVG[n2];   % Approx. averages of XX columns
+  200                                       % used for initializing BB
+  201  defarr scripttext,  TEXTCOLS[ns,ntextcols];  % text columns in data table
+  202  defarr scripttext,  SAMPLEHEAD[ns];    % Header texts for rows of XX
+  203  defarr scripttext,  AAHEAD[n1];        % Header texts for rows of AA
+  204  defarr scripttext,  BBHEAD[n2];        %.. and of BB
+  205  defarr scripttext,  FACTHEAD[np];
+  206     % Insert descriptive names of factors in FACTHEAD (if known)
+  207     % (Usually requires good initial values and contrun=1)
+  208 
+  209  defarr scripttext, FORMATS[6];  % format strings for writing
+  210 
+  211 %%% *** Change the path of the library file ME2libr.txt according ***
+  212 %%% *** to where it is residing in your system!                   ***
+  213 $include $Xwritex '\me2\ME2libr.txt'
+ Size of the opened file \me2\ME2libr.txt   57048
+  214 $include $Fwrite2
+ Size of the opened file \me2\ME2libr.txt   57048
+  215 $include $Outfiles
+ Size of the opened file \me2\ME2libr.txt   57048
+  216 $include $Normalize
+ Size of the opened file \me2\ME2libr.txt   57048
+  217 $include $Smoothcols
+ Size of the opened file \me2\ME2libr.txt   57048
+  218 
+  219 subroutine> Fhead{fi}{};
+  220 local jp;
+  221   write fi, '(11X)';
+  222   for> jp=1:1:np;
+  223     write fi, '(1X,A8)', FACTHEAD[jp];
+  224   for!;
+  225 subroutine!;
+  226 subroutine> Writenan{fi,xx,##1,##2}{};
+  227   if> (xx>-899); write fi, ##1, xx;
+  228   else;  write fi, ##2, 'NaN';
+  229   if!;
+  230 subroutine!;
+  231 
+  232 section!;   %%%%%%%%%%% End of first part of the script %%%%%%%%%%%%%%%
+  **** Executing first section (definitions) of ME-2 script ***
+  **** Compiling equation-specifying section of ME-2 script ****
+ 
+  233 
+  234 
+  235 
+  236 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  237 % Second part of script starts here: model specification, data loading
+  238 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  239 section> equations;
+  240 
+  241 %Specify input and output files.
+  242 %  File 30 is the input file, containing matrix XX
+  243 %  and possibly std-dev of XX
+  244 %  File 40 is the main output file, containing factor values etc.
+  245 %  File 41 contains residuals.
+  246 
+  247 
+  248 %  status    meaning
+  249 %  -------  -----------------------------------------------
+  250 % 'old'      for reading an existing file
+  251 % 'replace'  for deleting the old file and writing results to a new one
+  252 % 'unknown'  for writing results to the end of an old file, if one exists,
+  253 %            otherwise to a new file
+  254 %
+  255 %      file #   file name (and path)   R or W    status     max_rec_length
+  256 
+  257 openfile  30,     'demodata.txt',         R,    'old',          6000;
+  258 
+  259 
+  260 % Open standard output(input) files
+  261 FILEID[1]='mtdemo';      % Main part of title of files to be written
+  262 FILEID[2]='mtxxx';       % Main part of title of previous result file
+  263 if> (wriplotfil==0);
+  264   callsubr Outfiles{6000}{};
+  265 if!;
+  266 % Standard Files:
+  267 %  40 the main output
+  268 %  41 residuals output
+  269 %  49 factors-only output
+  270 %  39 previous factors (input)
+  271 
+  272 
+  273 FORMATS[6]='(//(', np,'(I2)', 'E14.5))';   % = '(//( 5E14.5))' if np=5
+  274 %For writing np values per line on file 49.
+  275 for> jp=1:1:np;                   % Insert trivial factor names
+  276   FACTHEAD[jp]='Fact', jp, '(I2.2)';
+  277 for!;
+  278 AAHEAD[0]=' ';
+  279 
+  280 
+  281 read 4, ' ', MINXXC1[0];
+  282 
+  283 
+  284 %%%% Read data values into array XX from file # 30
+  285 XX[0,0]=-999;  XXC1[0,0]=-999;   % Values set for missing data
+  286 tabiscomma=1;  % TAB required (or comma) after an unquoted string:
+  287 commalimit=1;  %.. a string containing space characters reads OK!
+  288 
+  289 %%% Read header row of data table
+  290   read 30, ' ', TEXTCOLS[1,0], ##1, ##1, ##1;  %bypass headers
+  291   for> j2=1:1:n2;
+  292     read 30, ' ', BBHEAD[j2];
+  293     if> (stdwithxx==1);  read 30, ' ', ##1;   % Ignore std head
+  294     if!;
+  295   for!;
+  296   read 30, ' ', ##1;   % Ignore head of serial # column
+  297 
+  298 %%% Read data table itself (text columns, times, and concentrations)
+  299 TEXTCOLS[0,0]='no-text'; TIME[0,0]=-999;
+  300 for> js=1:1:ns;         % Read main data table
+  301   read 30, ' ', TEXTCOLS[js,0], TIME[js,0];
+  302   if> (TIME[js,3]~=(TIME[js,1]+TIME[js,2]-1));
+  303     write 6, '(/3X,I6/)', js;
+  304     stop 'Error in time values';
+  305   if!;
+  306   if> (numid2col>0);
+  307     SAMPLEHEAD[js]=TEXTCOLS[js,numidcol],TEXTCOLS[js,numid2col];
+  308   else;
+  309     SAMPLEHEAD[js]=TEXTCOLS[js,numidcol];
+  310   if!;
+  311   for> j2=1:1:n2;
+  312     read 30, ' ', XX[js,j2];
+  313     if> (stdwithxx==1);  read 30, ' ', XXC1[js,j2];
+  314     if!;
+  315   for!;
+  316   read 30, ' ', sr;         % read serial number
+  317   if> (sr ~= js); stop 'Serial number mismatch';
+  318   if!;
+  319 for!;
+  320 closefile 30;
+  321 if> (Arrminval{TIME[0,0]}<1); stop 'Bad or missing time value(s)';
+  322 if!;
+  323 
+  324 for> j2=1:1:n2;       % loop over columns of XX
+  325   cn=0; sm=0;         % Compute approximate average of column j2
+  326   for> js=1:1:ns;
+  327     if> (XX[js,j2]>=0);          % Avoid missing values
+  328       sm=sm+XX[js,j2]; cn=cn+1;  % Add value, count it
+  329     if!;
+  330   for!;
+  331   % Protect against no valid values and non-positive sums
+  332   COLUMNAVG[j2]=Maxval{sm,0.001}/Maxval{cn,1};
+  333   BB.fhigh[j2,0]=COLUMNAVG[j2];
+  334 for!;
+  335 
+  336 if> (wriplotfil==1);
+  337               % Write a matlab plotting version of input data and stop
+  338   openfile 38, 'plotfile.txt', W, 'replace', 6000;
+  339   for> js=1:1:ns;
+  340     t1=TIME[js,1];t2=TIME[js,2];t3=TIME[js,3];
+  341     if> (js>1);               % Write a separator between two data sets?
+  342       if> (t3<TIME[js-1,1]);  % Yes if time turns back
+  343         for> j2=1:1:n2+1;
+  344           callsubr Writenan{38, -999, '(F13.6)', '(A13)'}{};
+  345         for!;
+  346         write 38, '(/)';
+  347       if!;
+  348     if!;
+  349     callsubr Writenan{38, (t1+t3)/2, '(F13.6)', '(A13)'}{};
+  350     for> j2=1:1:n2;
+  351       callsubr Writenan{38, XX[js,j2], '(F13.6)', '(A13)'}{};
+  352     for!;
+  353     write 38, '(/)';
+  354   for!;
+  355   stop 'plot file written';
+  356 if!;
+  357 
+  358 
+  359 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  360 % Define main equations
+  361 
+  362 SAMPLEOK[0]=0;
+  363 for> js=1:1:ns;
+  364   t1=TIME[js,1]; t2=TIME[js,2]; t3=TIME[js,3];  %timing for sample js
+  365   for> j2=1:1:n2;     % Loop over variables
+  366     if> (XX[js,j2]>-900);
+  367       SAMPLEOK[js]=1;
+  368       if> ( (js>=1123 & j2<=nadjust)  |       % Special for tracer elements
+  369             (js>=961 & js<= 1080 & j2<=2) );  % and for 1-hour SO4 and NO3:
+  370                                               % include adjustment factors
+  371         equ> XXX[js,j2], Data=t2*XX[js,j2],
+  372             C1=t2*Maxval{XXC1[js,j2],MINXXC1[j2]}, C3=c3, errmod=em;
+  373           for> jp=1:1:np;
+  374             term> pos; @AAA[js,jp]; @BB[j2,jp]; @ADJUST[j2];
+  375             term!;
+  376           for!;
+  377         equ!;
+  378       else;
+  379         equ> XXX[js,j2], Data=t2*XX[js,j2],
+  380                 C1=t2*Maxval{XXC1[js,j2],MINXXC1[j2]}, C3=c3, errmod=em;
+  381           if> (t1==t3);   % If sample == one time unit, use AA element for
+  382             term> pos; @AA[t3,1]; @BB[j2,1]; multiterm np;   %.. that time
+  383             term!;
+  384           else;           %.. if == several units, use combined factor AAA
+  385             term> pos; @AAA[js,1]; @BB[j2,1]; multiterm np;
+  386             term!;        % In both cases, use the implicit "multiterm" loop
+  387           if!;
+  388         equ!;
+  389       if!;
+  390     if!;
+  391   for!;
+  392 for!;
+  393 
+  394 
+  395 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  396 % SubExpression (SE) equations:
+  397 % Define sample SE factors AAA as _sums_ of time-unit factors AA
+  398 for> js=1:1:ns;
+  399   t1=TIME[js,1];  t3=TIME[js,3];  %timing for sample js
+  400   for> jp=1:1:np;
+  401     seequ> normal, AAA[js,jp];
+  402       for> j1=t1:1:t3;
+  403         term> pos; @AA[j1,jp];
+  404         term!;
+  405       for!;
+  406     seequ!;
+  407   for!;
+  408 for!;
+  409 
+  410 
+  411 %%%%%%%%%%%%%%%%%%%     aux equations.      %%%%%%%%%%%%%%%%%%%%%%%%%%
+  412 % Set averages of columns of time factor matrix AA to unity    %%%
+  413 callsubr Normalize{0,normc1,1,1.0}{AA,NORMS};
+  414 
+  415 % Impose smoothness on AA columns as a form of regularization
+  416 callsubr  Smoothcols{0,aasmooc1,0}{AA,AASMOO};
+  417 AASMOO.errmod[0,0]=-5;
+  418 AASMOO.C3[0,0]=aasmooc3;
+  419 
+  420 %%% Initialize factor keys to constrained free factors    %%%
+  421 %%% Set factor low limits.
+  422 %%% (alowlims, blowlims were set in the initial setup group)
+  423 
+  424 AA.fkey[0,0]=lolimit;  AA.flow[0,0]=alowlims; AA.fhigh[0,0]=5;
+  425 BB.fkey[0,0]=lolimit;  BB.flow[0,0]=blowlims;
+  426 % BB.fhigh have already been set
+  427 
+  428 % Set up standard block-diagonal preconditioning:
+  429 AA.fprecc[0,1]=np;   % row-wise precond blocks
+  430 BB.fprecc[0,1]=np;   % row-wise precond blocks
+  431 
+  432 
+  433 XXX.C3[0,numCr]=c3Cr;    % Increased C3 for Chromium
+  434 XXX.C3[0,numMn]=c3Mn;    % Increased C3 for Manganese
+  435 
+  436 
+  437 section!;  %%%%%%%%  End of section "equations"  %%%%%%%%%%%%
+  **** Compiling preprocessing section of ME-2 script ****
+ 
+  438 
+  439 
+  440 
+  441 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  442 section> preproc;   %%%%%%%   Preprocessing initial values     %%%%%%%%
+  443 
+  444 if> (contrun==0);     % Initialize factors to pseudorandom values (pos)
+  445   setrand 1, uniform,  seed1;
+  446   AA[0,0] = Urandom{0.01, 2.0, 1};  %{mean, std-dev, # of generator}
+  447   for> j2=1:1:n2;
+  448     BB[j2,0] = Urandom{0.0, 0.5*COLUMNAVG[j2], 1};
+  449   for!;
+  450   seed1=seed1+100;    % Set a new random seed for next task, if any
+  451 elseif (contrun==1);  % Read previous factor values from file 39
+  452   read 39, ' ', AA[0,0], BB[0,0];
+  453 else;
+  454   stop 'contrun should be =0 or =1';
+  455 if!;
+  456 
+  457 % The following commands are related to adjusting the scales of
+  458 % replicated measurements of variables.
+  459 % Delete if there are no replicated measurements.
+  460 ADJUST[0]=1;
+  461 ADJUST.fkey[0]=lohilimits; ADJUST.flow[0]=0.05; ADJUST.fhigh[0]=20.0;
+  462 
+  463 section!;  %%%%%%%%%%%%%%  End of section "preproc" %%%%%%%%%%%%%%%%%%%
+  **** Compiling postprocessing section of ME-2 script ****
+ 
+  464 
+  465 
+  466 
+  467 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  468 %%%%%    Starting the section for post-processing the results     %%%%%
+  469 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  470 section> postproc;
+  471 
+  472 write 49, FORMATS[6], AA[0,0], BB[0,0];
+  473 % Write factors in simple form, for reading by a future continuation run
+  474 
+  475 % Alternatively, one may also write as follows. The command is simpler
+  476 % but the layout of values in file is not so helpful:
+  477 % write 49, FORMATS[6], FREEFACTS[0];
+  478 
+  479 
+  480 write 40, '(/A)',   '    Task #,  seed: ';
+  481 write 40, '(I5)',    taskcount, seed1;
+  482 write 40, '(/A)',
+  483 '   Sum-of-squares  Q, Qmain, Qaux';
+  484 write 40, '(F12.2)',
+  485      qvalue, mainqvalue, auxqvalue;
+  486 write 40, '(/A)',
+  487 '   Main equ C3,  AAsmooth C1,   C3';
+  488 write 40, '(F12.2)',
+  489      c3, aasmooc1, aasmooc3;
+  490 write 40, '(//3X, A/)',
+  491 'Contributions to Qaux by smooth & norm equ:s, for each factor';
+  492 callsubr Fhead{40}{};
+  493 write 40, '(/1X,A11)', 'Smooth';
+  494   for> jp=1:1:np;
+  495      write 40, '(1X,F8.3)', Arrsumosqr{AASMOO.sres[0,jp]};
+  496   for!;
+  497 write 40, '(/1X,A11)', '  Norm';
+  498   for> jp=1:1:np;
+  499      write 40, '(1X,F8.3)', (NORMS.sres[1,jp])**2;
+  500   for!;
+  501 
+  502 
+  503 FORMATS[1]='(20(1X,I8))';
+  504 
+  505 % Update output titles as needed
+  506 write 40, '(///3X, A/)','Time factors';
+  507 callsubr Fhead{40}{};
+  508 callsubr Fwrite2{40,'(30(1X,F8.3))', '(1X,4X,1X)'}{AA};
+  509                     % Write factor matrix AA without row titles
+  510 write 40, '(/)';
+  511 callsubr Fhead{40}{};
+  512 
+  513 % FORMATS[1]='(20(1X,F8.3))';
+  514 % write 40, '(/A)',   '    Task #,  seed: ';
+  515 % write 40, '(I5)',    taskcount, seed1;
+  516 % write 40, '(/A)',
+  517 % '   Sum-of-squares  Q, Qmain, Qaux';
+  518 % write 40, '(F12.2)',
+  519 %      qvalue, mainqvalue, auxqvalue;
+  520 % write 40, '(/A)',
+  521 % '   Main equ C3,  AAsmooth C1,   C3';
+  522 % write 40, '(F12.2)',
+  523 %      c3, aasmooc1, aasmooc3;
+  524 % write 40, '(//3X, A/)',
+  525 % 'Quantities related to smooth & norm, for each factor';
+  526 % callsubr Fhead{40}{};
+  527 % write 40, '(/1X,A12,1X)', 'Smooth contrib in Qaux';
+  528 %   for> jp=1:1:np;
+  529 %      write 40, '(1X,F8.3)', Arrsumosqr{AASMOO.sres[0, jp]};
+  530 %   for!;
+  531 % write 40, '(/1X,A12,1X)', 'Norm contrib in Qaux';
+  532 %   for> jp=1:1:np;
+  533 %      write 40, '(1X,F8.3)', (NORMS.sres[1,jp])**2;
+  534 %   for!;
+  535 
+  536 write 40, '(//3X, A/)',  'Composition factors';
+  537 callsubr Fhead{40}{};
+  538 callsubr Fwrite2{40,'(30(1X,F8.4))', '(1X,A4,1X)'}{BB,BBHEAD};
+  539                        % Write factor matrix BB with row titles
+  540 
+  541 write 40, '(//3X,A/)','Contribution in Qmain by different variables';
+  542 write 40, '(5X,A/)','Adjustment coefficients for adjusted variables';
+  543 for> j2=1:1:n2;
+  544   write 40,  '(3X, A10)', BBHEAD[j2];
+  545   write 40,  '(1X,F8.2)', Arrsumosqr{XXX.sres[0, j2]};
+  546   if> (j2<=nadjust);
+  547     write 40,  '(1X, F8.3)', ADJUST[j2];
+  548   if!;
+  549   write 40, '(/)';
+  550 for!;
+  551 
+  552 
+  553 FORMATS[2]='(100(1X,I8))';
+  554 %callsubr Xwritex{2,41}{XXX};  % Write data array XXX
+  555 % Parameters:
+  556 %   # of format in FORMATS[],
+  557 %   # of file,
+  558 %   name of array
+  559 
+  560 FORMATS[4]='(100(1X,F5.1))';
+  561 callsubr Xwritex{4,41}{XXX.sres[]};  % Write array XXX.sres
+  562 
+  563 write 41, '(//)';
+  564 
+  565 section!;  %%%%%%%%%%% end of post-processing section %%%%%%%%%%%%%%%
+  **** Compiling callback section of ME-2 script ****
+ 
+  566 
+  567 
+  568 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  569 %%  Last part of script starts here:  Callback section               %%
+  570 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  571 section> callback;
+  572 
+  573 section!; %%% End of callback section, end of the whole script %%%
+ 
+ 
+ # of variables used by this script =      70
+ # of arrays defined by this script =      28
+ Maximum # of used variables =     189
+ Maximum # of defined arrays =     160
+ 
+  **** Executing section "equations" ***
+ 
+ Size of the opened file demodata.txt  160710
+ Successfully opened ME2-style input file      30
+ with name demodata.txt
+ Successfully opened output file      40
+ with name mtdemo.txt
+ Successfully opened output file      41
+ with name mtdemo.rsd
+ Successfully opened output file      49
+ with name mtdemo.dat
+ Echo from .ini:  / Smallest allowed C1 values for all variables
+ Echo from .ini:  / These limits are needed for this data set because some data
+ Echo from .ini:  / values have erroneous (too small) std-dev values.
+ Echo from .ini:  / These values are input near start of section "equations".
+ Echo from .ini:  1.5      /Sulfate
+ Echo from .ini:  0.2      /Nitrate
+ Echo from .ini:  0.001    /Al
+ Echo from .ini:  0.0005   /As	
+ Echo from .ini:  0.0001   /Cd	
+ Echo from .ini:  0.00012  /Cr	
+ Echo from .ini:  0.0002   /Cu(30min)	
+ Echo from .ini:  0.0015   /Fe(30min) 	
+ Echo from .ini:  0.0005   /Mn(tracer)  (was 0.0003)	
+ Echo from .ini:  0.002    /Ni(30min)
+ Echo from .ini:  0.0006   /Pb
+ Echo from .ini:  0.0003   /Se
+ Echo from .ini:  0.00015  /Zn
+ Echo from .ini:  0.05    /Nitrite
+ Echo from .ini:  0.05    /Chloride
+ Echo from .ini:  0.10    /Ammonium ion (NH4)
+ Echo from .ini:  0.15    /Sodium
+ Echo from .ini:  0.01    /Potassium(tracer)
+ Echo from .ini:  0.3     /OC
+ Echo from .ini:  0.3     /EC
+ Echo from .ini:  0.0015  /Ti
+ Echo from .ini:  0.0002  /V
+ Echo from .ini:  0.0002  /Mo
+ Echo from .ini:  0.0001  /Sb
+ 
+  **** Executing section "preproc", preparing initial values for fit ***
+ 
+  ***/ Model does not contain equations corresponding to all data values.
+  ***\ (This need not be an error, it can be done on purpose.)
+ 
+ A summary of the structure model follows: Model table size =  122302
+ Number of data points in the data vector:   30845
+ Number of (main+aux) equations specified in the model:    8773
+ Number of ordinary factor elements specified in the model:    3733
+ Number of subexpression factor elements specified in the model:    5675
+  **** Number of idle factor elements, not referenced in model:       3
+  **** Number of idle subexp-factor elements, not referenced in model:    3600
+ 
+ Number of factor elements in smallest term:       1
+ Number of factor elements in largest  term:       3
+ Smallest number of terms in any equation:       1
+ Largest  number of terms in any equation:     720
+ Min-Equ-Size in any equation:       1
+ Max-Equ-Size in any equation:     720
+ Most negative errormodel (EM) code is     -14
+ and largest (least negative):      -5
+ Initial Q (main and aux):     0.11473E+06        355.20
+    5 Qm 21127.35  Qaux 1445.431  g^2 0.1199E+05   Flags CBw:%-CBw,%-CBF:%-;%-;%-
+   10 Qm 7596.006  Qaux 852.1926  g^2 0.8454E+03   Flags CBw:%-:%-:%-CBF:%-:%-
+   15 Qm 6790.693  Qaux 399.2939  g^2 0.2763E+03   Flags :%-CBw:%-:%-:%-:%-
+   20 Qm 6579.411  Qaux 156.2851  g^2 0.1493E+03   Flags :%-:%-:%-:%-:%-
+   25 Qm 6444.394  Qaux 99.89427  g^2 0.6401E+02   Flags :%-:%-:%-:%-:%-
+   30 Qm 6378.521  Qaux 78.46745  g^2 0.3834E+02   Flags :%-:%-3 C-G AresCBF:%-;%-;%-
+   35 Qm 6214.659  Qaux 80.70474  g^2 0.4802E+02   Flags ;%-;%-;%-;%-;%-
+   40 Qm 6103.756  Qaux 73.75415  g^2 0.6365E+02   Flags ;%-;%-;%-;%-;%-
+   45 Qm 5978.307  Qaux 69.14695  g^2 0.8004E+02   Flags ;%-:%-:%-2 C-G AresCBw:%-:%-
+   50 Qm 5871.418  Qaux 66.29741  g^2 0.6436E+02   Flags ;%-;%-;%-;%-;%-
+   55 Qm 5780.413  Qaux 58.58888  g^2 0.1243E+03   Flags ;%-;%-;%-;%-:%-
+   60 Qm 5603.356  Qaux 58.51899  g^2 0.1334E+03   Flags :%-:%-:%-:%-3 C-G AresCBF:%-
+   65 Qm 5452.518  Qaux 57.55636  g^2 0.2091E+02   Flags :%-;%-;%-;%-;%-
+   70 Qm 5400.287  Qaux 51.91400  g^2 0.2060E+02   Flags :%-:%-:%-:%-:%-
+   75 Qm 5355.040  Qaux 49.24409  g^2 0.2105E+02   Flags :%-:%-:%-:%-:%-
+   80 Qm 5272.300  Qaux 45.12330  g^2 0.1609E+02   Flags 3 C-G AresCBw:%-;%-;%-;%-;%-
+   85 Qm 5247.707  Qaux 42.27339  g^2 0.1046E+02   Flags :%-:%-:%-:%-:%-
+   90 Qm 5233.064  Qaux 43.39445  g^2 0.1234E+02   Flags :%-:%-:%-:%-:%-
+   95 Qm 5194.269  Qaux 41.31545  g^2 0.3142E+01   Flags :%-2 C-G AresCBF:%-;%-;%-;%-
+  100 Qm 5181.320  Qaux 40.83206  g^2 0.3622E+01   Flags :%-:%-:%-;%-:%-
+  105 Qm 5171.383  Qaux 41.56348  g^2 0.3513E+01   Flags :%-:%-;%-;%-;%-
+  110 Qm 5161.528  Qaux 40.92386  g^2 0.2052E+01   Flags :%-:%-3 C-G AresCBw:%-:%-;%-
+  115 Qm 5156.998  Qaux 39.34880  g^2 0.1451E+01   Flags ;%-:%-:%-:%-:%-
+  120 Qm 5153.588  Qaux 39.42906  g^2 0.8670E+00   Flags :%-:%-:%-:%-:%-
+  125 Qm 5148.217  Qaux 39.66491  g^2 0.9742E+00   Flags :%-:%-:%-3 C-G AresCBF:%-:%-
+  130 Qm 5146.437  Qaux 39.10490  g^2 0.5371E+00   Flags :%-:%-:%-:%-:%-
+  135 Qm 5144.334  Qaux 38.97464  g^2 0.5698E+00   Flags :%-;%-;%-;%-;%-
+  140 Qm 5140.908  Qaux 38.66774  g^2 0.1191E+01   Flags ;%-;%-;%-;%-;%-
+  145 Qm 5136.981  Qaux 37.91044  g^2 0.1370E+01   Flags ;%-:%-;%-;%-:%-
+  150 Qm 5134.598  Qaux 36.91316  g^2 0.1831E+01   Flags :%-:%-:%-:%-:%-
+  155 Qm 5134.294  Qaux 36.22252  g^2 0.1509E+01   Flags :%-:%-:%-:%-:%-
+  160 Qm 5131.758  Qaux 35.87577  g^2 0.5202E+00   Flags 2 C-G AresCBw:%-:%-:%-;%-:%-
+  165 Qm 5131.093  Qaux 35.18477  g^2 0.3850E+00   Flags :%-:%-:%-:%-:%-
+  170 Qm 5130.793  Qaux 34.97840  g^2 0.1340E+00   Flags :%-:%-:%-:%-:%-
+  175 Qm 5131.473  Qaux 34.89753  g^2 0.6654E-01   Flags :%-3 C-G AresCBF:%-:%-;%-;%-
+  180 Qm 5131.344  Qaux 34.65400  g^2 0.7734E-01   Flags :%-:%-:%-:%-:%-
+  185 Qm 5131.178  Qaux 34.57101  g^2 0.4928E-01   Flags :%-:%-;%-;%-;%-
+  190 Qm 5131.069  Qaux 34.21299  g^2 0.1300E+00   Flags :%-:%-:%-:%-:%-
+  195 Qm 5130.917  Qaux 33.97656  g^2 0.1456E+00   Flags :%-:%-:%-:%-:%-
+  200 Qm 5130.820  Qaux 33.83754  g^2 0.6510E-01   Flags :%-:%-:%-:%-:%-
+  205 Qm 5130.900  Qaux 33.84776  g^2 0.4238E-01   Flags :%-3 C-G AresCBw:%-:%-:%-;%-
+  210 Qm 5130.783  Qaux 33.72461  g^2 0.3639E-01   Flags :%-:%-:%-:%-:%-
+  215 Qm 5130.789  Qaux 33.60047  g^2 0.2259E-01   Flags :%-:%-:%-:%-:%-
+  220 Qm 5130.829  Qaux 33.42165  g^2 0.2783E-01   Flags :%-:%-:%-:%-:%-
+  225 Qm 5130.776  Qaux 33.38193  g^2 0.1412E-01   Flags :%-:%-:%-:%-:%-
+  230 Qm 5131.080  Qaux 33.34696  g^2 0.1242E-01   Flags 2 C-G AresCBF:%-:%-:%-;%-:%-
+ Convergence (small decrease of Q) with level       1
+ when solving task number       1
+  235 Qm 5131.566  Qaux 33.36709  g^2 0.6675E-01   Flags :%-:%-:%-:%-LevelCBF:%-
+  240 Qm 5131.547  Qaux 33.34351  g^2 0.1313E-01   Flags :%-:%-:%-:%-:%-
+  245 Qm 5131.556  Qaux 33.25821  g^2 0.1665E-01   Flags :%-:%-:%-:%-:%-
+  250 Qm 5131.575  Qaux 33.14219  g^2 0.1974E-01   Flags :%-:%-:%-:%-:%-
+  255 Qm 5131.626  Qaux 32.97318  g^2 0.3018E-01   Flags :%-:%-:%-:%-:%-
+  260 Qm 5131.655  Qaux 32.91372  g^2 0.9253E-02   Flags :%-:%-:%-:%-:%-
+  265 Qm 5131.853  Qaux 32.93425  g^2 0.9287E-02   Flags :%-3 C-G AresCBw:%-:%-:%-:%-
+  270 Qm 5131.807  Qaux 32.93203  g^2 0.6980E-02   Flags :%-:%-:%-:%-:%-
+  275 Qm 5131.793  Qaux 32.92292  g^2 0.3868E-02   Flags :%-:%-:%-:%-:%-
+  280 Qm 5131.794  Qaux 32.91214  g^2 0.1504E-02   Flags :%-:%-:%-:%-:%-
+  285 Qm 5131.800  Qaux 32.90217  g^2 0.5453E-03   Flags :%-:%-:%-:%-:%-
+  290 Qm 5131.802  Qaux 32.89628  g^2 0.1144E-02   Flags :%-:%-:%-:%-:%-
+  295 Qm 5131.807  Qaux 32.88672  g^2 0.1195E-02   Flags :%-:%-:%-:%-:%-
+  300 Qm 5131.824  Qaux 32.86345  g^2 0.1343E-02   Flags :%-:%-:%-:%-:%-
+  305 Qm 5131.818  Qaux 32.86270  g^2 0.1723E-02   Flags :%-:%-:%-:%-:%-
+  310 Qm 5131.829  Qaux 32.84476  g^2 0.1380E-02   Flags :%-:%-:%-:%-:%-
+  315 Qm 5131.816  Qaux 32.85472  g^2 0.1275E-02   Flags :%-:%-:%-:%-:%-
+  320 Qm 5131.824  Qaux 32.84508  g^2 0.1499E-02   Flags :%-:%-:%-:%-:%-
+  325 Qm 5131.824  Qaux 32.84296  g^2 0.6172E-03   Flags :%-:%-:%-:%-:%-
+  330 Qm 5131.821  Qaux 32.84533  g^2 0.4567E-03   Flags :%-:%-:%-:%-:%-
+  335 Qm 5131.820  Qaux 32.84581  g^2 0.3469E-03   Flags :%-:%-:%-:%-:%-
+  340 Qm 5132.069  Qaux 32.84650  g^2 0.8346E-03   Flags :%-3 C-G AresCBF:%-:%-;%-;%-
+  345 Qm 5132.056  Qaux 32.85843  g^2 0.2255E-03   Flags ;%-;%-;%-:%-:%-
+  350 Qm 5132.056  Qaux 32.85795  g^2 0.6797E-04   Flags :%-;%-:%-:%-:%-
+  355 Qm 5132.230  Qaux 32.86848  g^2 0.4975E-03   Flags :%-2 C-G XresCBw:%-:%-;%-;%-
+  360 Qm 5132.222  Qaux 32.87589  g^2 0.9779E-04   Flags ;%-;%-;%-;%-:%-
+  365 Qm 5132.223  Qaux 32.87509  g^2 0.3826E-04   Flags :%-;%-:%-:%-:%-
+  370 Qm 5132.224  Qaux 32.87336  g^2 0.4176E-04   Flags :%-:%-:%-:%-:%-
+  375 Qm 5132.225  Qaux 32.87285  g^2 0.5456E-04   Flags :%-:%-:%-:%-:%-
+  380 Qm 5132.224  Qaux 32.87290  g^2 0.2020E-04   Flags :%-:%-:%-:%-:%-
+  385 Qm 5132.225  Qaux 32.87259  g^2 0.1426E-04   Flags :%-:%-:%-:%-:%-
+  390 Qm 5132.224  Qaux 32.87317  g^2 0.1258E-04   Flags :%-:%-:%-:%-:%-
+  395 Qm 5132.226  Qaux 32.87138  g^2 0.1353E-04   Flags :%-:%-:%-:%-:%-
+ Convergence (small gradient norm) with level       2
+ when solving task number       1
+  400 Qm 5132.318  Qaux 32.88085  g^2 0.3082E-03   Flags :%-LevelCBF:%-:%-;%-;%-
+  405 Qm 5132.312  Qaux 32.88573  g^2 0.3655E-04   Flags ;%-;%-;%-:%-:%-
+ Iteration finished, convergence achieved for task number       1
+ Gradient norm 0.9161E-05 is below its convergence limit 0.1000E-04
+ Preconditioning mode =      10
+ Size of preconditioning matrix =   11173
+ In this task, # of adjustments of prec-matrix diagonals:      85
+  408 iter-steps in all in task number   1
+ Final Q=      5165.1986 in the robust mode.
+ Contributions to the obtained value of Q:
+ From main data:     5132.3134  from aux equations:        32.8852
+ POS-Outlier limit (  2.0) exceeded by   260 positive residuals
+ NEG-Outlier limit (  2.0) exceeded by   161 negative residuals
+ True final main-data Q, when not downweighting outliers, =      9039.4566
+      LICENCE: Ing. D.Mooibroek, Natl.Inst.Publ.Health&Env RIVM, The Netherlands
+ 
+  **** Executing section "postproc" of ME-2 script ***
+ 
+ 
+ 
+  **** Executing section "preproc", preparing initial values for fit ***
+ 
+ 
+ 
+ Starting to process with the same .INI file next task:       2
+ Initial Q (main and aux):     0.10382E+06        352.16
+    5 Qm 17046.32  Qaux 912.6333  g^2 0.9376E+04   Flags CBw:%-CBw:%-CBF:%-;%-;%-
+   10 Qm 7307.695  Qaux 608.7968  g^2 0.4573E+03   Flags CBw:%-:%-:%-CBF:%-:%-
+   15 Qm 6759.483  Qaux 308.1691  g^2 0.1653E+03   Flags :%-CBw:%-:%-:%-:%-
+   20 Qm 6581.448  Qaux 109.6904  g^2 0.7507E+02   Flags :%-:%-:%-:%-:%-
+   25 Qm 6482.128  Qaux 85.41567  g^2 0.2709E+02   Flags :%-:%-:%-:%-:%-
+   30 Qm 6438.760  Qaux 62.66121  g^2 0.3994E+02   Flags ;%-;%-3 C-G AresCBF:%-:%-:%-
+   35 Qm 6358.272  Qaux 53.24969  g^2 0.2043E+02   Flags ;%-;%-;%-;%-;%-
+   40 Qm 6310.580  Qaux 50.16987  g^2 0.1321E+02   Flags ;%-;%-;%-;%-;%-
+   45 Qm 6240.584  Qaux 48.74684  g^2 0.3251E+02   Flags ;%-;%-;%-2 C-G AresCBw:%-:%-
+   50 Qm 6179.124  Qaux 46.13395  g^2 0.1939E+02   Flags ;%-;%-;%-:%-:%-
+   55 Qm 6133.767  Qaux 45.09489  g^2 0.2352E+02   Flags :%-;%-;%-;%-;%-
+   60 Qm 6094.566  Qaux 46.19207  g^2 0.5216E+02   Flags ;%-;%-:%-:%-:%-
+   65 Qm 5980.053  Qaux 39.45118  g^2 0.9680E+01   Flags 3 C-G AresCBF:%-;%-;%-;%-;%-
+   70 Qm 5959.528  Qaux 35.95800  g^2 0.6772E+01   Flags ;%-:%-:%-:%-:%-
+   75 Qm 5947.191  Qaux 35.92737  g^2 0.7059E+01   Flags :%-:%-:%-:%-:%-
+   80 Qm 5903.810  Qaux 34.53762  g^2 0.1125E+02   Flags :%-3 C-G AresCBw:%-:%-;%-;%-
+   85 Qm 5888.142  Qaux 34.23188  g^2 0.7339E+01   Flags ;%-;%-;%-:%-:%-
+   90 Qm 5881.326  Qaux 33.36664  g^2 0.5764E+01   Flags :%-:%-:%-:%-:%-
+   95 Qm 5859.866  Qaux 33.63701  g^2 0.3220E+01   Flags :%-:%-2 C-G AresCBF:%-;%-;%-
+  100 Qm 5847.585  Qaux 32.13025  g^2 0.2849E+01   Flags ;%-;%-;%-;%-;%-
+  105 Qm 5840.066  Qaux 32.26079  g^2 0.2750E+01   Flags ;%-;%-;%-:%-;%-
+  110 Qm 5830.133  Qaux 32.09128  g^2 0.6119E+01   Flags ;%-;%-:%-3 C-G AresCBw:%-;%-
+  115 Qm 5820.863  Qaux 31.90640  g^2 0.2135E+01   Flags ;%-;%-;%-;%-;%-
+  120 Qm 5812.820  Qaux 31.68679  g^2 0.2942E+01   Flags ;%-;%-;%-:%-;%-
+  125 Qm 5805.099  Qaux 32.00892  g^2 0.3235E+01   Flags ;%-;%-;%-;%-:%-
+  130 Qm 5803.227  Qaux 31.73800  g^2 0.1379E+01   Flags :%-3 C-G AresCBF:%-;%-;%-;%-
+  135 Qm 5796.114  Qaux 31.66509  g^2 0.1871E+01   Flags ;%-;%-;%-;%-;%-
+  140 Qm 5789.411  Qaux 32.02676  g^2 0.2049E+01   Flags ;%-;%-;%-;%-;%-
+  145 Qm 5788.540  Qaux 31.84282  g^2 0.2627E+01   Flags ;%-:%-:%-2 C-G AresCBw:%-:%-
+  150 Qm 5782.332  Qaux 32.21860  g^2 0.1242E+01   Flags ;%-;%-;%-;%-;%-
+  155 Qm 5776.805  Qaux 32.57050  g^2 0.1400E+01   Flags ;%-;%-;%-;%-;%-
+  160 Qm 5775.410  Qaux 32.93293  g^2 0.5944E+01   Flags ;%-:%-;%-;%-3 C-G AresCBF:%-
+  165 Qm 5765.086  Qaux 33.95648  g^2 0.2041E+01   Flags ;%-;%-;%-;%-;%-
+  170 Qm 5759.799  Qaux 33.21656  g^2 0.7737E+00   Flags ;%-;%-:%-:%-:%-
+  175 Qm 5758.970  Qaux 32.73240  g^2 0.2611E+00   Flags :%-:%-:%-:%-:%-
+  180 Qm 5748.698  Qaux 33.63771  g^2 0.5740E+00   Flags 3 C-G AresCBw:%-;%-;%-;%-:%-
+  185 Qm 5747.528  Qaux 33.35481  g^2 0.2713E+00   Flags ;%-:%-:%-:%-:%-
+  190 Qm 5746.890  Qaux 33.10840  g^2 0.2294E+00   Flags :%-:%-:%-:%-:%-
+  195 Qm 5737.542  Qaux 33.19449  g^2 0.2382E+00   Flags :%-2 C-G AresCBF:%-;%-;%-;%-
+  200 Qm 5736.987  Qaux 33.10212  g^2 0.1190E+00   Flags ;%-;%-;%-;%-;%-
+  205 Qm 5736.690  Qaux 32.76968  g^2 0.9777E-01   Flags ;%-;%-;%-;%-;%-
+  210 Qm 5727.028  Qaux 32.67251  g^2 0.3589E+00   Flags ;%-;%-3 C-G AresCBw:%-;%-;%-
+  215 Qm 5726.446  Qaux 32.57353  g^2 0.6047E-01   Flags ;%-;%-;%-;%-;%-
+  220 Qm 5726.307  Qaux 32.33533  g^2 0.9268E-01   Flags ;%-;%-;%-;%-;%-
+  225 Qm 5716.806  Qaux 32.27172  g^2 0.5770E+00   Flags ;%-;%-;%-3 C-G AresCBF:%-;%-
+  230 Qm 5715.818  Qaux 32.15084  g^2 0.7721E-01   Flags ;%-;%-;%-;%-;%-
+  235 Qm 5715.715  Qaux 31.89636  g^2 0.5248E-01   Flags ;%-;%-;%-;%-;%-
+  240 Qm 5705.573  Qaux 31.92010  g^2 0.4538E+01   Flags ;%-;%-;%-;%-2 C-G AresCBw:%-
+  245 Qm 5703.865  Qaux 31.82309  g^2 0.1542E+00   Flags ;%-;%-;%-;%-;%-
+  250 Qm 5703.660  Qaux 31.60568  g^2 0.4616E-01   Flags ;%-;%-;%-;%-;%-
+  255 Qm 5703.616  Qaux 31.53812  g^2 0.1817E-01   Flags ;%-;%-;%-;%-;%-
+  260 Qm 5691.908  Qaux 31.48116  g^2 0.1923E+00   Flags 3 C-G AresCBF:%-;%-;%-;%-;%-
+  265 Qm 5691.484  Qaux 31.26176  g^2 0.5155E-01   Flags ;%-;%-;%-;%-;%-
+  270 Qm 5690.786  Qaux 31.11402  g^2 0.1054E+00   Flags ;%-;%-;%-;%-;%-
+  275 Qm 5671.612  Qaux 31.22042  g^2 0.7601E+00   Flags ;%-:%-3 C-G AresCBw:%-;%-;%-
+  280 Qm 5669.508  Qaux 31.11726  g^2 0.1317E+00   Flags ;%-;%-;%-;%-;%-
+  285 Qm 5669.242  Qaux 30.96506  g^2 0.7985E-01   Flags ;%-;%-;%-;%-;%-
+  290 Qm 5637.406  Qaux 30.92097  g^2 0.2342E+01   Flags ;%-;%-;%-2 C-G AresCBF:%-;%-
+  295 Qm 5631.338  Qaux 30.89231  g^2 0.3442E+00   Flags ;%-;%-;%-;%-;%-
+  300 Qm 5630.309  Qaux 30.45218  g^2 0.1351E+00   Flags ;%-;%-;%-;%-;%-
+  305 Qm 5585.717  Qaux 30.38297  g^2 0.2257E+02   Flags ;%-;%-:%-:%-3 C-G AresCBw:%-
+  310 Qm 5573.157  Qaux 30.86144  g^2 0.1008E+01   Flags ;%-;%-;%-;%-;%-
+  315 Qm 5570.789  Qaux 30.25773  g^2 0.4864E+00   Flags ;%-;%-;%-;%-;%-
+  320 Qm 5569.347  Qaux 29.95508  g^2 0.5145E+00   Flags ;%-;%-;%-;%-;%-
+  325 Qm 5500.522  Qaux 30.64677  g^2 0.1274E+01   Flags 3 C-G AresCBF:%-;%-;%-;%-;%-
+  330 Qm 5496.897  Qaux 30.35561  g^2 0.3824E+00   Flags ;%-;%-;%-;%-;%-
+  335 Qm 5495.944  Qaux 29.83690  g^2 0.3901E+00   Flags ;%-;%-;%-:%-:%-
+  340 Qm 5440.528  Qaux 29.95625  g^2 0.1409E+01   Flags :%-2 C-G AresCBw:%-;%-;%-;%-
+  345 Qm 5437.526  Qaux 30.03369  g^2 0.3374E+00   Flags ;%-;%-;%-;%-;%-
+  350 Qm 5434.735  Qaux 29.78743  g^2 0.8743E+00   Flags ;%-;%-;%-;%-;%-
+  355 Qm 5390.541  Qaux 29.93647  g^2 0.2830E+01   Flags ;%-;%-3 C-G AresCBF:%-;%-;%-
+  360 Qm 5387.367  Qaux 30.01942  g^2 0.2662E+00   Flags ;%-;%-;%-;%-;%-
+  365 Qm 5386.592  Qaux 29.62663  g^2 0.1728E+00   Flags ;%-;%-;%-;%-:%-
+  370 Qm 5351.646  Qaux 29.79005  g^2 0.8804E+01   Flags :%-;%-;%-3 C-G AresCBw:%-;%-
+  375 Qm 5342.639  Qaux 30.25137  g^2 0.4852E+00   Flags ;%-;%-;%-;%-;%-
+  380 Qm 5340.180  Qaux 29.81576  g^2 0.1898E+00   Flags ;%-;%-;%-;%-;%-
+  385 Qm 5295.047  Qaux 30.34392  g^2 0.4453E+02   Flags ;%-;%-;%-;%-2 C-G AresCBF;%-
+  390 Qm 5264.250  Qaux 30.95357  g^2 0.1784E+01   Flags ;%-;%-;%-;%-;%-
+  395 Qm 5255.991  Qaux 30.80795  g^2 0.8544E+00   Flags ;%-;%-;%-;%-;%-
+  400 Qm 5252.737  Qaux 30.20100  g^2 0.2049E+01   Flags ;%-;%-;%-;%-;%-
+  405 Qm 5183.812  Qaux 31.14087  g^2 0.6635E+01   Flags 3 C-G AresCBw;%-;%-;%-;%-:%-
+  410 Qm 5173.286  Qaux 30.92332  g^2 0.1172E+01   Flags ;%-;%-;%-;%-:%-
+  415 Qm 5171.045  Qaux 30.45311  g^2 0.1079E+01   Flags :%-:%-;%-;%-:%-
+  420 Qm 5164.324  Qaux 30.68491  g^2 0.4025E+00   Flags :%-3 C-G AresCBF:%-;%-;%-;%-
+  425 Qm 5161.641  Qaux 30.98864  g^2 0.7792E+00   Flags ;%-;%-;%-;%-;%-
+  430 Qm 5155.439  Qaux 32.49320  g^2 0.2282E+01   Flags ;%-;%-;%-;%-;%-
+  435 Qm 5146.157  Qaux 36.86534  g^2 0.2493E+01   Flags ;%-;%-;%-;%-;%-
+  440 Qm 5142.879  Qaux 37.96374  g^2 0.2438E+01   Flags :%-;%-;%-;%-;%-
+  445 Qm 5141.925  Qaux 34.47859  g^2 0.2631E+01   Flags 2 C-G AresCBw:%-:%-:%-:%-:%-
+  450 Qm 5137.193  Qaux 33.30857  g^2 0.1334E+01   Flags :%-:%-:%-:%-:%-
+  455 Qm 5135.474  Qaux 33.14388  g^2 0.4938E+00   Flags :%-:%-:%-:%-:%-
+  460 Qm 5133.439  Qaux 33.24499  g^2 0.2337E+00   Flags :%-3 C-G AresCBF:%-;%-;%-;%-
+  465 Qm 5131.872  Qaux 33.18145  g^2 0.2691E+00   Flags ;%-;%-;%-;%-;%-
+  470 Qm 5131.408  Qaux 33.11804  g^2 0.1342E+00   Flags ;%-;%-:%-:%-:%-
+  475 Qm 5133.189  Qaux 33.21221  g^2 0.1549E+00   Flags ;%-:%-3 C-G AresCBw:%-:%-;%-
+  480 Qm 5132.999  Qaux 33.15354  g^2 0.3857E-01   Flags ;%-:%-;%-:%-;%-
+  485 Qm 5132.927  Qaux 33.12025  g^2 0.1217E-01   Flags :%-:%-:%-;%-;%-
+  490 Qm 5132.924  Qaux 33.16836  g^2 0.9036E-01   Flags ;%-:%-:%-2 C-G AresCBF:%-:%-
+  495 Qm 5132.828  Qaux 33.15134  g^2 0.2583E-01   Flags ;%-;%-:%-;%-;%-
+  500 Qm 5132.783  Qaux 33.14690  g^2 0.8454E-02   Flags ;%-:%-;%-;%-;%-
+ Step count limit exceeded with level       1
+ when solving task number       2
+  505 Qm 5132.500  Qaux 33.16563  g^2 0.7812E-02   Flags LevelCBF:%-:%-;%-;%-;%-
+  510 Qm 5132.443  Qaux 33.16962  g^2 0.6358E-02   Flags ;%-;%-;%-:%-;%-
+  515 Qm 5132.419  Qaux 33.16506  g^2 0.7707E-02   Flags ;%-;%-;%-;%-:%-
+  520 Qm 5132.468  Qaux 33.04801  g^2 0.1292E-01   Flags :%-:%-:%-:%-:%-
+  525 Qm 5132.463  Qaux 32.98980  g^2 0.1284E-01   Flags :%-:%-;%-;%-;%-
+  530 Qm 5132.464  Qaux 32.96974  g^2 0.3076E-02   Flags :%-:%-:%-:%-:%-
+  535 Qm 5132.460  Qaux 32.95989  g^2 0.2982E-02   Flags :%-:%-;%-;%-;%-
+  540 Qm 5132.428  Qaux 32.98241  g^2 0.3157E-02   Flags 3 C-G AresCBw:%-:%-;%-;%-;%-
+  545 Qm 5132.385  Qaux 33.00943  g^2 0.2157E-02   Flags ;%-;%-:%-:%-:%-
+  550 Qm 5132.380  Qaux 33.00873  g^2 0.8290E-03   Flags :%-:%-:%-:%-:%-
+  555 Qm 5132.358  Qaux 33.02492  g^2 0.1328E-02   Flags :%-:%-:%-:%-:%-
+  560 Qm 5132.345  Qaux 33.03349  g^2 0.1053E-02   Flags :%-:%-:%-:%-:%-
+  565 Qm 5132.339  Qaux 33.03716  g^2 0.5094E-03   Flags :%-:%-:%-:%-:%-
+  570 Qm 5132.327  Qaux 33.04707  g^2 0.5545E-03   Flags :%-:%-:%-:%-:%-
+  575 Qm 5132.321  Qaux 33.05054  g^2 0.6525E-03   Flags :%-:%-:%-;%-:%-
+  580 Qm 5132.308  Qaux 33.05950  g^2 0.9471E-03   Flags :%-:%-;%-;%-;%-
+  585 Qm 5132.304  Qaux 33.06153  g^2 0.6194E-03   Flags ;%-;%-;%-:%-:%-
+  590 Qm 5132.300  Qaux 33.06347  g^2 0.3350E-03   Flags :%-:%-:%-:%-:%-
+  595 Qm 5132.292  Qaux 33.07067  g^2 0.2490E-03   Flags :%-:%-:%-:%-:%-
+  600 Qm 5132.268  Qaux 33.09392  g^2 0.3309E-03   Flags :%-:%-:%-:%-:%-
+  605 Qm 5132.266  Qaux 33.09493  g^2 0.1509E-03   Flags :%-:%-;%-:%-:%-
+  610 Qm 5132.259  Qaux 33.10126  g^2 0.7756E-04   Flags :%-:%-:%-:%-:%-
+  615 Qm 5132.258  Qaux 33.10241  g^2 0.4478E-04   Flags :%-;%-;%-;%-;%-
+  620 Qm 5132.509  Qaux 33.11106  g^2 0.1457E-02   Flags :%-3 C-G UresCBF:%-:%-;%-;%-
+  625 Qm 5132.490  Qaux 33.12552  g^2 0.4680E-03   Flags ;%-;%-;%-;%-;%-
+  630 Qm 5132.493  Qaux 33.12090  g^2 0.8762E-04   Flags ;%-;%-:%-:%-:%-
+  635 Qm 5132.658  Qaux 33.12773  g^2 0.7683E-03   Flags :%-2 C-G XresCBw:%-:%-;%-;%-
+  640 Qm 5132.646  Qaux 33.13734  g^2 0.2373E-03   Flags ;%-;%-;%-;%-;%-
+  645 Qm 5132.650  Qaux 33.13340  g^2 0.5911E-04   Flags ;%-;%-;%-;%-;%-
+  650 Qm 5132.653  Qaux 33.12974  g^2 0.3864E-04   Flags ;%-;%-;%-;%-;%-
+  655 Qm 5132.656  Qaux 33.12684  g^2 0.2598E-04   Flags ;%-;%-;%-;%-;%-
+  660 Qm 5132.659  Qaux 33.12376  g^2 0.1734E-04   Flags ;%-;%-;%-;%-;%-
+  665 Qm 5132.660  Qaux 33.12203  g^2 0.1427E-04   Flags ;%-;%-;%-;%-;%-
+  670 Qm 5132.661  Qaux 33.12183  g^2 0.1880E-04   Flags :%-:%-:%-:%-:%-
+  675 Qm 5132.661  Qaux 33.12121  g^2 0.2653E-04   Flags :%-:%-:%-:%-:%-
+  680 Qm 5132.660  Qaux 33.12196  g^2 0.2501E-04   Flags :%-:%-:%-:%-:%-
+  685 Qm 5132.658  Qaux 33.12375  g^2 0.1787E-04   Flags :%-:%-:%-:%-:%-
+ Convergence (small gradient norm) with level       2
+ when solving task number       2
+  690 Qm 5132.766  Qaux 33.12919  g^2 0.8537E-03   Flags :%-:%-LevelCBF:%-:%-;%-
+  695 Qm 5132.758  Qaux 33.13650  g^2 0.1253E-03   Flags ;%-;%-;%-;%-;%-
+  700 Qm 5132.760  Qaux 33.13449  g^2 0.4606E-04   Flags ;%-;%-;%-;%-;%-
+  705 Qm 5132.761  Qaux 33.13279  g^2 0.1597E-04   Flags ;%-;%-;%-;%-;%-
+ Iteration finished, convergence achieved for task number       2
+ Gradient norm 0.8718E-05 is below its convergence limit 0.1000E-04
+ Preconditioning mode =      10
+ Size of preconditioning matrix =   11173
+ In this task, # of adjustments of prec-matrix diagonals:      81
+  708 iter-steps in all in task number   2
+ Final Q=      5165.8944 in the robust mode.
+ Contributions to the obtained value of Q:
+ From main data:     5132.7627  from aux equations:        33.1316
+ POS-Outlier limit (  2.0) exceeded by   260 positive residuals
+ NEG-Outlier limit (  2.0) exceeded by   161 negative residuals
+ True final main-data Q, when not downweighting outliers, =      9041.2315
+      LICENCE: Ing. D.Mooibroek, Natl.Inst.Publ.Health&Env RIVM, The Netherlands
+ 
+  **** Executing section "postproc" of ME-2 script ***
+ 
+ 
+ 
+  **** Executing section "preproc", preparing initial values for fit ***
+ 
+ 
+ 
+ Starting to process with the same .INI file next task:       3
+ Initial Q (main and aux):      96852.            351.13
+    5 Qm 24913.58  Qaux 1902.345  g^2 0.1129E+05   Flags CBw:%-CBw,%-CBF:%-:%-;%-
+   10 Qm 7494.672  Qaux 690.9669  g^2 0.1329E+04   Flags CBw:%-;%-;%-CBF:%-;%-
+   15 Qm 6456.392  Qaux 239.5651  g^2 0.4097E+03   Flags :%-CBw:%-:%-:%-:%-
+   20 Qm 6167.126  Qaux 110.1981  g^2 0.2270E+03   Flags :%-:%-:%-:%-:%-
+   25 Qm 6037.767  Qaux 76.96537  g^2 0.1158E+03   Flags :%-:%-:%-:%-:%-
+   30 Qm 6017.032  Qaux 63.31293  g^2 0.4899E+02   Flags :%-:%-3 C-G AresCBF:%-;%-;%-
+   35 Qm 5936.960  Qaux 53.54091  g^2 0.1970E+02   Flags ;%-:%-:%-;%-;%-
+   40 Qm 5893.997  Qaux 47.29497  g^2 0.2022E+02   Flags :%-:%-;%-:%-:%-
+   45 Qm 5910.151  Qaux 44.60463  g^2 0.2744E+02   Flags :%-:%-;%-2 C-G AresCBw:%-:%-
+   50 Qm 5877.904  Qaux 42.08325  g^2 0.1189E+02   Flags ;%-;%-;%-;%-;%-
+   55 Qm 5856.886  Qaux 41.54017  g^2 0.9157E+01   Flags ;%-;%-;%-;%-;%-
+   60 Qm 5852.465  Qaux 41.07390  g^2 0.3876E+02   Flags ;%-;%-:%-:%-3 C-G AresCBF:%-
+   65 Qm 5824.026  Qaux 39.19078  g^2 0.6462E+01   Flags ;%-;%-;%-;%-;%-
+   70 Qm 5803.800  Qaux 37.04554  g^2 0.3544E+01   Flags ;%-;%-;%-;%-;%-
+   75 Qm 5797.555  Qaux 36.05029  g^2 0.1997E+01   Flags ;%-;%-;%-;%-;%-
+   80 Qm 5725.759  Qaux 36.38577  g^2 0.5386E+01   Flags 3 C-G AresCBw:%-;%-;%-;%-;%-
+   85 Qm 5710.188  Qaux 35.94435  g^2 0.2656E+01   Flags ;%-;%-;%-;%-;%-
+   90 Qm 5705.674  Qaux 34.50293  g^2 0.1637E+01   Flags ;%-;%-;%-;%-;%-
+   95 Qm 5568.186  Qaux 35.35128  g^2 0.6789E+01   Flags ;%-2 C-G AresCBF:%-;%-;%-;%-
+  100 Qm 5549.360  Qaux 35.63619  g^2 0.2099E+01   Flags ;%-;%-;%-;%-;%-
+  105 Qm 5538.105  Qaux 35.26008  g^2 0.2786E+01   Flags ;%-;%-;%-;%-;%-
+  110 Qm 5404.155  Qaux 35.97941  g^2 0.9270E+01   Flags :%-:%-3 C-G AresCBw:%-:%-;%-
+  115 Qm 5370.167  Qaux 37.72851  g^2 0.8713E+01   Flags ;%-;%-;%-:%-;%-
+  120 Qm 5353.421  Qaux 37.06883  g^2 0.8913E+01   Flags ;%-;%-;%-;%-;%-
+  125 Qm 5269.329  Qaux 37.07292  g^2 0.6728E+01   Flags :%-:%-:%-3 C-G AresCBF:%-:%-
+  130 Qm 5255.334  Qaux 36.68115  g^2 0.2003E+01   Flags ;%-;%-;%-;%-:%-
+  135 Qm 5245.968  Qaux 36.95939  g^2 0.2801E+01   Flags :%-:%-:%-:%-:%-
+  140 Qm 5206.479  Qaux 36.85703  g^2 0.3609E+02   Flags :%-:%-:%-:%-2 C-G AresCBw:%-
+  145 Qm 5194.659  Qaux 35.83630  g^2 0.4344E+01   Flags :%-:%-;%-;%-:%-
+  150 Qm 5190.863  Qaux 35.16494  g^2 0.1315E+01   Flags :%-:%-:%-:%-:%-
+  155 Qm 5188.977  Qaux 34.98123  g^2 0.9815E+00   Flags :%-:%-:%-:%-:%-
+  160 Qm 5165.530  Qaux 35.41664  g^2 0.8484E+00   Flags 3 C-G AresCBF:%-:%-:%-;%-;%-
+  165 Qm 5164.813  Qaux 35.09709  g^2 0.1434E+00   Flags :%-:%-:%-:%-:%-
+  170 Qm 5164.423  Qaux 34.92798  g^2 0.9142E-01   Flags :%-:%-:%-:%-:%-
+  175 Qm 5151.397  Qaux 34.90117  g^2 0.3348E+00   Flags :%-3 C-G AresCBw:%-:%-:%-;%-
+  180 Qm 5150.612  Qaux 34.52242  g^2 0.2559E+00   Flags ;%-;%-;%-;%-:%-
+  185 Qm 5150.109  Qaux 34.51090  g^2 0.1606E+00   Flags :%-:%-:%-:%-:%-
+  190 Qm 5143.771  Qaux 34.30257  g^2 0.1184E+00   Flags :%-:%-2 C-G AresCBF:%-:%-:%-
+  195 Qm 5143.483  Qaux 34.11869  g^2 0.4415E-01   Flags ;%-;%-:%-:%-:%-
+  200 Qm 5143.426  Qaux 34.06909  g^2 0.1650E-01   Flags :%-:%-:%-:%-:%-
+  205 Qm 5138.411  Qaux 34.04496  g^2 0.4711E-01   Flags :%-:%-:%-3 C-G AresCBw:%-:%-
+  210 Qm 5138.392  Qaux 33.97754  g^2 0.1142E-01   Flags :%-;%-;%-;%-;%-
+  215 Qm 5138.402  Qaux 33.93096  g^2 0.1021E-01   Flags :%-:%-:%-:%-:%-
+  220 Qm 5138.421  Qaux 33.83767  g^2 0.1590E-01   Flags :%-:%-:%-:%-:%-
+  225 Qm 5138.500  Qaux 33.70020  g^2 0.1563E-01   Flags :%-;%-:%-:%-:%-
+  230 Qm 5138.509  Qaux 33.62558  g^2 0.1472E-01   Flags :%-:%-:%-:%-:%-
+  235 Qm 5138.554  Qaux 33.53455  g^2 0.8081E-02   Flags :%-:%-:%-:%-:%-
+  240 Qm 5138.550  Qaux 33.52134  g^2 0.3756E-02   Flags :%-:%-:%-:%-:%-
+  245 Qm 5136.345  Qaux 33.54130  g^2 0.8077E-02   Flags :%-:%-3 C-G AresCBF:%-:%-:%-
+  250 Qm 5136.353  Qaux 33.50492  g^2 0.2854E-02   Flags ;%-;%-;%-;%-:%-
+ Convergence (small decrease of Q) with level       1
+ when solving task number       3
+  255 Qm 5135.001  Qaux 33.50520  g^2 0.2260E-02   Flags :%-LevelCBF:%-:%-:%-;%-
+  260 Qm 5135.011  Qaux 33.48022  g^2 0.1302E-02   Flags ;%-;%-;%-:%-:%-
+  265 Qm 5135.010  Qaux 33.46928  g^2 0.3341E-02   Flags :%-:%-:%-:%-:%-
+  270 Qm 5135.016  Qaux 33.44634  g^2 0.4300E-02   Flags :%-:%-:%-:%-:%-
+  275 Qm 5135.046  Qaux 33.38916  g^2 0.6508E-02   Flags ;%-;%-;%-;%-;%-
+  280 Qm 5135.055  Qaux 33.35250  g^2 0.4781E-02   Flags ;%-:%-:%-;%-;%-
+  285 Qm 5135.029  Qaux 33.35262  g^2 0.5336E-02   Flags ;%-;%-;%-;%-;%-
+  290 Qm 5135.038  Qaux 33.31307  g^2 0.6381E-02   Flags ;%-;%-;%-;%-;%-
+  295 Qm 5134.968  Qaux 33.34222  g^2 0.1078E-01   Flags ;%-;%-;%-;%-;%-
+  300 Qm 5134.976  Qaux 33.31826  g^2 0.1918E-01   Flags ;%-:<%-:%-:%-:%-
+  305 Qm 5134.966  Qaux 33.31249  g^2 0.9106E-02   Flags :<%-:%-:%-:<%-:%-
+  310 Qm 5134.973  Qaux 33.29559  g^2 0.1388E-01   Flags :%-:%-:<%-:%-:%-
+  315 Qm 5134.977  Qaux 33.28911  g^2 0.2089E-01   Flags :<%-:%-:%-:%-:%-
+  320 Qm 5134.960  Qaux 33.29750  g^2 0.4249E-01   Flags :%-:%-:%-:%-:%-
+  325 Qm 5134.943  Qaux 33.31019  g^2 0.5014E-01   Flags :%-:%-:%-:%-:%-
+  330 Qm 5133.977  Qaux 33.35478  g^2 0.6313E-02   Flags :%-2 C-G AresCBw:%-;%-;%-;%-
+  335 Qm 5133.989  Qaux 33.31593  g^2 0.5791E-02   Flags ;%-;%-;%-;%-;%-
+  340 Qm 5134.019  Qaux 33.26291  g^2 0.4539E-02   Flags :%-:%-:%-:%-;%-
+  345 Qm 5133.436  Qaux 33.25504  g^2 0.3086E-02   Flags ;%-3 C-G XresCBF:%-;%-;%-;%-
+  350 Qm 5133.455  Qaux 33.21340  g^2 0.8426E-02   Flags ;%-;%-:%-;%-:%-
+  355 Qm 5133.477  Qaux 33.17487  g^2 0.7463E-02   Flags :%-:%-:%-:%-:%-
+  360 Qm 5133.432  Qaux 33.20218  g^2 0.7128E-02   Flags :%-:%-:%-:%-:%-
+  365 Qm 5133.417  Qaux 33.20702  g^2 0.2293E-02   Flags :%-;%-;%-;%-;%-
+  370 Qm 5133.436  Qaux 33.18378  g^2 0.1436E-02   Flags ;%-;%-:%-:%-:%-
+  375 Qm 5133.448  Qaux 33.16963  g^2 0.5079E-03   Flags :%-:%-:%-:%-:%-
+  380 Qm 5133.444  Qaux 33.17288  g^2 0.3595E-03   Flags :%-:%-:%-:%-:%-
+  385 Qm 5133.429  Qaux 33.18687  g^2 0.3020E-03   Flags :%-:%-:%-;%-;%-
+  390 Qm 5133.430  Qaux 33.18442  g^2 0.2468E-03   Flags ;%-;%-;%-;%-;%-
+  395 Qm 5133.422  Qaux 33.19129  g^2 0.4652E-03   Flags ;%-:%-:%-:%-:%-
+  400 Qm 5133.417  Qaux 33.19626  g^2 0.2742E-03   Flags :%-;%-;%-;%-;%-
+  405 Qm 5133.400  Qaux 33.21229  g^2 0.4246E-03   Flags ;%-;%-:%-:%-:%-
+  410 Qm 5133.405  Qaux 33.20633  g^2 0.2464E-03   Flags :%-;%-;%-;%-:%-
+  415 Qm 5133.402  Qaux 33.20814  g^2 0.2576E-03   Flags :%-:%-:%-:%-;%-
+  420 Qm 5133.404  Qaux 33.20600  g^2 0.1805E-03   Flags ;%-;%-;%-;%-;%-
+  425 Qm 5133.103  Qaux 33.21737  g^2 0.5641E-03   Flags ;%-:%-3 C-G UresCBF:%-;%-;%-
+  430 Qm 5133.107  Qaux 33.21231  g^2 0.1233E-03   Flags ;%-;%-;%-;%-;%-
+  435 Qm 5133.117  Qaux 33.20110  g^2 0.7589E-04   Flags ;%-;%-;%-;%-;%-
+  440 Qm 5132.959  Qaux 33.19650  g^2 0.2154E-03   Flags ;%-;%-2 C-G XresCBw:%-;%-;%-
+  445 Qm 5132.960  Qaux 33.19554  g^2 0.6101E-04   Flags ;%-;%-;%-;%-;%-
+  450 Qm 5132.969  Qaux 33.18473  g^2 0.6072E-04   Flags ;%-;%-;%-;%-;%-
+  455 Qm 5132.975  Qaux 33.17871  g^2 0.4752E-04   Flags ;%-;%-;%-;%-;%-
+  460 Qm 5132.976  Qaux 33.17697  g^2 0.2508E-04   Flags ;%-;%-;%-;%-;%-
+  465 Qm 5132.980  Qaux 33.17364  g^2 0.2979E-04   Flags ;%-;%-;%-:%-:%-
+  470 Qm 5132.982  Qaux 33.17110  g^2 0.3232E-04   Flags :%-:%-;%-;%-;%-
+  475 Qm 5132.977  Qaux 33.17632  g^2 0.6286E-04   Flags ;%-:%-:%-:%-:%-
+  480 Qm 5132.970  Qaux 33.18236  g^2 0.8741E-04   Flags :%-:%-:%-:%-:%-
+  485 Qm 5132.966  Qaux 33.18629  g^2 0.7364E-04   Flags :%-:%-:%-:%-:%-
+  490 Qm 5132.961  Qaux 33.19166  g^2 0.2654E-04   Flags :%-;%-;%-;%-;%-
+  495 Qm 5132.956  Qaux 33.19583  g^2 0.1207E-04   Flags ;%-;%-;%-;%-;%-
+  500 Qm 5132.955  Qaux 33.19756  g^2 0.1189E-04   Flags ;%-:%-:%-:%-;%-
+ Convergence (small gradient norm) with level       2
+ when solving task number       3
+  505 Qm 5132.882  Qaux 33.19438  g^2 0.1470E-03   Flags ;%-;%-LevelCBF:%-;%-;%-
+  510 Qm 5132.883  Qaux 33.19344  g^2 0.3190E-04   Flags ;%-;%-;%-;%-;%-
+  515 Qm 5132.888  Qaux 33.18757  g^2 0.2913E-04   Flags ;%-;%-;%-;%-;%-
+  520 Qm 5132.894  Qaux 33.18120  g^2 0.2807E-04   Flags ;%-;%-;%-;%-;%-
+  525 Qm 5132.897  Qaux 33.17825  g^2 0.2071E-04   Flags ;%-;%-;%-;%-;%-
+  530 Qm 5132.901  Qaux 33.17373  g^2 0.2119E-04   Flags ;%-;%-;%-;%-;%-
+  535 Qm 5132.906  Qaux 33.16914  g^2 0.1724E-04   Flags ;%-;%-;%-;%-;%-
+  540 Qm 5132.910  Qaux 33.16466  g^2 0.9679E-05   Flags ;%-;%-;%-;%-;%-
+ Iteration finished, convergence achieved for task number       3
+ Gradient norm 0.9680E-05 is below its convergence limit 0.1000E-04
+ Preconditioning mode =      10
+ Size of preconditioning matrix =   11173
+ In this task, # of adjustments of prec-matrix diagonals:      97
+  540 iter-steps in all in task number   3
+ Final Q=      5166.0751 in the robust mode.
+ Contributions to the obtained value of Q:
+ From main data:     5132.9105  from aux equations:        33.1646
+ POS-Outlier limit (  2.0) exceeded by   258 positive residuals
+ NEG-Outlier limit (  2.0) exceeded by   162 negative residuals
+ True final main-data Q, when not downweighting outliers, =      9038.4391
+      LICENCE: Ing. D.Mooibroek, Natl.Inst.Publ.Health&Env RIVM, The Netherlands
+ 
+  **** Executing section "postproc" of ME-2 script ***
+ 
+ 
+ 
+  **** Executing section "preproc", preparing initial values for fit ***
+ 
+ 
+ 
+ Starting to process with the same .INI file next task:       4
+ Initial Q (main and aux):     0.11362E+06        343.37
+    5 Qm 26607.54  Qaux 2696.412  g^2 0.1410E+05   Flags CBw:%-CBw,%-CBF:%-;%-;%-
+   10 Qm 8786.352  Qaux 1273.968  g^2 0.9993E+03   Flags CBw:%-:%-;%-CBF:%-:%-
+   15 Qm 7716.107  Qaux 316.6962  g^2 0.5174E+03   Flags :%-CBw:%-;%-;%-;%-
+   20 Qm 7345.582  Qaux 179.5226  g^2 0.3537E+03   Flags :%-:%-:%-:%-:%-
+   25 Qm 7107.412  Qaux 157.6104  g^2 0.3931E+03   Flags :%-:%-:%-:%-:%-
+   30 Qm 6700.801  Qaux 83.83403  g^2 0.1508E+03   Flags :%-:%-3 C-G AresCBF:%-;%-;%-
+   35 Qm 6471.846  Qaux 58.44328  g^2 0.2485E+02   Flags ;%-;%-;%-:%-;%-
+   40 Qm 6409.187  Qaux 49.50125  g^2 0.1899E+02   Flags ;%-;%-;%-;%-;%-
+   45 Qm 6199.183  Qaux 50.55770  g^2 0.1174E+03   Flags ;%-;%-;%-2 C-G AresCBw:%-;%-
+   50 Qm 6053.730  Qaux 44.90524  g^2 0.7646E+02   Flags ;%-;%-;%-;%-;%-
+   55 Qm 5929.066  Qaux 48.83498  g^2 0.7754E+02   Flags ;%-;%-;%-;%-;%-
+   60 Qm 5745.100  Qaux 49.08377  g^2 0.1554E+03   Flags ;%-;%-;%-;%-3 C-G AresCBF:%-
+   65 Qm 5597.924  Qaux 49.33428  g^2 0.3216E+02   Flags ;%-;%-;%-;%-;%-
+   70 Qm 5523.156  Qaux 44.13820  g^2 0.4321E+02   Flags ;%-;%-:%-:%-:%-
+   75 Qm 5448.672  Qaux 44.63899  g^2 0.6547E+02   Flags :%-:%-:%-;%-;%-
+   80 Qm 5333.939  Qaux 42.24230  g^2 0.2864E+02   Flags 3 C-G AresCBw:%-;%-;%-;%-:%-
+   85 Qm 5283.771  Qaux 44.43030  g^2 0.2353E+02   Flags :%-:%-:%-:%-:%-
+   90 Qm 5261.692  Qaux 43.48902  g^2 0.2410E+02   Flags :%-:%-:%-:%-:%-
+   95 Qm 5223.932  Qaux 41.33638  g^2 0.9120E+01   Flags :%-2 C-G AresCBF:%-;%-:%-:%-
+  100 Qm 5195.512  Qaux 37.92554  g^2 0.5319E+01   Flags :%-:%-:%-:%-:%-
+  105 Qm 5177.912  Qaux 37.97177  g^2 0.4793E+01   Flags :%-:%-:%-:%-:%-
+  110 Qm 5172.358  Qaux 37.22130  g^2 0.3730E+01   Flags :%-:%-3 C-G AresCBw:%-:%-:%-
+  115 Qm 5168.056  Qaux 36.10621  g^2 0.1022E+01   Flags :%-:%-:%-:%-:%-
+  120 Qm 5164.748  Qaux 35.83124  g^2 0.1498E+01   Flags :%-:%-:%-:%-:%-
+  125 Qm 5157.204  Qaux 35.72016  g^2 0.1314E+01   Flags :%-:%-:%-3 C-G AresCBF:%-:%-
+  130 Qm 5155.138  Qaux 35.37959  g^2 0.4168E+00   Flags :%-:%-:%-:%-:%-
+  135 Qm 5154.249  Qaux 35.25135  g^2 0.2702E+00   Flags :%-:%-:%-:%-:%-
+  140 Qm 5146.963  Qaux 35.14460  g^2 0.6012E+01   Flags :%-:%-:%-:%-2 C-G AresCBw:%-
+  145 Qm 5146.469  Qaux 34.74052  g^2 0.9339E-01   Flags :%-;%-;%-;%-:%-
+  150 Qm 5146.417  Qaux 34.52180  g^2 0.6550E-01   Flags :%-:%-:%-:%-:%-
+  155 Qm 5146.393  Qaux 34.35696  g^2 0.4750E-01   Flags :%-:%-:%-:%-:%-
+  160 Qm 5140.393  Qaux 34.34949  g^2 0.2776E-01   Flags 3 C-G AresCBF:%-;%-;%-;%-;%-
+  165 Qm 5140.412  Qaux 34.18722  g^2 0.3549E-01   Flags :%-:%-:%-:%-:%-
+  170 Qm 5140.192  Qaux 34.06416  g^2 0.7657E-01   Flags :%-:%-:%-:%-:%-
+  175 Qm 5139.860  Qaux 33.79605  g^2 0.8793E-01   Flags :%-:%-:%-:%-:%-
+  180 Qm 5139.764  Qaux 33.54920  g^2 0.8017E-01   Flags :%-:%-:%-:%-:%-
+  185 Qm 5139.698  Qaux 33.48336  g^2 0.3162E-01   Flags :%-:%-:%-:%-:%-
+  190 Qm 5136.795  Qaux 33.48636  g^2 0.4154E-01   Flags 3 C-G AresCBw:%-;%-;%-;%-:%-
+  195 Qm 5136.843  Qaux 33.20149  g^2 0.9376E-01   Flags :%-:%-:%-:%-:%-
+  200 Qm 5136.730  Qaux 33.22262  g^2 0.4350E-01   Flags :%-:%-:%-:%-:%-
+  205 Qm 5134.618  Qaux 33.17329  g^2 0.1007E-01   Flags :%-2 C-G AresCBF:%-;%-;%-;%-
+  210 Qm 5134.644  Qaux 33.12173  g^2 0.5598E-02   Flags :%-:%-:%-:%-:%-
+ Convergence (small decrease of Q) with level       1
+ when solving task number       4
+  215 Qm 5133.885  Qaux 33.10650  g^2 0.1093E-02   Flags LevelCBF:%-;%-;%-;%-;%-
+  220 Qm 5133.909  Qaux 33.06439  g^2 0.5366E-02   Flags :%-:%-:%-:%-:%-
+  225 Qm 5133.929  Qaux 33.02463  g^2 0.4543E-02   Flags :%-:%-:%-:%-:%-
+  230 Qm 5133.930  Qaux 33.01496  g^2 0.1492E-02   Flags :%-:%-:%-:%-:%-
+  235 Qm 5133.922  Qaux 33.01896  g^2 0.8562E-03   Flags :%-:%-:%-:%-:%-
+  240 Qm 5133.918  Qaux 33.01951  g^2 0.1301E-02   Flags :%-:%-:%-:%-:%-
+  245 Qm 5133.912  Qaux 33.02134  g^2 0.1133E-02   Flags :%-:%-:%-:%-:%-
+  250 Qm 5133.906  Qaux 33.02355  g^2 0.5044E-03   Flags :%-:%-:%-:%-:%-
+  255 Qm 5133.900  Qaux 33.02732  g^2 0.3291E-03   Flags :%-:%-:%-:%-:%-
+  260 Qm 5133.902  Qaux 33.02409  g^2 0.3056E-03   Flags :%-:%-:%-:%-:%-
+  265 Qm 5133.905  Qaux 33.01983  g^2 0.2205E-03   Flags :%-:%-:%-:%-:%-
+  270 Qm 5133.909  Qaux 33.01530  g^2 0.2348E-03   Flags :%-:%-:%-:%-:%-
+  275 Qm 5133.905  Qaux 33.01814  g^2 0.2457E-03   Flags :%-:%-:%-:%-:%-
+  280 Qm 5133.910  Qaux 33.01147  g^2 0.2856E-03   Flags :%-:%-:%-:%-:%-
+  285 Qm 5133.908  Qaux 33.01360  g^2 0.1458E-03   Flags :%-:%-:%-:%-:%-
+  290 Qm 5133.908  Qaux 33.01234  g^2 0.1183E-03   Flags :%-:%-:%-:%-:%-
+  295 Qm 5133.307  Qaux 33.00616  g^2 0.7051E-03   Flags :%-3 C-G UresCBF:%-;%-;%-;%-
+  300 Qm 5133.317  Qaux 32.99555  g^2 0.1158E-03   Flags ;%-;%-;%-:%-:%-
+  305 Qm 5133.315  Qaux 32.99684  g^2 0.5167E-04   Flags :%-;%-:%-:%-:%-
+  310 Qm 5133.014  Qaux 32.98936  g^2 0.3802E-03   Flags :%-3 C-G XresCBw:%-;%-;%-;%-
+  315 Qm 5133.021  Qaux 32.98247  g^2 0.4958E-04   Flags ;%-;%-;%-:%-:%-
+  320 Qm 5133.020  Qaux 32.98313  g^2 0.2775E-04   Flags :%-:%-:%-:%-:%-
+  325 Qm 5133.021  Qaux 32.98252  g^2 0.3518E-04   Flags :%-:%-:%-:%-:%-
+  330 Qm 5133.021  Qaux 32.98190  g^2 0.5272E-04   Flags :%-:%-:%-:%-:%-
+  335 Qm 5133.024  Qaux 32.97903  g^2 0.1495E-04   Flags :%-:%-:%-:%-:%-
+  340 Qm 5133.023  Qaux 32.97987  g^2 0.1526E-04   Flags :%-:%-:%-:%-:%-
+  345 Qm 5133.023  Qaux 32.97945  g^2 0.1606E-04   Flags :%-:%-:%-:%-:%-
+ Convergence (small gradient norm) with level       2
+ when solving task number       4
+  350 Qm 5132.829  Qaux 32.97461  g^2 0.5224E-03   Flags :%-:%-LevelCBF:%-;%-;%-
+  355 Qm 5132.833  Qaux 32.96956  g^2 0.4656E-04   Flags ;%-;%-;%-;%-:%-
+ Iteration finished, convergence achieved for task number       4
+ Gradient norm 0.9738E-05 is below its convergence limit 0.1000E-04
+ Preconditioning mode =      10
+ Size of preconditioning matrix =   11173
+ In this task, # of adjustments of prec-matrix diagonals:     192
+  358 iter-steps in all in task number   4
+ Final Q=      5165.8034 in the robust mode.
+ Contributions to the obtained value of Q:
+ From main data:     5132.8328  from aux equations:        32.9705
+ POS-Outlier limit (  2.0) exceeded by   258 positive residuals
+ NEG-Outlier limit (  2.0) exceeded by   162 negative residuals
+ True final main-data Q, when not downweighting outliers, =      9035.7006
+      LICENCE: Ing. D.Mooibroek, Natl.Inst.Publ.Health&Env RIVM, The Netherlands
+ 
+  **** Executing section "postproc" of ME-2 script ***
+ 
+ 
+ 
+  **** Executing section "preproc", preparing initial values for fit ***
+ 
+ 
+ 
+ Starting to process with the same .INI file next task:       5
+ Initial Q (main and aux):     0.13258E+06        331.21
+    5 Qm 22205.08  Qaux 2269.971  g^2 0.1325E+05   Flags CBw:%-CBw,%-CBF:%-;%-:%-
+   10 Qm 8548.003  Qaux 1318.688  g^2 0.9317E+03   Flags CBw:%-:%-;%-CBF:%-;%-
+   15 Qm 7083.311  Qaux 531.3007  g^2 0.7257E+03   Flags ;%-CBw:%-;%-:%-:%-
+   20 Qm 6563.217  Qaux 320.1399  g^2 0.3780E+03   Flags :%-:%-:%-:%-:%-
+   25 Qm 6336.193  Qaux 175.9778  g^2 0.2959E+03   Flags :%-:%-:%-:%-:%-
+   30 Qm 6195.094  Qaux 110.8338  g^2 0.8878E+02   Flags :%-:%-3 C-G AresCBF:%-:%-:%-
+   35 Qm 6030.194  Qaux 79.78842  g^2 0.4089E+02   Flags :%-:%-:%-:%-:%-
+   40 Qm 5951.279  Qaux 71.72542  g^2 0.3851E+02   Flags :%-:%-:%-:%-:%-
+   45 Qm 5916.228  Qaux 64.83935  g^2 0.3333E+02   Flags :%-:%-:%-2 C-G AresCBw:%-:%-
+   50 Qm 5877.130  Qaux 58.40188  g^2 0.1513E+02   Flags :%-:%-:%-:%-:%-
+   55 Qm 5854.381  Qaux 55.47964  g^2 0.1417E+02   Flags :%-:%-:%-:%-:%-
+   60 Qm 5830.807  Qaux 52.84846  g^2 0.1856E+02   Flags :%-:%-:%-:%-3 C-G AresCBF:%-
+   65 Qm 5818.809  Qaux 49.73790  g^2 0.3017E+01   Flags :%-;%-;%-;%-;%-
+   70 Qm 5810.687  Qaux 48.04801  g^2 0.3492E+01   Flags ;%-;%-;%-;%-;%-
+   75 Qm 5805.121  Qaux 46.37453  g^2 0.4719E+01   Flags ;%-;%-:%-:%-:%-
+   80 Qm 5787.815  Qaux 42.22674  g^2 0.1248E+01   Flags 3 C-G AresCBw:%-;%-;%-;%-;%-
+   85 Qm 5783.999  Qaux 41.05686  g^2 0.1291E+01   Flags ;%-;%-;%-;%-;%-
+   90 Qm 5780.386  Qaux 40.54086  g^2 0.1880E+01   Flags ;%-;%-;%-;%-;%-
+   95 Qm 5770.722  Qaux 39.55540  g^2 0.9536E+00   Flags ;%-2 C-G AresCBF:%-;%-;%-;%-
+  100 Qm 5768.509  Qaux 39.05596  g^2 0.1238E+01   Flags ;%-;%-:%-:%-:%-
+  105 Qm 5767.319  Qaux 38.76244  g^2 0.6798E+00   Flags ;%-;%-;%-;%-;%-
+  110 Qm 5764.239  Qaux 38.02542  g^2 0.4832E+00   Flags ;%-;%-3 C-G AresCBw:%-;%-;%-
+  115 Qm 5763.215  Qaux 37.70735  g^2 0.3376E+00   Flags ;%-;%-;%-;%-;%-
+  120 Qm 5762.169  Qaux 37.46765  g^2 0.2561E+00   Flags ;%-;%-;%-;%-;%-
+  125 Qm 5761.158  Qaux 36.91830  g^2 0.4971E+00   Flags ;%-;%-;%-;%-;%-
+  130 Qm 5760.431  Qaux 36.64961  g^2 0.8992E+00   Flags ;%-;%-;%-;%-:%-
+  135 Qm 5759.821  Qaux 36.13406  g^2 0.7637E+00   Flags ;%-;%-;%-:%-:%-
+  140 Qm 5754.910  Qaux 35.75360  g^2 0.4257E+00   Flags :%-:%-3 C-G AresCBF:%-:%-:%-
+  145 Qm 5754.248  Qaux 35.55528  g^2 0.1279E+00   Flags :%-:%-:%-:%-:%-
+  150 Qm 5753.976  Qaux 35.49265  g^2 0.4710E-01   Flags :%-:%-:%-;%-;%-
+  155 Qm 5752.114  Qaux 35.45774  g^2 0.9333E-01   Flags ;%-;%-;%-2 C-G AresCBw:%-:%-
+  160 Qm 5751.939  Qaux 35.44418  g^2 0.4602E-01   Flags :%-;%-;%-;%-;%-
+  165 Qm 5751.571  Qaux 35.52619  g^2 0.6466E-01   Flags ;%-;%-;%-:%-;%-
+  170 Qm 5751.252  Qaux 35.48932  g^2 0.7756E-01   Flags ;%-:%-:%-:%-:%-
+  175 Qm 5750.788  Qaux 35.57658  g^2 0.1049E+00   Flags :%-:%-:%-:%-:%-
+  180 Qm 5750.725  Qaux 35.49087  g^2 0.6743E-01   Flags :%-:%-:%-:%-:%-
+  185 Qm 5749.541  Qaux 35.53269  g^2 0.4082E-01   Flags :%-:%-3 C-G AresCBF:%-:%-;%-
+  190 Qm 5749.519  Qaux 35.48382  g^2 0.1404E-01   Flags ;%-;%-;%-;%-;%-
+  195 Qm 5749.535  Qaux 35.43196  g^2 0.5840E-02   Flags :%-:%-:%-:%-:%-
+  200 Qm 5749.587  Qaux 35.35642  g^2 0.4256E-02   Flags :%-:%-:%-:%-:%-
+  205 Qm 5749.585  Qaux 35.34649  g^2 0.2466E-02   Flags :%-:%-:%-;%-;%-
+  210 Qm 5748.620  Qaux 35.37224  g^2 0.3333E-02   Flags 3 C-G AresCBw:%-;%-;%-:%-:%-
+ Convergence (small decrease of Q) with level       1
+ when solving task number       5
+  215 Qm 5748.274  Qaux 35.37588  g^2 0.7091E-01   Flags ;%-;%-;%-;%-LevelCBF:%-
+  220 Qm 5748.230  Qaux 35.39981  g^2 0.1538E-02   Flags :%-:%-:%-:%-;%-
+  225 Qm 5748.223  Qaux 35.40023  g^2 0.7790E-03   Flags ;%-;%-;%-;%-;%-
+  230 Qm 5748.230  Qaux 35.38689  g^2 0.1354E-02   Flags ;%-;%-;%-;%-;%-
+  235 Qm 5748.207  Qaux 35.40234  g^2 0.1636E-02   Flags ;%-;%-;%-;%-:%-
+  240 Qm 5748.205  Qaux 35.39473  g^2 0.2615E-02   Flags :%-:%-:%-:%-;%-
+  245 Qm 5748.181  Qaux 35.40887  g^2 0.1432E-02   Flags ;%-;%-;%-:%-:%-
+  250 Qm 5748.189  Qaux 35.39501  g^2 0.1563E-02   Flags :%-:%-:%-:%-:%-
+  255 Qm 5748.180  Qaux 35.39675  g^2 0.1557E-02   Flags :%-:%-:%-:%-:%-
+  260 Qm 5748.197  Qaux 35.37489  g^2 0.1273E-02   Flags :%-:%-:%-:%-:%-
+  265 Qm 5748.205  Qaux 35.36412  g^2 0.5815E-03   Flags :%-:%-:%-:%-:%-
+  270 Qm 5748.208  Qaux 35.35871  g^2 0.3585E-03   Flags :%-:%-:%-:%-:%-
+  275 Qm 5748.214  Qaux 35.35183  g^2 0.2497E-03   Flags :%-:%-:%-:%-:%-
+  280 Qm 5748.211  Qaux 35.35342  g^2 0.2939E-03   Flags :%-:%-:%-:%-:%-
+  285 Qm 5748.214  Qaux 35.34974  g^2 0.2908E-03   Flags :%-:%-:%-:%-:%-
+  290 Qm 5748.208  Qaux 35.35490  g^2 0.1780E-03   Flags :%-:%-:%-:%-:%-
+  295 Qm 5748.209  Qaux 35.35299  g^2 0.1001E-03   Flags :%-:%-:%-:%-:%-
+  300 Qm 5747.850  Qaux 35.39253  g^2 0.1072E-02   Flags 2 C-G UresCBF:%-:%-:%-:%-:%-
+  305 Qm 5747.850  Qaux 35.39015  g^2 0.3289E-03   Flags :%-;%-;%-;%-;%-
+  310 Qm 5747.850  Qaux 35.38925  g^2 0.1175E-03   Flags ;%-;%-;%-;%-;%-
+  315 Qm 5747.613  Qaux 35.42270  g^2 0.7727E-03   Flags 3 C-G XresCBw:%-:%-:%-:%-:%-
+  320 Qm 5747.613  Qaux 35.42110  g^2 0.2401E-03   Flags :%-:%-:%-;%-:%-
+  325 Qm 5747.613  Qaux 35.42010  g^2 0.1431E-03   Flags :%-;%-;%-;%-;%-
+  330 Qm 5747.610  Qaux 35.42329  g^2 0.6930E-04   Flags ;%-;%-;%-;%-;%-
+  335 Qm 5747.608  Qaux 35.42495  g^2 0.3566E-04   Flags ;%-;%-:%-:%-:%-
+  340 Qm 5747.604  Qaux 35.42816  g^2 0.3583E-04   Flags ;%-;%-;%-;%-:%-
+  345 Qm 5747.604  Qaux 35.42878  g^2 0.1511E-04   Flags :%-:%-:%-:%-:%-
+  350 Qm 5747.603  Qaux 35.42909  g^2 0.3012E-04   Flags :%-:%-:%-:%-:%-
+  355 Qm 5747.602  Qaux 35.42982  g^2 0.3843E-04   Flags :%-:%-:%-:%-:%-
+  360 Qm 5747.605  Qaux 35.42670  g^2 0.2957E-04   Flags :%-:%-:%-:%-:%-
+  365 Qm 5747.605  Qaux 35.42696  g^2 0.1428E-04   Flags :%-:%-:%-:%-:%-
+ Convergence (small gradient norm) with level       2
+ when solving task number       5
+  370 Qm 5747.262  Qaux 35.43834  g^2 0.3070E-02   Flags :%-:%-:%-LevelCBF:%-:%-
+  375 Qm 5747.260  Qaux 35.43779  g^2 0.3917E-03   Flags :%-:%-:%-:%-;%-
+  380 Qm 5747.257  Qaux 35.44119  g^2 0.3511E-04   Flags :%-;%-:%-:%-;%-
+  385 Qm 5747.259  Qaux 35.43824  g^2 0.2280E-04   Flags ;%-;%-;%-;%-;%-
+  390 Qm 5747.257  Qaux 35.44057  g^2 0.1340E-04   Flags ;%-;%-;%-;%-;%-
+ Iteration finished, convergence achieved for task number       5
+ Gradient norm 0.8142E-05 is below its convergence limit 0.1000E-04
+ Preconditioning mode =      10
+ Size of preconditioning matrix =   11173
+ In this task, # of adjustments of prec-matrix diagonals:     102
+  393 iter-steps in all in task number   5
+ Final Q=      5782.6981 in the robust mode.
+ Contributions to the obtained value of Q:
+ From main data:     5747.2567  from aux equations:        35.4414
+ POS-Outlier limit (  2.0) exceeded by   285 positive residuals
+ NEG-Outlier limit (  2.0) exceeded by   123 negative residuals
+ True final main-data Q, when not downweighting outliers, =     10530.4353
+      LICENCE: Ing. D.Mooibroek, Natl.Inst.Publ.Health&Env RIVM, The Netherlands
+ 
+  **** Executing section "postproc" of ME-2 script ***
+ 
+ 
+ 
+  **** Executing section "preproc", preparing initial values for fit ***
+ 
+ 
+ 
+ Starting to process with the same .INI file next task:       6
+ Initial Q (main and aux):     0.11341E+06        335.01
+    5 Qm 19471.43  Qaux 1780.829  g^2 0.1627E+05   Flags CBw:%-CBw:%-CBF:%-:%-;%-
+   10 Qm 7486.250  Qaux 753.1009  g^2 0.6186E+03   Flags CBw:%-;%-;%-CBF:%-:%-
+   15 Qm 6840.622  Qaux 332.2431  g^2 0.2527E+03   Flags :%-CBw:%-:%-:%-:%-
+   20 Qm 6465.252  Qaux 150.4717  g^2 0.1404E+03   Flags :%-:%-:%-:%-:%-
+   25 Qm 6238.698  Qaux 146.1215  g^2 0.1038E+03   Flags ;%-;%-;%-;%-;%-
+   30 Qm 5968.296  Qaux 107.1991  g^2 0.5559E+02   Flags ;%-;%-3 C-G AresCBF:%-:%-:%-
+   35 Qm 5860.355  Qaux 72.96886  g^2 0.2623E+02   Flags :%-:%-:%-:%-:%-
+   40 Qm 5780.740  Qaux 62.20545  g^2 0.3387E+02   Flags ;%-:%-:%-:%-:%-
+   45 Qm 5692.031  Qaux 56.06622  g^2 0.3621E+02   Flags :%-:%-:%-2 C-G AresCBw:%-:%-
+   50 Qm 5630.152  Qaux 45.80066  g^2 0.2678E+02   Flags :%-:%-;%-:%-;%-
+   55 Qm 5582.813  Qaux 45.43311  g^2 0.2856E+02   Flags ;%-;%-;%-;%-;%-
+   60 Qm 5514.139  Qaux 46.72987  g^2 0.4662E+02   Flags ;%-;%-;%-;%-3 C-G AresCBF:%-
+   65 Qm 5430.470  Qaux 45.25913  g^2 0.1378E+02   Flags ;%-;%-;%-;%-;%-
+   70 Qm 5361.000  Qaux 42.94683  g^2 0.2194E+02   Flags ;%-;%-;%-;%-;%-
+   75 Qm 5333.739  Qaux 41.06416  g^2 0.2063E+02   Flags :%-:%-:%-:%-:%-
+   80 Qm 5256.450  Qaux 38.22244  g^2 0.1734E+02   Flags 3 C-G AresCBw:%-:%-:%-;%-;%-
+   85 Qm 5218.745  Qaux 37.38006  g^2 0.1961E+02   Flags :%-:%-:%-:%-:%-
+   90 Qm 5193.111  Qaux 36.70486  g^2 0.1944E+02   Flags :%-:%-:%-:%-:%-
+   95 Qm 5160.934  Qaux 36.26277  g^2 0.4521E+01   Flags :%-2 C-G AresCBF:%-;%-;%-;%-
+  100 Qm 5147.870  Qaux 34.28250  g^2 0.2514E+01   Flags :%-:%-:%-:%-:%-
+  105 Qm 5132.700  Qaux 36.93056  g^2 0.2893E+01   Flags ;%-:%-:%-:%-:%-
+  110 Qm 5131.733  Qaux 35.80329  g^2 0.2228E+01   Flags :%-;%-3 C-G AresCBw:%-:%-;%-
+  115 Qm 5127.557  Qaux 34.93055  g^2 0.5761E+00   Flags ;%-;%-;%-:%-:%-
+  120 Qm 5126.674  Qaux 34.55919  g^2 0.2390E+00   Flags :%-:%-:%-:%-:%-
+  125 Qm 5129.696  Qaux 34.54036  g^2 0.6964E+00   Flags :%-:%-:%-3 C-G AresCBF:%-;%-
+  130 Qm 5129.061  Qaux 34.54959  g^2 0.1072E+00   Flags ;%-;%-;%-:%-:%-
+  135 Qm 5128.866  Qaux 34.26790  g^2 0.1159E+00   Flags :%-:%-:%-:%-;%-
+  140 Qm 5128.335  Qaux 34.24381  g^2 0.1788E+00   Flags :%-:%-;%-:%-:%-
+  145 Qm 5128.147  Qaux 34.00622  g^2 0.1214E+00   Flags :%-:%-:%-:%-:%-
+  150 Qm 5130.801  Qaux 34.00209  g^2 0.1204E+00   Flags :%-2 C-G AresCBw:%-:%-;%-;%-
+  155 Qm 5130.703  Qaux 33.93949  g^2 0.2515E-01   Flags :%-:%-:%-;%-;%-
+  160 Qm 5130.717  Qaux 33.84665  g^2 0.1522E-01   Flags :%-:%-;%-;%-:%-
+  165 Qm 5131.551  Qaux 33.85184  g^2 0.2934E-01   Flags :%-:%-3 C-G AresCBF:%-;%-;%-
+  170 Qm 5131.484  Qaux 33.87249  g^2 0.1128E-01   Flags ;%-;%-;%-:%-:%-
+  175 Qm 5131.535  Qaux 33.75207  g^2 0.1779E-01   Flags :%-:%-;%-:%-:%-
+  180 Qm 5131.559  Qaux 33.63177  g^2 0.2609E-01   Flags :%-:%-:%-:%-:%-
+  185 Qm 5131.649  Qaux 33.41362  g^2 0.2386E-01   Flags :%-:%-:%-:%-:%-
+  190 Qm 5131.616  Qaux 33.37865  g^2 0.1056E-01   Flags :%-:%-:%-:%-:%-
+  195 Qm 5131.667  Qaux 33.29644  g^2 0.6343E-02   Flags :%-:%-:%-:%-:%-
+  200 Qm 5132.610  Qaux 33.33582  g^2 0.4777E-02   Flags 3 C-G AresCBw:%-;%-;%-;%-;%-
+ Convergence (small decrease of Q) with level       1
+ when solving task number       6
+  205 Qm 5132.976  Qaux 33.33129  g^2 0.9711E-01   Flags :%-:%-:%-:%-LevelCBF:%-
+  210 Qm 5132.939  Qaux 33.34180  g^2 0.1897E-02   Flags :%-;%-;%-;%-;%-
+  215 Qm 5132.920  Qaux 33.34484  g^2 0.2456E-02   Flags ;%-:%-:%-:%-:%-
+  220 Qm 5132.921  Qaux 33.32215  g^2 0.4206E-02   Flags :%-:%-:%-:%-;%-
+  225 Qm 5132.917  Qaux 33.29776  g^2 0.6035E-02   Flags ;%-;%-;%-;%-;%-
+  230 Qm 5132.877  Qaux 33.30243  g^2 0.5919E-02   Flags ;%-;%-:%-:%-:%-
+  235 Qm 5132.868  Qaux 33.27268  g^2 0.8151E-02   Flags :%-;%-;%-;%-;%-
+  240 Qm 5132.846  Qaux 33.24155  g^2 0.8891E-02   Flags ;%-;%-;%-;%-;%-
+  245 Qm 5132.882  Qaux 33.15813  g^2 0.7663E-02   Flags ;%-;%-;%-;%-;%-
+  250 Qm 5132.834  Qaux 33.14915  g^2 0.1095E-01   Flags ;%-;%-;%-;%-;%-
+  255 Qm 5132.818  Qaux 33.14276  g^2 0.1674E-01   Flags :%-;%-;%-;%-:%-
+  260 Qm 5132.818  Qaux 33.13466  g^2 0.2113E-01   Flags :%-:%-:%-:<%-:%-
+  265 Qm 5132.797  Qaux 33.14744  g^2 0.7630E-02   Flags :%-:%-:%-:%-:%-
+  270 Qm 5132.772  Qaux 33.16505  g^2 0.5289E-02   Flags :%-:%-:%-:%-:%-
+  275 Qm 5132.486  Qaux 33.25130  g^2 0.3120E-02   Flags 2 C-G AresCBw:%-;%-;%-;%-;%-
+  280 Qm 5132.477  Qaux 33.24121  g^2 0.3372E-02   Flags ;%-;%-;%-;%-;%-
+  285 Qm 5132.481  Qaux 33.22503  g^2 0.2400E-02   Flags :%-:%-:%-:%-:%-
+  290 Qm 5132.496  Qaux 33.22373  g^2 0.1136E-02   Flags 3 C-G XresCBF:%-;%-;%-;%-;%-
+  295 Qm 5132.498  Qaux 33.21494  g^2 0.1962E-02   Flags ;%-;%-;%-;%-:%-
+  300 Qm 5132.528  Qaux 33.17562  g^2 0.1740E-02   Flags :%-:%-:%-;%-;%-
+  305 Qm 5132.542  Qaux 33.15133  g^2 0.1490E-02   Flags ;%-:%-:%-:%-;%-
+  310 Qm 5132.545  Qaux 33.14138  g^2 0.1079E-02   Flags ;%-;%-;%-;%-;%-
+  315 Qm 5132.553  Qaux 33.12964  g^2 0.5702E-03   Flags ;%-:%-:%-:%-;%-
+  320 Qm 5132.522  Qaux 33.15667  g^2 0.6838E-03   Flags ;%-;%-;%-;%-;%-
+  325 Qm 5132.522  Qaux 33.15517  g^2 0.2200E-03   Flags ;%-;%-;%-;%-;%-
+  330 Qm 5132.521  Qaux 33.15528  g^2 0.1869E-03   Flags ;%-;%-;%-;%-:%-
+  335 Qm 5132.518  Qaux 33.15720  g^2 0.1318E-03   Flags :%-:%-:%-:%-:%-
+  340 Qm 5132.510  Qaux 33.16391  g^2 0.2033E-03   Flags :%-:%-:%-:%-:%-
+  345 Qm 5132.521  Qaux 33.15224  g^2 0.1756E-03   Flags :%-:%-;%-;%-;%-
+  350 Qm 5132.524  Qaux 33.14829  g^2 0.1131E-03   Flags ;%-;%-:%-:%-:%-
+  355 Qm 5132.527  Qaux 33.14437  g^2 0.9866E-04   Flags :%-:%-:%-:%-:%-
+  360 Qm 5132.528  Qaux 33.14365  g^2 0.7729E-04   Flags :%-:%-:%-:%-:%-
+  365 Qm 5132.528  Qaux 33.14315  g^2 0.3169E-04   Flags :%-:%-:%-:%-:%-
+  370 Qm 5132.589  Qaux 33.15146  g^2 0.9462E-03   Flags :%-3 C-G UresCBF:%-;%-;%-;%-
+  375 Qm 5132.583  Qaux 33.15641  g^2 0.9024E-04   Flags ;%-;%-;%-;%-;%-
+  380 Qm 5132.588  Qaux 33.15113  g^2 0.5044E-04   Flags ;%-;%-;%-;%-;%-
+  385 Qm 5132.674  Qaux 33.15879  g^2 0.5269E-03   Flags ;%-2 C-G XresCBw:%-:%-;%-;%-
+  390 Qm 5132.668  Qaux 33.16340  g^2 0.6198E-04   Flags ;%-;%-;%-;%-;%-
+  395 Qm 5132.675  Qaux 33.15662  g^2 0.5887E-04   Flags ;%-;%-;%-;%-;%-
+  400 Qm 5132.679  Qaux 33.15151  g^2 0.3781E-04   Flags ;%-;%-;%-;%-;%-
+  405 Qm 5132.682  Qaux 33.14902  g^2 0.1607E-04   Flags ;%-;%-;%-;%-;%-
+  410 Qm 5132.685  Qaux 33.14572  g^2 0.1231E-04   Flags ;%-:%-:%-:%-;%-
+ Convergence (small gradient norm) with level       2
+ when solving task number       6
+  415 Qm 5132.731  Qaux 33.14966  g^2 0.7455E-03   Flags :%-:%-LevelCBF:%-;%-;%-
+  420 Qm 5132.726  Qaux 33.15410  g^2 0.5165E-04   Flags ;%-;%-;%-;%-;%-
+  425 Qm 5132.729  Qaux 33.15064  g^2 0.2244E-04   Flags ;%-;%-;%-;%-;%-
+  430 Qm 5132.732  Qaux 33.14809  g^2 0.1928E-04   Flags ;%-;%-;%-;%-;%-
+ Iteration finished, convergence achieved for task number       6
+ Gradient norm 0.8380E-05 is below its convergence limit 0.1000E-04
+ Preconditioning mode =      10
+ Size of preconditioning matrix =   11173
+ In this task, # of adjustments of prec-matrix diagonals:      69
+  433 iter-steps in all in task number   6
+ Final Q=      5165.8800 in the robust mode.
+ Contributions to the obtained value of Q:
+ From main data:     5132.7332  from aux equations:        33.1468
+ POS-Outlier limit (  2.0) exceeded by   260 positive residuals
+ NEG-Outlier limit (  2.0) exceeded by   161 negative residuals
+ True final main-data Q, when not downweighting outliers, =      9041.2115
+      LICENCE: Ing. D.Mooibroek, Natl.Inst.Publ.Health&Env RIVM, The Netherlands
+ 
+  **** Executing section "postproc" of ME-2 script ***
+ 
+ 
+ 
+  **** Executing section "preproc", preparing initial values for fit ***
+ 
+ 
+ 
+ Starting to process with the same .INI file next task:       7
+ Initial Q (main and aux):     0.12612E+06        363.15
+    5 Qm 18635.93  Qaux 1847.723  g^2 0.7206E+04   Flags CBw:%-CBw:%-CBF:%-:%-;%-
+   10 Qm 7782.272  Qaux 1055.378  g^2 0.5058E+03   Flags CBw:%-:%-:%-CBF:%-:%-
+   15 Qm 6993.359  Qaux 395.3036  g^2 0.3664E+03   Flags :%-CBw:%-:%-:%-:%-
+   20 Qm 6696.382  Qaux 194.5020  g^2 0.1535E+03   Flags :%-:%-:%-:%-:%-
+   25 Qm 6545.856  Qaux 154.2828  g^2 0.7500E+02   Flags :%-:%-:%-:%-:%-
+   30 Qm 6453.859  Qaux 104.4712  g^2 0.6224E+02   Flags :%-:%-3 C-G AresCBF:%-;%-;%-
+   35 Qm 6335.526  Qaux 74.70414  g^2 0.2627E+02   Flags ;%-;%-:%-;%-:%-
+   40 Qm 6245.040  Qaux 80.91856  g^2 0.2990E+02   Flags :%-:%-:%-:%-:%-
+   45 Qm 6165.126  Qaux 69.83038  g^2 0.5644E+02   Flags :%-:%-;%-2 C-G AresCBw:%-;%-
+   50 Qm 6056.197  Qaux 56.38509  g^2 0.3719E+02   Flags ;%-;%-;%-;%-;%-
+   55 Qm 5992.759  Qaux 57.59246  g^2 0.4111E+02   Flags :%-:%-:%-:%-:%-
+   60 Qm 5900.650  Qaux 56.44128  g^2 0.8154E+02   Flags :%-:%-:%-:%-3 C-G AresCBF:%-
+   65 Qm 5770.465  Qaux 63.85272  g^2 0.1876E+02   Flags ;%-;%-;%-;%-;%-
+   70 Qm 5706.125  Qaux 62.15442  g^2 0.2171E+02   Flags ;%-;%-;%-;%-;%-
+   75 Qm 5665.189  Qaux 63.22712  g^2 0.4305E+02   Flags ;%-;%-;%-:%-:%-
+   80 Qm 5493.272  Qaux 47.53674  g^2 0.3581E+02   Flags 3 C-G AresCBw:%-:%-:%-:%-;%-
+   85 Qm 5438.914  Qaux 45.33039  g^2 0.2208E+02   Flags ;%-:%-:%-:%-:%-
+   90 Qm 5379.134  Qaux 51.05238  g^2 0.4587E+02   Flags :%-:%-;%-;%-:%-
+   95 Qm 5314.797  Qaux 46.94491  g^2 0.1523E+02   Flags :%-:%-2 C-G AresCBF:%-;%-;%-
+  100 Qm 5271.998  Qaux 41.87425  g^2 0.7979E+01   Flags ;%-;%-;%-;%-;%-
+  105 Qm 5251.542  Qaux 39.74525  g^2 0.8231E+01   Flags ;%-:%-:%-:%-:%-
+  110 Qm 5225.019  Qaux 39.02427  g^2 0.1407E+02   Flags ;%-;%-;%-3 C-G AresCBw:%-:%-
+  115 Qm 5202.199  Qaux 38.48668  g^2 0.1247E+02   Flags :%-:%-:%-:%-:%-
+  120 Qm 5185.147  Qaux 38.87659  g^2 0.1049E+02   Flags :%-;%-:%-:%-:%-
+  125 Qm 5186.834  Qaux 38.44099  g^2 0.1152E+02   Flags :%-:%-:%-:%-3 C-G AresCBF:%-
+  130 Qm 5165.748  Qaux 37.42427  g^2 0.4992E+01   Flags :%-:%-;%-;%-:%-
+  135 Qm 5158.492  Qaux 36.38194  g^2 0.1437E+01   Flags :%-:%-:%-;%-;%-
+  140 Qm 5156.760  Qaux 35.94318  g^2 0.5857E+00   Flags :%-:%-:%-:%-:%-
+  145 Qm 5153.303  Qaux 36.62906  g^2 0.7644E+00   Flags 2 C-G AresCBw:%-:%-:%-:%-;%-
+  150 Qm 5150.590  Qaux 36.32841  g^2 0.9735E+00   Flags ;%-;%-;%-:%-;%-
+  155 Qm 5147.426  Qaux 37.11972  g^2 0.6379E+00   Flags ;%-;%-;%-:%-:%-
+  160 Qm 5147.376  Qaux 37.14631  g^2 0.3947E+00   Flags :%-3 C-G AresCBF:%-:%-:%-:%-
+  165 Qm 5145.668  Qaux 37.17234  g^2 0.5171E+00   Flags :%-;%-:%-;%-;%-
+  170 Qm 5144.185  Qaux 37.08029  g^2 0.3541E+00   Flags ;%-;%-;%-:%-;%-
+  175 Qm 5143.656  Qaux 37.03576  g^2 0.3693E+00   Flags ;%-:%-:%-3 C-G AresCBw:%-:%-
+  180 Qm 5143.135  Qaux 36.94205  g^2 0.1327E+00   Flags :%-;%-:%-;%-:%-
+  185 Qm 5142.689  Qaux 36.99170  g^2 0.9826E-01   Flags :%-:%-:%-;%-:%-
+  190 Qm 5142.021  Qaux 36.94456  g^2 0.3403E+00   Flags ;%-;%-;%-;%-;%-
+  195 Qm 5139.923  Qaux 36.58851  g^2 0.9085E+00   Flags ;%-;%-;%-;%-;%-
+  200 Qm 5138.304  Qaux 35.67705  g^2 0.7954E+00   Flags ;%-;%-;%-;%-;%-
+  205 Qm 5137.054  Qaux 35.50207  g^2 0.2076E+01   Flags ;%-:%-;%-;%-;%-
+  210 Qm 5136.268  Qaux 35.53944  g^2 0.1051E+01   Flags :%-:%-:%-:%-:%-
+  215 Qm 5134.009  Qaux 35.53712  g^2 0.3693E+01   Flags :%-:%-:%-;%-2 C-G AresCBF:%-
+  220 Qm 5132.798  Qaux 34.73759  g^2 0.3441E+00   Flags :%-:%-:%-:%-:%-
+  225 Qm 5132.270  Qaux 34.47965  g^2 0.1535E+00   Flags :%-;%-:%-:%-:%-
+  230 Qm 5131.998  Qaux 34.39279  g^2 0.6047E-01   Flags :%-:%-:%-:%-:%-
+  235 Qm 5131.524  Qaux 34.32973  g^2 0.3095E-01   Flags 3 C-G AresCBw:%-:%-;%-;%-:%-
+  240 Qm 5131.460  Qaux 34.24461  g^2 0.2244E-01   Flags ;%-:%-:%-:%-:%-
+  245 Qm 5131.411  Qaux 34.18907  g^2 0.2110E-01   Flags :%-:%-:%-:%-:%-
+  250 Qm 5131.464  Qaux 34.01878  g^2 0.2757E-01   Flags :%-:%-:%-:%-:%-
+  255 Qm 5131.506  Qaux 33.86732  g^2 0.2471E-01   Flags :%-:%-:%-:%-:%-
+  260 Qm 5131.545  Qaux 33.75823  g^2 0.1536E-01   Flags :%-:%-:%-:%-:%-
+  265 Qm 5132.421  Qaux 33.75961  g^2 0.1741E-01   Flags 3 C-G AresCBF:%-:%-;%-;%-:%-
+  270 Qm 5132.349  Qaux 33.74985  g^2 0.9400E-02   Flags ;%-;%-;%-:%-:%-
+  275 Qm 5132.294  Qaux 33.76907  g^2 0.7492E-02   Flags :%-:%-:%-:%-:%-
+  280 Qm 5132.296  Qaux 33.71813  g^2 0.8125E-02   Flags :%-:%-:%-:%-:%-
+  285 Qm 5132.308  Qaux 33.66176  g^2 0.9513E-02   Flags :%-:%-:%-:%-:%-
+  290 Qm 5132.303  Qaux 33.62682  g^2 0.8338E-02   Flags :%-:%-:%-:%-:%-
+  295 Qm 5132.318  Qaux 33.53628  g^2 0.1919E-01   Flags :%-:%-:%-:%-;%-
+  300 Qm 5132.441  Qaux 33.34572  g^2 0.1029E-01   Flags ;%-;%-;%-;%-;%-
+  305 Qm 5132.517  Qaux 33.22322  g^2 0.8799E-02   Flags ;%-;%-:%-:%-:%-
+  310 Qm 5132.561  Qaux 33.13584  g^2 0.8337E-02   Flags :%-:%-:%-:%-:%-
+  315 Qm 5132.540  Qaux 33.13148  g^2 0.5546E-02   Flags ;%-:%-;%-:%-:%-
+  320 Qm 5132.580  Qaux 33.07130  g^2 0.3875E-02   Flags :%-:%-:%-;%-:%-
+  325 Qm 5131.979  Qaux 33.13140  g^2 0.7644E-02   Flags 2 C-G AresCBw:%-:%-;%-;%-;%-
+ Convergence (small decrease of Q) with level       1
+ when solving task number       7
+  330 Qm 5132.162  Qaux 33.13002  g^2 0.3188E-01   Flags ;%-;%-;%-:%-LevelCBF:%-
+  335 Qm 5132.134  Qaux 33.13224  g^2 0.7440E-02   Flags :%-:%-;%-;%-;%-
+  340 Qm 5132.116  Qaux 33.12851  g^2 0.3807E-02   Flags ;%-:%-:%-:%-:%-
+  345 Qm 5132.087  Qaux 33.11628  g^2 0.1959E-01   Flags :%-:%-;%-;%-;%-
+  350 Qm 5132.087  Qaux 33.09475  g^2 0.2297E-01   Flags ;%-:%-:%-:%-:%-
+  355 Qm 5132.064  Qaux 33.10099  g^2 0.9278E-02   Flags :%-:%-:%-:%-:%-
+  360 Qm 5132.054  Qaux 33.09876  g^2 0.7200E-02   Flags :%-:%-:%-:%-:%-
+  365 Qm 5132.038  Qaux 33.10551  g^2 0.6197E-02   Flags :%-:%-:%-:%-:%-
+  370 Qm 5132.019  Qaux 33.11915  g^2 0.3322E-02   Flags :%-:%-:%-:%-:%-
+  375 Qm 5132.008  Qaux 33.12577  g^2 0.3772E-02   Flags :%-:%-:%-:%-:%-
+  380 Qm 5132.009  Qaux 33.12090  g^2 0.3225E-02   Flags :%-:%-:%-:%-:%-
+  385 Qm 5132.010  Qaux 33.11672  g^2 0.2141E-02   Flags :%-:%-:%-:%-:%-
+  390 Qm 5132.015  Qaux 33.10935  g^2 0.2185E-02   Flags :%-:%-:%-:%-:%-
+  395 Qm 5132.016  Qaux 33.10696  g^2 0.1486E-02   Flags :%-:%-:%-:%-:%-
+  400 Qm 5132.267  Qaux 33.12387  g^2 0.8177E-03   Flags 3 C-G AresCBw:%-;%-;%-;%-;%-
+  405 Qm 5132.256  Qaux 33.13098  g^2 0.6768E-03   Flags ;%-;%-;%-;%-;%-
+  410 Qm 5132.256  Qaux 33.12980  g^2 0.2664E-03   Flags ;%-:%-:%-:%-:%-
+  415 Qm 5132.518  Qaux 33.12749  g^2 0.2454E-03   Flags 3 C-G XresCBF:%-:%-;%-;%-;%-
+  420 Qm 5132.512  Qaux 33.13172  g^2 0.2597E-03   Flags ;%-;%-;%-;%-;%-
+  425 Qm 5132.515  Qaux 33.12739  g^2 0.1810E-03   Flags ;%-;%-;%-;%-;%-
+  430 Qm 5132.516  Qaux 33.12591  g^2 0.2287E-03   Flags ;%-;%-;%-;%-;%-
+  435 Qm 5132.515  Qaux 33.12500  g^2 0.2908E-03   Flags ;%-;%-;%-;%-;%-
+  440 Qm 5132.516  Qaux 33.12321  g^2 0.2343E-03   Flags :%-:%-:%-:%-:%-
+  445 Qm 5132.496  Qaux 33.14128  g^2 0.3369E-03   Flags :%-:%-:%-:%-:%-
+  450 Qm 5132.474  Qaux 33.16235  g^2 0.2498E-03   Flags ;%-:%-:%-:%-:%-
+  455 Qm 5132.463  Qaux 33.17168  g^2 0.2330E-03   Flags :%-:%-;%-;%-:%-
+  460 Qm 5132.453  Qaux 33.18174  g^2 0.8507E-04   Flags :%-;%-:%-:%-:%-
+  465 Qm 5132.447  Qaux 33.18759  g^2 0.3917E-04   Flags :%-:%-:%-:%-:%-
+  470 Qm 5132.446  Qaux 33.18768  g^2 0.2988E-04   Flags :%-:%-:%-:%-:%-
+  475 Qm 5132.437  Qaux 33.19704  g^2 0.4484E-04   Flags :%-:%-:%-:%-:%-
+  480 Qm 5132.439  Qaux 33.19503  g^2 0.4009E-04   Flags :%-:%-:%-:%-:%-
+  485 Qm 5132.440  Qaux 33.19389  g^2 0.1898E-04   Flags :%-:%-:%-:%-;%-
+  490 Qm 5132.440  Qaux 33.19394  g^2 0.1233E-04   Flags ;%-:%-:%-:%-:%-
+  495 Qm 5132.603  Qaux 33.19406  g^2 0.2621E-03   Flags :%-2 C-G UresCBF:%-;%-;%-;%-
+  500 Qm 5132.600  Qaux 33.19651  g^2 0.6014E-04   Flags ;%-;%-;%-;%-;%-
+  505 Qm 5132.604  Qaux 33.19218  g^2 0.3368E-04   Flags ;%-;%-;%-;%-;%-
+  510 Qm 5132.725  Qaux 33.19098  g^2 0.1344E-03   Flags ;%-3 C-G XresCBw:%-:%-;%-;%-
+  515 Qm 5132.724  Qaux 33.19206  g^2 0.3149E-04   Flags ;%-;%-;%-;%-;%-
+  520 Qm 5132.730  Qaux 33.18509  g^2 0.3558E-04   Flags ;%-;%-;%-;%-;%-
+  525 Qm 5132.735  Qaux 33.18009  g^2 0.2361E-04   Flags ;%-;%-;%-;%-;%-
+  530 Qm 5132.738  Qaux 33.17728  g^2 0.1513E-04   Flags ;%-;%-;%-;%-;%-
+  535 Qm 5132.744  Qaux 33.17047  g^2 0.2507E-04   Flags ;%-;%-;%-;%-;%-
+  540 Qm 5132.749  Qaux 33.16545  g^2 0.1192E-04   Flags ;%-;%-;%-;%-;%-
+ Convergence (small gradient norm) with level       2
+ when solving task number       7
+  545 Qm 5132.691  Qaux 33.15939  g^2 0.2924E-02   Flags ;%-;%-;%-;%-LevelCBF;%-
+  550 Qm 5132.684  Qaux 33.16098  g^2 0.5345E-03   Flags ;%-;%-;%-;%-;%-
+  555 Qm 5132.688  Qaux 33.14928  g^2 0.4245E-03   Flags ;%-;%-;%-;%-;%-
+  560 Qm 5132.687  Qaux 33.13665  g^2 0.5814E-03   Flags ;%-;%-;%-;%-;%-
+  565 Qm 5132.687  Qaux 33.13139  g^2 0.2717E-02   Flags ;%-;%-;%-;%-;%-
+  570 Qm 5132.689  Qaux 33.12943  g^2 0.8942E-02   Flags ;%-;%-;%-;%-;%-
+  575 Qm 5132.692  Qaux 33.12687  g^2 0.9428E-02   Flags ;%-:%->><%-,%-:%-
+  580 Qm 5132.692  Qaux 33.12697  g^2 0.1549E-01   Flags :%-:%->>><%-<%>%-
+  585 Qm 5132.693  Qaux 33.12558  g^2 0.1591E-01   Flags :%-:%-:%-:%->>><%-
+  590 Qm 5132.510  Qaux 33.09705  g^2 0.4919E-02   Flags <%>%->>>>>>>>>#-3 C-G AresCBw>%-:%-
+  595 Qm 5132.518  Qaux 33.07448  g^2 0.1589E-02   Flags :%-:%-:%-:%-:%-
+  600 Qm 5132.530  Qaux 33.05892  g^2 0.6664E-03   Flags :%-:%-:%-:%-:%-
+  605 Qm 5132.558  Qaux 33.02568  g^2 0.9374E-03   Flags ;%-;%-:%-:%-:%-
+  610 Qm 5132.582  Qaux 32.99105  g^2 0.2371E-02   Flags :%-:%-:%-:%-:%-
+  615 Qm 5132.625  Qaux 32.93850  g^2 0.1181E-02   Flags :%-;%-:%-:%-:%-
+  620 Qm 5132.633  Qaux 32.92586  g^2 0.7853E-03   Flags :%-:%-;%-:%-:%-
+  625 Qm 5132.643  Qaux 32.91436  g^2 0.2730E-03   Flags :%-:%-:%-:%-:%-
+  630 Qm 5132.642  Qaux 32.91359  g^2 0.2893E-03   Flags :%-:%-:%-:%-:%-
+  635 Qm 5132.642  Qaux 32.91334  g^2 0.4070E-04   Flags :%-:%-:%-:%-:%-
+  640 Qm 5132.643  Qaux 32.91176  g^2 0.5320E-04   Flags :%-:%-:%-:%-:%-
+  645 Qm 5132.649  Qaux 32.90619  g^2 0.9257E-04   Flags :%-:%-:%-:%-:%-
+  650 Qm 5132.649  Qaux 32.90531  g^2 0.1061E-03   Flags :%-:%-:%-:%-:%-
+  655 Qm 5132.652  Qaux 32.90167  g^2 0.4290E-04   Flags :%-:%-:%-:%-:%-
+  660 Qm 5132.652  Qaux 32.90188  g^2 0.1798E-04   Flags :%-:%-:%-:%-:%-
+  665 Qm 5132.653  Qaux 32.90121  g^2 0.1669E-04   Flags :%-:%-:%-:%-:%-
+  670 Qm 5132.415  Qaux 32.89909  g^2 0.2230E-04   Flags 2 C-G UresCBF:%-:%-;%-:%-:%-
+  675 Qm 5132.416  Qaux 32.89798  g^2 0.1975E-04   Flags :%-:%-:%-:%-:%-
+  680 Qm 5132.418  Qaux 32.89613  g^2 0.4010E-04   Flags :%-:%-:%-:%-:%-
+  685 Qm 5132.355  Qaux 32.89486  g^2 0.1054E-04   Flags 3 C-G XresCBw:%-:%-:%-:%-:%-
+  690 Qm 5132.354  Qaux 32.89523  g^2 0.1632E-04   Flags :%-:%-:%-:%-:%-
+  695 Qm 5132.356  Qaux 32.89357  g^2 0.5878E-04   Flags :%-:%-:%-;%-:%-
+  700 Qm 5132.364  Qaux 32.88503  g^2 0.6741E-04   Flags :%-;%-;%-;%-;%-
+  705 Qm 5132.369  Qaux 32.87934  g^2 0.4728E-04   Flags ;%-;%-;%-;%-:%-
+  710 Qm 5132.372  Qaux 32.87633  g^2 0.1384E-04   Flags ;%-:%-:%-:%-:%-
+  715 Qm 5132.373  Qaux 32.87558  g^2 0.1437E-04   Flags :%-:%-:%-:%-:%-
+  720 Qm 5132.375  Qaux 32.87339  g^2 0.1569E-04   Flags :%-:%-:%-:%-:%-
+  725 Qm 5132.376  Qaux 32.87284  g^2 0.1325E-04   Flags :%-:%-:%-:%-:%-
+ Iteration finished, convergence achieved for task number       7
+ Gradient norm 0.8774E-05 is below its convergence limit 0.1000E-04
+ Preconditioning mode =      10
+ Size of preconditioning matrix =   11173
+ In this task, # of adjustments of prec-matrix diagonals:     142
+  728 iter-steps in all in task number   7
+ Final Q=      5165.2490 in the robust mode.
+ Contributions to the obtained value of Q:
+ From main data:     5132.3781  from aux equations:        32.8709
+ POS-Outlier limit (  2.0) exceeded by   259 positive residuals
+ NEG-Outlier limit (  2.0) exceeded by   161 negative residuals
+ True final main-data Q, when not downweighting outliers, =      9037.8493
+      LICENCE: Ing. D.Mooibroek, Natl.Inst.Publ.Health&Env RIVM, The Netherlands
+ 
+  **** Executing section "postproc" of ME-2 script ***
+ 
+ 
+ 
+  **** Executing section "preproc", preparing initial values for fit ***
+ 
+ 
+ 
+ Starting to process with the same .INI file next task:       8
+ Initial Q (main and aux):     0.11618E+06        344.05
+    5 Qm 19066.60  Qaux 1779.946  g^2 0.1420E+05   Flags CBw:%-CBw,%-CBF:%-:%-;%-
+   10 Qm 7227.471  Qaux 831.6011  g^2 0.1461E+04   Flags CBw:%-;%-:%-CBF:%-:%-
+   15 Qm 6406.212  Qaux 422.9653  g^2 0.4267E+03   Flags :%-CBw:%-:%-:%-:%-
+   20 Qm 6137.468  Qaux 281.1066  g^2 0.3244E+03   Flags :%-:%-:%-:%-:%-
+   25 Qm 6001.483  Qaux 188.5997  g^2 0.2583E+03   Flags :%-:%-:%-:%-:%-
+   30 Qm 5867.824  Qaux 115.9102  g^2 0.5145E+02   Flags :%-:%-3 C-G AresCBF:%-:%-:%-
+   35 Qm 5724.052  Qaux 74.08680  g^2 0.3879E+02   Flags ;%-;%-:%-:%-:%-
+   40 Qm 5658.445  Qaux 65.79892  g^2 0.2919E+02   Flags :%-:%-:%-:%-:%-
+   45 Qm 5564.806  Qaux 60.70682  g^2 0.6711E+02   Flags :%-:%-:%-2 C-G AresCBw:%-:%-
+   50 Qm 5490.612  Qaux 51.35114  g^2 0.4958E+02   Flags :%-:%-:%-:%-:%-
+   55 Qm 5450.345  Qaux 49.78900  g^2 0.1163E+03   Flags :%-:%-:%-:%-:%-
+   60 Qm 5366.408  Qaux 47.81393  g^2 0.8886E+02   Flags :%-:%-:%-:%-3 C-G AresCBF:%-
+   65 Qm 5304.546  Qaux 48.62932  g^2 0.1297E+02   Flags :%-;%-;%-:%-:%-
+   70 Qm 5278.716  Qaux 43.55800  g^2 0.8885E+01   Flags :%-:%-:%-:%-:%-
+   75 Qm 5259.784  Qaux 43.89600  g^2 0.9568E+01   Flags :%-:%-:%-:%-:%-
+   80 Qm 5228.099  Qaux 40.00394  g^2 0.9561E+01   Flags 3 C-G AresCBw:%-:%-:%-:%-:%-
+   85 Qm 5216.135  Qaux 39.38472  g^2 0.6862E+01   Flags :%-:%-:%-:%-:%-
+   90 Qm 5204.214  Qaux 39.96101  g^2 0.9315E+01   Flags :%-:%-:%-:%-:%-
+   95 Qm 5173.297  Qaux 39.00354  g^2 0.3054E+01   Flags :%-2 C-G AresCBF:%-:%-:%-:%-
+  100 Qm 5165.781  Qaux 37.89559  g^2 0.1723E+01   Flags :%-:%-:%-:%-:%-
+  105 Qm 5162.277  Qaux 37.26006  g^2 0.7631E+00   Flags :%-:%-:%-:%-:%-
+  110 Qm 5151.552  Qaux 36.58959  g^2 0.8258E+00   Flags :%-:%-3 C-G AresCBw:%-:%-;%-
+  115 Qm 5149.131  Qaux 36.00142  g^2 0.8457E+00   Flags ;%-:%-;%-;%-:%-
+  120 Qm 5147.918  Qaux 35.51560  g^2 0.6973E+00   Flags :%-:%-:%-:%-:%-
+  125 Qm 5140.301  Qaux 35.41155  g^2 0.3463E+00   Flags :%-:%-:%-3 C-G AresCBF:%-:%-
+  130 Qm 5139.895  Qaux 35.04934  g^2 0.1691E+00   Flags ;%-;%-:%-:%-:%-
+  135 Qm 5139.527  Qaux 34.73605  g^2 0.1755E+00   Flags :%-:%-:%-:%-:%-
+  140 Qm 5139.249  Qaux 34.35373  g^2 0.2325E+00   Flags :%-:%-:%-:%-:%-
+  145 Qm 5135.133  Qaux 34.14758  g^2 0.8182E-01   Flags :%-2 C-G AresCBw:%-:%-:%-:%-
+  150 Qm 5135.056  Qaux 33.90596  g^2 0.4407E-01   Flags :%-:%-:%-:%-:%-
+  155 Qm 5135.010  Qaux 33.80319  g^2 0.2742E-01   Flags :%-:%-:%-:%-:%-
+  160 Qm 5133.915  Qaux 33.79633  g^2 0.1834E-01   Flags :%-:%-3 C-G AresCBF:%-:%-;%-
+  165 Qm 5133.876  Qaux 33.73901  g^2 0.1853E-01   Flags ;%-:%-:%-:%-:%-
+ Convergence (small decrease of Q) with level       1
+ when solving task number       8
+  170 Qm 5132.958  Qaux 33.67979  g^2 0.9470E-02   Flags ;%-LevelCBF:%-:%-;%-:%-
+  175 Qm 5132.941  Qaux 33.61631  g^2 0.2282E-01   Flags :%-:%-:%-:%-:%-
+  180 Qm 5132.977  Qaux 33.26423  g^2 0.6252E-01   Flags :%-:%-:%-:%-:%-
+  185 Qm 5132.928  Qaux 33.08134  g^2 0.6031E-01   Flags :%-:%-:%-:%-:%-
+  190 Qm 5132.888  Qaux 33.00064  g^2 0.4110E-01   Flags :%-:%-:%-:%-:%-
+  195 Qm 5132.871  Qaux 33.00881  g^2 0.1799E-01   Flags :%-:%-:%-3 C-G AresCBw:%-:%-
+  200 Qm 5132.863  Qaux 32.95992  g^2 0.1282E-01   Flags :%-;%-:%-:%-:%-
+  205 Qm 5132.869  Qaux 32.93159  g^2 0.3356E-02   Flags :%-:%-:%-:%-:%-
+  210 Qm 5132.859  Qaux 32.92894  g^2 0.2937E-02   Flags :%-:%-:%-:%-:%-
+  215 Qm 5132.863  Qaux 32.91143  g^2 0.2960E-02   Flags :%-:%-:%-:%-:%-
+  220 Qm 5132.870  Qaux 32.88824  g^2 0.4050E-02   Flags :%-:%-:%-:%-:%-
+  225 Qm 5132.864  Qaux 32.88308  g^2 0.1819E-02   Flags :%-:%-:%-:%-:%-
+  230 Qm 5132.857  Qaux 32.88676  g^2 0.7092E-03   Flags :%-:%-:%-:%-:%-
+  235 Qm 5132.866  Qaux 32.87481  g^2 0.5464E-03   Flags :%-:%-:%-:%-:%-
+  240 Qm 5132.856  Qaux 32.88353  g^2 0.4160E-03   Flags :%-:%-:%-:%-:%-
+  245 Qm 5132.599  Qaux 32.89604  g^2 0.1102E-02   Flags :%-2 C-G AresCBw:%-:%-;%-;%-
+  250 Qm 5132.593  Qaux 32.90048  g^2 0.3015E-03   Flags :%-;%-:%-:%-:%-
+  255 Qm 5132.598  Qaux 32.89443  g^2 0.1453E-03   Flags :%-:%-:%-:%-:%-
+  260 Qm 5132.598  Qaux 32.89423  g^2 0.1744E-03   Flags :%-:%-:%-:%-:%-
+  265 Qm 5132.594  Qaux 32.89796  g^2 0.1408E-03   Flags :%-:%-:%-:%-:%-
+  270 Qm 5132.589  Qaux 32.90151  g^2 0.1459E-03   Flags :%-:%-:%-:%-:%-
+  275 Qm 5132.591  Qaux 32.89885  g^2 0.1132E-03   Flags :%-:%-:%-:%-:%-
+  280 Qm 5132.591  Qaux 32.89873  g^2 0.8411E-04   Flags :%-:%-:%-:%-:%-
+  285 Qm 5132.595  Qaux 32.89417  g^2 0.9980E-04   Flags :%-:%-:%-:%-:%-
+  290 Qm 5132.592  Qaux 32.89721  g^2 0.8619E-04   Flags :%-:%-:%-:%-:%-
+  295 Qm 5132.595  Qaux 32.89388  g^2 0.6363E-04   Flags :%-:%-:%-:%-:%-
+  300 Qm 5132.595  Qaux 32.89330  g^2 0.3407E-04   Flags :%-:%-:%-:%-:%-
+  305 Qm 5132.594  Qaux 32.89411  g^2 0.3631E-04   Flags :%-:%-:%-:%-:%-
+  310 Qm 5132.595  Qaux 32.89358  g^2 0.2263E-04   Flags :%-:%-:%-:%-:%-
+  315 Qm 5132.595  Qaux 32.89319  g^2 0.2084E-04   Flags :%-:%-:%-:%-:%-
+ Convergence (small gradient norm) with level       2
+ when solving task number       8
+  320 Qm 5132.410  Qaux 32.90198  g^2 0.2703E-02   Flags :%-:%-:%-LevelCBF:%-:%-
+  325 Qm 5132.406  Qaux 32.90547  g^2 0.9869E-04   Flags ;%-;%-;%-;%-;%-
+  330 Qm 5132.406  Qaux 32.90476  g^2 0.1409E-04   Flags :%-:%-:%-:%-;%-
+ Iteration finished, convergence achieved for task number       8
+ Gradient norm 0.9459E-05 is below its convergence limit 0.1000E-04
+ Preconditioning mode =      10
+ Size of preconditioning matrix =   11173
+ In this task, # of adjustments of prec-matrix diagonals:      67
+  334 iter-steps in all in task number   8
+ Final Q=      5165.3113 in the robust mode.
+ Contributions to the obtained value of Q:
+ From main data:     5132.4070  from aux equations:        32.9043
+ POS-Outlier limit (  2.0) exceeded by   260 positive residuals
+ NEG-Outlier limit (  2.0) exceeded by   161 negative residuals
+ True final main-data Q, when not downweighting outliers, =      9039.8234
+      LICENCE: Ing. D.Mooibroek, Natl.Inst.Publ.Health&Env RIVM, The Netherlands
+ 
+  **** Executing section "postproc" of ME-2 script ***
+ 
+ 
+ 
+  **** Executing section "preproc", preparing initial values for fit ***
+ 
+ 
+ 
+ Starting to process with the same .INI file next task:       9
+ Initial Q (main and aux):     0.12300E+06        346.57
+    5 Qm 23295.24  Qaux 2110.507  g^2 0.1512E+05   Flags CBw:%-CBw:%-CBF:%-:%-;%-
+   10 Qm 8041.745  Qaux 1181.674  g^2 0.7849E+03   Flags CBw:%-;%-;%-CBF:%-:%-
+   15 Qm 7281.147  Qaux 613.9983  g^2 0.3905E+03   Flags :%-CBw:%-:%-:%-:%-
+   20 Qm 6959.868  Qaux 229.4039  g^2 0.2072E+03   Flags :%-:%-;%-:%-:%-
+   25 Qm 6770.088  Qaux 151.7162  g^2 0.9042E+02   Flags :%-:%-:%-:%-:%-
+   30 Qm 6663.507  Qaux 107.7933  g^2 0.6870E+02   Flags :%-:%-3 C-G AresCBF:%-:%-;%-
+   35 Qm 6471.496  Qaux 96.91811  g^2 0.5279E+02   Flags ;%-;%-;%-;%-;%-
+   40 Qm 6355.904  Qaux 94.62461  g^2 0.5722E+02   Flags ;%-;%-:%-:%-:%-
+   45 Qm 6247.235  Qaux 77.76208  g^2 0.7864E+02   Flags :%-:%-:%-2 C-G AresCBw:%-:%-
+   50 Qm 6130.392  Qaux 59.86061  g^2 0.6476E+02   Flags :%-:%-:%-:%-:%-
+   55 Qm 6051.555  Qaux 55.02469  g^2 0.7132E+02   Flags :%-:%-:%-:%-:%-
+   60 Qm 5995.230  Qaux 52.68966  g^2 0.7493E+02   Flags :%-:%-:%-:%-3 C-G AresCBF:%-
+   65 Qm 5934.473  Qaux 46.48954  g^2 0.1390E+02   Flags :%-:%-;%-;%-;%-
+   70 Qm 5892.624  Qaux 43.75691  g^2 0.1538E+02   Flags ;%-;%-;%-:%-:%-
+   75 Qm 5843.520  Qaux 49.63966  g^2 0.3317E+02   Flags ;%-:%-;%-:%-:%-
+   80 Qm 5819.754  Qaux 46.29713  g^2 0.1354E+02   Flags :%-:%-3 C-G AresCBw:%-:%-:%-
+   85 Qm 5795.747  Qaux 41.28461  g^2 0.1180E+02   Flags :%-:%-:%-:%-:%-
+   90 Qm 5772.959  Qaux 42.07238  g^2 0.1331E+02   Flags :%-:%-:%-:%-:%-
+   95 Qm 5735.389  Qaux 43.13650  g^2 0.5888E+01   Flags :%-:%-:%-2 C-G AresCBF:%-:%-
+  100 Qm 5723.843  Qaux 39.21703  g^2 0.4114E+01   Flags :%-:%-:%-:%-:%-
+  105 Qm 5718.968  Qaux 38.99457  g^2 0.1420E+01   Flags :%-:%-:%-:%-:%-
+  110 Qm 5705.388  Qaux 38.56020  g^2 0.6589E+01   Flags :%-:%-:%-:%-3 C-G AresCBw:%-
+  115 Qm 5699.732  Qaux 37.52503  g^2 0.1501E+01   Flags :%-;%-;%-;%-;%-
+  120 Qm 5697.013  Qaux 35.91174  g^2 0.9243E+00   Flags ;%-;%-;%-;%-:%-
+  125 Qm 5696.287  Qaux 35.22753  g^2 0.5963E+00   Flags :%-;%-;%-:%-:%-
+  130 Qm 5667.283  Qaux 35.70739  g^2 0.1015E+01   Flags 3 C-G AresCBF:%-;%-;%-;%-;%-
+  135 Qm 5663.583  Qaux 35.49033  g^2 0.1303E+01   Flags ;%-:%-;%-;%-;%-
+  140 Qm 5662.261  Qaux 34.68664  g^2 0.1045E+01   Flags :%-:%-:%-:%-;%-
+  145 Qm 5622.786  Qaux 34.56241  g^2 0.1374E+01   Flags ;%-2 C-G AresCBw:%-;%-;%-;%-
+  150 Qm 5614.219  Qaux 34.58734  g^2 0.1105E+01   Flags ;%-;%-;%-;%-;%-
+  155 Qm 5612.712  Qaux 34.12011  g^2 0.5836E+00   Flags ;%-;%-;%-;%-;%-
+  160 Qm 5564.228  Qaux 34.33810  g^2 0.2400E+01   Flags ;%-;%-3 C-G AresCBF;%-;%-;%-
+  165 Qm 5552.705  Qaux 35.82346  g^2 0.1204E+01   Flags ;%-;%-;%-;%-;%-
+  170 Qm 5544.992  Qaux 34.57605  g^2 0.2482E+01   Flags ;%-;%-;%-;%-;%-
+  175 Qm 5473.149  Qaux 34.28003  g^2 0.3288E+02   Flags ;%-;%-;%-;%-3 C-G AresCBw:%-
+  180 Qm 5438.933  Qaux 36.32757  g^2 0.4726E+01   Flags ;%-;%-;%-;%-;%-
+  185 Qm 5418.128  Qaux 36.67064  g^2 0.4245E+01   Flags ;%-;%-;%-;%-;%-
+  190 Qm 5398.541  Qaux 34.73845  g^2 0.1591E+02   Flags ;%-;%-;%-;%-;%-
+  195 Qm 5285.550  Qaux 34.54929  g^2 0.7204E+01   Flags ;%-;%-2 C-G AresCBF:%-;%-;%-
+  200 Qm 5253.277  Qaux 35.23956  g^2 0.6264E+01   Flags ;%-;%-;%-;%-;%-
+  205 Qm 5229.243  Qaux 36.23210  g^2 0.1005E+02   Flags ;%-;%-:%-:%-:%-
+  210 Qm 5194.113  Qaux 37.69683  g^2 0.3224E+02   Flags :%-:%-:%-:%-3 C-G AresCBw:%-
+  215 Qm 5174.906  Qaux 36.82280  g^2 0.3095E+01   Flags :%-:%-:%-:%-:%-
+  220 Qm 5165.301  Qaux 36.11703  g^2 0.2738E+01   Flags :%-;%-;%-:%-:%-
+  225 Qm 5161.104  Qaux 35.04200  g^2 0.2592E+01   Flags :%-:%-:%-:%-:%-
+  230 Qm 5145.859  Qaux 35.04402  g^2 0.1113E+01   Flags 3 C-G AresCBF:%-:%-;%-:%-:%-
+  235 Qm 5143.935  Qaux 34.13732  g^2 0.5229E+00   Flags :%-:%-:%-:%-:%-
+  240 Qm 5143.171  Qaux 33.81590  g^2 0.3482E+00   Flags ;%-;%-:%-:%-:%-
+  245 Qm 5137.368  Qaux 33.70487  g^2 0.2265E+00   Flags :%-2 C-G AresCBw:%-:%-;%-;%-
+  250 Qm 5137.059  Qaux 33.58429  g^2 0.8995E-01   Flags :%-:%-:%-:%-:%-
+  255 Qm 5136.968  Qaux 33.44126  g^2 0.5306E-01   Flags :%-:%-:%-:%-:%-
+  260 Qm 5133.253  Qaux 33.45635  g^2 0.1134E+00   Flags :%-:%-3 C-G AresCBF:%-:%-;%-
+  265 Qm 5133.167  Qaux 33.45385  g^2 0.1253E-01   Flags ;%-;%-:%-:%-:%-
+  270 Qm 5133.235  Qaux 33.30532  g^2 0.2864E-01   Flags :%-;%-:%-:%-:%-
+  275 Qm 5133.188  Qaux 33.20942  g^2 0.4876E-01   Flags :%-:%-:%-:%-:%-
+  280 Qm 5133.151  Qaux 33.07169  g^2 0.5351E-01   Flags :%-:%-:%-:%-:%-
+  285 Qm 5133.148  Qaux 32.93789  g^2 0.4425E-01   Flags :%-:%-:%-:%-:%-
+  290 Qm 5133.184  Qaux 32.84196  g^2 0.2778E-01   Flags :%-:%-:%-:%-:%-
+  295 Qm 5132.763  Qaux 32.88178  g^2 0.9200E-02   Flags 3 C-G AresCBw:%-:%-;%-;%-:%-
+  300 Qm 5132.736  Qaux 32.86049  g^2 0.8445E-02   Flags :%-:%-:%-:%-:%-
+  305 Qm 5132.741  Qaux 32.82675  g^2 0.4010E-02   Flags :%-:%-:%-:%-:%-
+  310 Qm 5132.746  Qaux 32.79951  g^2 0.5132E-02   Flags :%-:%-:%-:%-:%-
+  315 Qm 5132.665  Qaux 32.80590  g^2 0.1357E+00   Flags :%-:%-:%-:%-2 C-G AresCBF:%-
+  320 Qm 5132.623  Qaux 32.81476  g^2 0.2113E-02   Flags :%-;%-;%-;%-;%-
+ Convergence (small decrease of Q) with level       1
+ when solving task number       9
+  325 Qm 5132.525  Qaux 32.83531  g^2 0.1449E-01   Flags :%-:%-:%-LevelCBF:%-:%-
+  330 Qm 5132.510  Qaux 32.84359  g^2 0.7854E-03   Flags ;%-;%-;%-;%-;%-
+  335 Qm 5132.513  Qaux 32.83782  g^2 0.4112E-03   Flags :%-:%-:%-:%-:%-
+  340 Qm 5132.514  Qaux 32.83368  g^2 0.4235E-03   Flags :%-:%-:%-:%-:%-
+  345 Qm 5132.507  Qaux 32.83759  g^2 0.6076E-03   Flags :%-:%-:%-:%-:%-
+  350 Qm 5132.500  Qaux 32.84243  g^2 0.4245E-03   Flags :%-:%-:%-:%-:%-
+  355 Qm 5132.507  Qaux 32.83386  g^2 0.4025E-03   Flags :%-:%-:%-:%-:%-
+  360 Qm 5132.506  Qaux 32.83362  g^2 0.2405E-03   Flags :%-:%-:%-:%-:%-
+  365 Qm 5132.511  Qaux 32.82766  g^2 0.1604E-03   Flags :%-:%-:%-:%-:%-
+  370 Qm 5132.507  Qaux 32.83117  g^2 0.1307E-03   Flags :%-:%-:%-:%-:%-
+  375 Qm 5132.511  Qaux 32.82681  g^2 0.2487E-03   Flags :%-:%-:%-:%-:%-
+  380 Qm 5132.509  Qaux 32.82799  g^2 0.1976E-03   Flags :%-:%-:%-:%-:%-
+  385 Qm 5132.510  Qaux 32.82624  g^2 0.9794E-04   Flags :%-:%-:%-:%-:%-
+  390 Qm 5132.509  Qaux 32.82691  g^2 0.9740E-04   Flags :%-:%-:%-:%-:%-
+  395 Qm 5132.508  Qaux 32.82721  g^2 0.5372E-04   Flags :%-:%-:%-:%-:%-
+  400 Qm 5132.508  Qaux 32.82672  g^2 0.2760E-04   Flags :%-:%-:%-:%-:%-
+  405 Qm 5132.322  Qaux 32.83063  g^2 0.5073E-01   Flags :%-:%-:%-:%-3 C-G UresCBF:%-
+  410 Qm 5132.304  Qaux 32.83953  g^2 0.3455E-03   Flags :%-;%-;%-;%-;%-
+  415 Qm 5132.298  Qaux 32.84452  g^2 0.4070E-04   Flags ;%-:%-:%-:%-:%-
+  420 Qm 5132.275  Qaux 32.84660  g^2 0.3769E-01   Flags :%-:%-:%-:%-3 C-G XresCBw:%-
+  425 Qm 5132.262  Qaux 32.85430  g^2 0.1852E-03   Flags :%-;%-;%-;%-;%-
+  430 Qm 5132.257  Qaux 32.85854  g^2 0.2572E-04   Flags ;%-:%-:%-:%-:%-
+  435 Qm 5132.258  Qaux 32.85790  g^2 0.1238E-04   Flags :%-:%-:%-:%-:%-
+ Convergence (small gradient norm) with level       2
+ when solving task number       9
+  440 Qm 5132.263  Qaux 32.86689  g^2 0.1127E-02   Flags :%-:%-LevelCBF:%-:%-;%-
+  445 Qm 5132.256  Qaux 32.87226  g^2 0.7014E-04   Flags ;%-;%-;%-;%-:%-
+  450 Qm 5132.258  Qaux 32.87067  g^2 0.1119E-04   Flags :%-:%-:%-:%-:%-
+ Iteration finished, convergence achieved for task number       9
+ Gradient norm 0.9425E-05 is below its convergence limit 0.1000E-04
+ Preconditioning mode =      10
+ Size of preconditioning matrix =   11173
+ In this task, # of adjustments of prec-matrix diagonals:      71
+  453 iter-steps in all in task number   9
+ Final Q=      5165.1291 in the robust mode.
+ Contributions to the obtained value of Q:
+ From main data:     5132.2581  from aux equations:        32.8710
+ POS-Outlier limit (  2.0) exceeded by   260 positive residuals
+ NEG-Outlier limit (  2.0) exceeded by   161 negative residuals
+ True final main-data Q, when not downweighting outliers, =      9040.7086
+      LICENCE: Ing. D.Mooibroek, Natl.Inst.Publ.Health&Env RIVM, The Netherlands
+ 
+  **** Executing section "postproc" of ME-2 script ***
+ 
+ 
+ 
+  **** Executing section "preproc", preparing initial values for fit ***
+ 
+ 
+ 
+ Starting to process with the same .INI file next task:      10
+ Initial Q (main and aux):      89470.            360.05
+    5 Qm 20121.05  Qaux 1143.552  g^2 0.1125E+05   Flags CBw:%-CBw:%-CBF:%-:%-:%-
+   10 Qm 7278.736  Qaux 648.5278  g^2 0.5916E+03   Flags CBw:%-;%-;%-CBF:%-;%-
+   15 Qm 6482.739  Qaux 242.8066  g^2 0.2214E+03   Flags ;%-CBw:%-;%-:%-:%-
+   20 Qm 6207.191  Qaux 128.9057  g^2 0.9608E+02   Flags :%-:%-:%-:%-:%-
+   25 Qm 6074.859  Qaux 97.29032  g^2 0.5487E+02   Flags :%-:%-:%-:%-:%-
+   30 Qm 5885.467  Qaux 81.11290  g^2 0.4050E+02   Flags :%-:%-3 C-G AresCBF:%-;%-;%-
+   35 Qm 5798.731  Qaux 66.27516  g^2 0.2740E+02   Flags ;%-;%-:%-:%-:%-
+   40 Qm 5715.180  Qaux 66.53454  g^2 0.4198E+02   Flags :%-:%-:%-:%-:%-
+   45 Qm 5563.165  Qaux 63.38067  g^2 0.6192E+02   Flags :%-:%-:%-2 C-G AresCBw:%-:%-
+   50 Qm 5433.332  Qaux 52.89676  g^2 0.5298E+02   Flags ;%-;%-;%-;%-:%-
+   55 Qm 5372.327  Qaux 51.78780  g^2 0.7527E+02   Flags :%-:%-:%-:%-:%-
+   60 Qm 5334.637  Qaux 50.51733  g^2 0.5850E+02   Flags :%-:%-:%-:%-3 C-G AresCBF:%-
+   65 Qm 5296.913  Qaux 43.85321  g^2 0.7196E+01   Flags ;%-:%-:%-:%-:%-
+   70 Qm 5273.313  Qaux 41.57727  g^2 0.9928E+01   Flags :%-:%-:%-:%-:%-
+   75 Qm 5259.115  Qaux 41.22098  g^2 0.1186E+02   Flags :%-:%-:%-:%-:%-
+   80 Qm 5247.286  Qaux 37.85232  g^2 0.8162E+01   Flags 3 C-G AresCBw:%-:%-:%-:%-:%-
+   85 Qm 5234.135  Qaux 37.76032  g^2 0.6735E+01   Flags :%-:%-:%-:%-:%-
+   90 Qm 5223.135  Qaux 38.19061  g^2 0.7302E+01   Flags :%-;%-;%-:%-:%-
+   95 Qm 5220.124  Qaux 36.81568  g^2 0.3310E+01   Flags :%-2 C-G AresCBF:%-:%-:%-;%-
+  100 Qm 5184.850  Qaux 38.08686  g^2 0.6144E+01   Flags ;%-;%-;%-;%-;%-
+  105 Qm 5172.217  Qaux 37.75582  g^2 0.4998E+01   Flags ;%-;%-:%-;%-:%-
+  110 Qm 5181.241  Qaux 36.74509  g^2 0.4228E+01   Flags :%-:%-3 C-G AresCBw:%-:%-:%-
+  115 Qm 5163.889  Qaux 38.65892  g^2 0.6331E+01   Flags :%-:%-:%-:%-:%-
+  120 Qm 5153.782  Qaux 36.33823  g^2 0.5935E+01   Flags :%-:%-:%-:%-:%-
+  125 Qm 5148.193  Qaux 36.86322  g^2 0.2963E+01   Flags :%-:%-:%-3 C-G AresCBF:%-;%-
+  130 Qm 5135.990  Qaux 35.69997  g^2 0.2080E+01   Flags :%-:%-:%-:%-:%-
+  135 Qm 5133.072  Qaux 35.00704  g^2 0.5088E+00   Flags :%-:%-:%-:%-:%-
+  140 Qm 5134.425  Qaux 35.08029  g^2 0.2885E+01   Flags :%-:%-:%-:%-2 C-G AresCBw:%-
+  145 Qm 5132.572  Qaux 34.93216  g^2 0.3380E+00   Flags :%-:%-:%-:%-:%-
+  150 Qm 5131.910  Qaux 34.79870  g^2 0.1616E+00   Flags :%-:%-:%-:%-:%-
+  155 Qm 5131.568  Qaux 34.82116  g^2 0.7390E-01   Flags :%-:%-:%-:%-:%-
+  160 Qm 5132.107  Qaux 34.99558  g^2 0.7315E-01   Flags 3 C-G AresCBF:%-:%-:%-:%-:%-
+  165 Qm 5131.916  Qaux 34.88792  g^2 0.5227E-01   Flags :%-:%-:%-:%-:%-
+  170 Qm 5131.585  Qaux 34.95963  g^2 0.5709E-01   Flags :%-:%-:%-:%-:%-
+  175 Qm 5131.570  Qaux 35.00575  g^2 0.1000E+00   Flags :%-:%-:%-3 C-G AresCBw:%-:%-
+  180 Qm 5131.517  Qaux 34.85290  g^2 0.5382E-01   Flags :%-:%-:%-:%-:%-
+  185 Qm 5131.527  Qaux 34.73197  g^2 0.3544E-01   Flags :%-:%-:%-:%-:%-
+  190 Qm 5131.425  Qaux 34.73603  g^2 0.2673E-01   Flags :%-:%-:%-:%-:%-
+  195 Qm 5131.984  Qaux 34.63704  g^2 0.1353E-01   Flags :%-2 C-G AresCBF:%-:%-:%-:%-
+  200 Qm 5131.988  Qaux 34.53765  g^2 0.2214E-01   Flags :%-:%-:%-:%-:%-
+ Convergence (small decrease of Q) with level       1
+ when solving task number      10
+  205 Qm 5132.156  Qaux 34.54614  g^2 0.1022E-01   Flags LevelCBF:%-:%-:%-:%-:%-
+  210 Qm 5132.130  Qaux 34.48217  g^2 0.2950E-01   Flags :%-:%-:%-:%-:%-
+  215 Qm 5132.191  Qaux 34.01174  g^2 0.1460E+00   Flags :%-:%-:%-:%-:%-
+  220 Qm 5132.360  Qaux 33.32174  g^2 0.1930E+00   Flags :%-:%-:%-:%-:%-
+  225 Qm 5132.398  Qaux 33.05715  g^2 0.2169E+00   Flags :%-:%-:%-:%-,%-
+  230 Qm 5132.722  Qaux 32.96761  g^2 0.1264E+00   Flags :%-:%-:%-:%-3 C-G AresCBw:%-
+  235 Qm 5132.599  Qaux 32.87790  g^2 0.5657E-01   Flags :%-:%-:%-:%-:%-
+  240 Qm 5132.501  Qaux 32.89680  g^2 0.9615E-02   Flags :%-:%-:%-:%-:%-
+  245 Qm 5132.491  Qaux 32.88759  g^2 0.3160E-02   Flags :%-:%-:%-:%-:%-
+  250 Qm 5132.289  Qaux 32.93599  g^2 0.1057E-02   Flags 3 C-G AresCBw:%-:%-:%-:%-:%-
+  255 Qm 5132.276  Qaux 32.93845  g^2 0.2335E-02   Flags :%-:%-:%-:%-:%-
+  260 Qm 5132.256  Qaux 32.94883  g^2 0.1332E-02   Flags :%-:%-:%-:%-:%-
+  265 Qm 5132.259  Qaux 32.94001  g^2 0.1331E-02   Flags :%-:%-:%-:%-:%-
+  270 Qm 5132.260  Qaux 32.93368  g^2 0.1112E-02   Flags :%-:%-:%-:%-:%-
+  275 Qm 5132.248  Qaux 32.94152  g^2 0.1201E-02   Flags :%-:%-:%-:%-:%-
+  280 Qm 5132.260  Qaux 32.92422  g^2 0.1323E-02   Flags :%-:%-:%-:%-:%-
+  285 Qm 5132.273  Qaux 32.90652  g^2 0.8949E-03   Flags :%-:%-:%-:%-:%-
+  290 Qm 5132.278  Qaux 32.90016  g^2 0.4899E-03   Flags :%-:%-:%-:%-:%-
+  295 Qm 5132.274  Qaux 32.90281  g^2 0.3085E-03   Flags :%-:%-:%-:%-:%-
+  300 Qm 5132.273  Qaux 32.90281  g^2 0.4255E-03   Flags :%-:%-:%-:%-:%-
+  305 Qm 5132.262  Qaux 32.91174  g^2 0.6672E-03   Flags :%-:%-:%-:%-:%-
+  310 Qm 5132.270  Qaux 32.90200  g^2 0.6486E-03   Flags :%-:%-:%-:%-:%-
+  315 Qm 5132.261  Qaux 32.90956  g^2 0.3333E-03   Flags :%-:%-:%-:%-:%-
+  320 Qm 5132.265  Qaux 32.90533  g^2 0.1247E-03   Flags :%-:%-:%-;%-:%-
+  325 Qm 5132.261  Qaux 32.90925  g^2 0.1147E-03   Flags :%-:%-:%-:%-:%-
+  330 Qm 5132.401  Qaux 32.90736  g^2 0.1813E-03   Flags :%-2 C-G UresCBF:%-:%-:%-;%-
+  335 Qm 5132.397  Qaux 32.91095  g^2 0.5718E-04   Flags :%-:%-;%-:%-:%-
+  340 Qm 5132.398  Qaux 32.90991  g^2 0.6629E-04   Flags :%-:%-:%-:%-:%-
+  345 Qm 5132.448  Qaux 32.91685  g^2 0.1085E-03   Flags :%-3 C-G XresCBw:%-:%-:%-;%-
+  350 Qm 5132.445  Qaux 32.91938  g^2 0.1982E-04   Flags ;%-;%-;%-:%-:%-
+  355 Qm 5132.446  Qaux 32.91790  g^2 0.4318E-04   Flags :%-:%-:%-:%-:%-
+  360 Qm 5132.446  Qaux 32.91804  g^2 0.7768E-04   Flags :%-:%-:%-:%-:%-
+  365 Qm 5132.446  Qaux 32.91758  g^2 0.3762E-04   Flags :%-:%-:%-:%-:%-
+  370 Qm 5132.445  Qaux 32.91888  g^2 0.1097E-04   Flags :%-:%-:%-:%-:%-
+ Convergence (small gradient norm) with level       2
+ when solving task number      10
+  375 Qm 5132.484  Qaux 32.92346  g^2 0.6558E-04   Flags :%-LevelCBF:%-:%-:%-;%-
+  380 Qm 5132.482  Qaux 32.92556  g^2 0.1068E-04   Flags ;%-;%-;%-;%-:%-
+ Iteration finished, convergence achieved for task number      10
+ Gradient norm 0.7911E-05 is below its convergence limit 0.1000E-04
+ Preconditioning mode =      10
+ Size of preconditioning matrix =   11173
+ In this task, # of adjustments of prec-matrix diagonals:      83
+  381 iter-steps in all in task number  10
+ Final Q=      5165.4077 in the robust mode.
+ Contributions to the obtained value of Q:
+ From main data:     5132.4823  from aux equations:        32.9254
+ POS-Outlier limit (  2.0) exceeded by   259 positive residuals
+ NEG-Outlier limit (  2.0) exceeded by   161 negative residuals
+ True final main-data Q, when not downweighting outliers, =      9037.8963
+      LICENCE: Ing. D.Mooibroek, Natl.Inst.Publ.Health&Env RIVM, The Netherlands
+ 
+  **** Executing section "postproc" of ME-2 script ***
+ 
+ 
+
+ Run history on  DATE: 2022 11 28  TIME: 11 46 18.926
+ Routine,  Count1,  Count2,  Accumulated Time of Routine
+ SE_equs   19242   19242       1.742
+ iterall      10      10      16.449
+ C-G1_wg     248     248       1.401
+ dosubgr    4736    4736       0.278
+ Stepdir    4736    4736       1.064
+ C-G2...    4736    4736       2.468
+ Do_step    4736    4736       2.869
+ Ending.    4736    4736       0.148
+ C-G1...    4488    4488       3.579
+ inpoutp     942     942       0.195
+    ME-2 optimized for Pentium 4. Compiled by Gnu fortran.
+ 
+ 
+
+
+
+

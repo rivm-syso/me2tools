@@ -1,0 +1,44 @@
+Package: me2tools
+Type: Package
+Title: Tools for processing the input and output of the Multilineair Engine version 2 (ME-2) and MetCor
+Version: 0.1.0
+Authors@R: c(
+    person("Dennis", "Mooibroek", email = "dennis.mooibroek@rivm.nl", role = c("aut", "cre")),
+    person("Uwayemi", "Sofowote", email = "uwayemi.sofowote@ontario.ca", role = c("aut")))
+Description: Read the outcome of the Multilineair Engine version 2 (ME-2) into R. Also export, import and plot the MetCor results.
+Depends:
+    R (>= 3.5.0)
+Imports:
+    cli,
+    crayon,
+    broom,
+    classInt,
+    dplyr,
+    ggplot2,
+    ggspatial,
+    ggtext,
+    lubridate,
+    openair,
+    pals,
+    purrr,
+    raster,
+    readr,
+    readxl,
+    rgdal,
+    rnaturalearth,
+    rnaturalearthdata,
+    sf,
+    stringr,
+    terra,
+    tibble,
+    tidyterra,
+    tidyr
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.1
+Roxygen: list(markdown = TRUE)
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
