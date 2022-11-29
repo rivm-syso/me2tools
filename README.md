@@ -193,4 +193,4 @@ This projects is licensed using the Open Source GPL-3 license, please see the [l
 
 Contributions of any kind are most welcome, however, [issues](https://github.com/rivm-syso/me2tools/issues) and [pull requests](https://github.com/rivm-syso/me2tools/pulls) are the preferred ways of sharing them.
 
-Please note that **me2tools** uses a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By contributing to this project, you agree to abide by its terms.
+Please note that the **me2tools** project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.
