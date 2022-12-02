@@ -101,7 +101,7 @@ epa_plot_profile <- function(F_matrix,
     cli::cli_abort(c(
       "{.var factor} column not detected:",
       "i" = "The F-matrix should contain a {.var factor} column.",
-      "x" = "Did you forget to enable {.var tidy_output when reading the F-matrix}?"
+      "x" = "Did you forget to enable {.var tidy_output} when reading the F-matrix?"
     ))
   }
 
