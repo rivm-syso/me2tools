@@ -403,9 +403,10 @@ temporal_contributions <- function(mydata,
 
     # create the colors
     iqrColor <- adjustcolor(myColors, alpha.f = 0.5)
-    iqrColor <- rep(iqrColor, each = nrow(box.data) / ngroup)
 
-    medianColor <- rep(myColors, each = nrow(box.data) / ngroup)
+    iqrColor <- rep(iqrColor[1], each = nrow(box.data))
+
+    medianColor <- rep(myColors[1], each = nrow(box.data))
 
     # add colored segments to plot
     box.plot <- box.plot +
@@ -530,7 +531,7 @@ temporal_contributions <- function(mydata,
     "plot" = default.plot,
     "box.plot" = box.plot,
     "data" = mydata,
-    "plot.data" = plot.data,
+    "box.data" = box.data,
     call = match.call()
   )
   class(output) <- "me2tools"
