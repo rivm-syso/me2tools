@@ -21,6 +21,10 @@
 #'    \item \code{show.scale} A logical evaluating to TRUE or FALSE indicating
 #'      whether a scale should be shown at the lower right hand side of the
 #'      plot. Defaults to \code{TRUE}.
+#'    \item \code{show.compass} A logical evaluating to TRUE or FALSE indicating
+#'      whether a compass pointing to the North should be shown at the lower 
+#'      right hand side of the plot. If there is also a scale present, the
+#'      compass will be added on top of the scale. Defaults to \code{TRUE}.
 #'    \item \code{center.from} How to calculate the center point. Can be one of
 #'      \dQuote{raster}, \dQuote{receptor} or \dQuote{manual}. In case of
 #'      \dQuote{manual} the \code{center.point} has to be provided as well.
@@ -139,6 +143,7 @@ metcor_plot_options <- function() {
     "plot" = list(
       "panel.background" = "#97dbf2",
       "show.scale" = TRUE,
+      "show.compass" = TRUE,
       "center.from" = "raster",
       "center.point" = c("lon" = 0, "lat" = 0),
       "zoom.level" = 1,

@@ -730,6 +730,29 @@ metcor_plot <- function(metcor.raster,
         text_cex = 1
       )
   }
+  
+  # add compass if needed
+  if (metcor.plot.options$plot$show.compass == TRUE) {
+    if (verbose) {
+      message("- adding compass")
+    }
+    if (metcor.plot.options$plot$show.scale == TRUE) {
+      # add some padding
+      metcor.plot <- metcor.plot +
+        ggspatial::annotation_north_arrow(location = "br", 
+                                          #which_north = "true", 
+                                          style = ggspatial::north_arrow_fancy_orienteering,
+                                          pad_x = unit(0.0, "in"), 
+                                          pad_y = unit(0.2, "in"))
+    } else {
+      metcor.plot <- metcor.plot +
+        ggspatial::annotation_north_arrow(location = "br", 
+                                          #which_north = "true", 
+                                          style = ggspatial::north_arrow_fancy_orienteering,
+                                          pad_x = unit(0.0, "in"), 
+                                          pad_y = unit(0.0, "in"))
+    }
+  }
 
   # add annotation if not NA
   if (!identical(metcor.plot.options$annotation$text, NA)) {

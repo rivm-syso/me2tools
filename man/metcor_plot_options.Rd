@@ -28,6 +28,10 @@ formatted code.
 \item \code{show.scale} A logical evaluating to TRUE or FALSE indicating
 whether a scale should be shown at the lower right hand side of the
 plot. Defaults to \code{TRUE}.
+\item \code{show.compass} A logical evaluating to TRUE or FALSE indicating
+whether a compass pointing to the North should be shown at the lower
+right hand side of the plot. If there is also a scale present, the
+compass will be added on top of the scale. Defaults to \code{TRUE}.
 \item \code{center.from} How to calculate the center point. Can be one of
 \dQuote{raster}, \dQuote{receptor} or \dQuote{manual}. In case of
 \dQuote{manual} the \code{center.point} has to be provided as well.
