@@ -9,6 +9,7 @@ temporal_contributions(
   factor = NA,
   type = "default",
   group = NA,
+  facet = NA,
   na.rm = TRUE,
   xlab = NA,
   ylab = NA,
@@ -20,6 +21,7 @@ temporal_contributions(
   point.size = 1.25,
   line.size = 1,
   facet.col = 2,
+  facet.scales = "fixed",
   ...
 )
 }
@@ -28,7 +30,8 @@ temporal_contributions(
 Must include a \code{date} field and at least one variable (factor
 contributions) to plot.}
 
-\item{factor}{Name of variable to plot, typically a factor from the G-matrix.}
+\item{factor}{Name of variable to plot, typically a factor contribution
+from the G-matrix.}
 
 \item{type}{\code{type} determines how the data are split i.e. conditioned,
 and then plotted. The \dQuote{default} will produce a single plot using the
@@ -45,8 +48,12 @@ directly. This offers great flexibility for understanding the variation of
 different variables and how they depend on one another.}
 
 \item{group}{This sets the grouping variable to be used. For example, if a
-data frame had a column \code{site} setting \code{group = "site"} will
-plot all sites together in each panel.}
+data frame had a column \code{year} setting \code{group = "year"} will
+plot the years as individual box plots.}
+
+\item{facet}{This sets the faceting variable to be used. For example, if a
+data frame had a column \code{site} setting \code{facet = "site"} will
+plot all sites individually in their own panels.}
 
 \item{na.rm}{A logical evaluating to TRUE or FALSE indicating whether NA
 values should be stripped before the computation proceeds.}
@@ -83,7 +90,12 @@ the P05 and P95 for the whisker limits).}
 
 \item{line.size}{The size of the lines. Defaults to 1.}
 
-\item{facet.col}{The number of columns for the faceted plot. Defaults to 2.}
+\item{facet.col}{The number of columns for the faceted plot. If the number of
+columns is set to 1, the faceting will be in rows only. Defaults to 2.}
+
+\item{facet.scales}{Should scales be fixed ("fixed", the default), free
+("free"), or free in one dimension ("free_x", "free_y")? See also
+ggplot2::facet_wrap or ggplot2::facet_grid.}
 
 \item{...}{Other parameters passed onto \code{cutData}. For example, in the
 case of \code{cutData} the option \code{hemisphere = "southern"}.}
