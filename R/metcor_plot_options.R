@@ -25,6 +25,10 @@
 #'      whether a compass pointing to the North should be shown at the lower 
 #'      right hand side of the plot. If there is also a scale present, the
 #'      compass will be added on top of the scale. Defaults to \code{TRUE}.
+#'    \item \code{compass.which_north} Has two options: \dQuote{grid} results 
+#'      in a north arrow always pointing up; \dQuote{true} always points to the 
+#'      north pole from whichever corner of the map the north arrow is in. 
+#'      Defaults to \dQuote{grid}
 #'    \item \code{center.from} How to calculate the center point. Can be one of
 #'      \dQuote{raster}, \dQuote{receptor} or \dQuote{manual}. In case of
 #'      \dQuote{manual} the \code{center.point} has to be provided as well.
@@ -83,8 +87,9 @@
 #'   \item \code{layers.before} can contain a list with several simple feature
 #'     (SF) layers that are plotted below the MetCor results. Each item in the
 #'     list should contain a list with \dQuote{data}: dataframe with SF;
-#'     \dQuote{color} color of the outline of the shapes; \dQuote{size} size of
-#'     the outline of the shape; \dQuote{fill} the fill color of the shape.
+#'     \dQuote{color} color of the outline of the shapes; \dQuote{linewidth} 
+#'     size of the outline of the shape; \dQuote{fill} the fill color of the 
+#'     shape.
 #'   \item \code{layers.afer} can contain a list with several SF layers that
 #'     are plotted on top of the MetCor results. See \code{layers.before} for
 #'     requirements.
@@ -144,6 +149,7 @@ metcor_plot_options <- function() {
       "panel.background" = "#97dbf2",
       "show.scale" = TRUE,
       "show.compass" = TRUE,
+      "compass.which_north" = "grid",
       "center.from" = "raster",
       "center.point" = c("lon" = 0, "lat" = 0),
       "zoom.level" = 1,

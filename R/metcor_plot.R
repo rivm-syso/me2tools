@@ -561,13 +561,13 @@ metcor_plot <- function(metcor.raster,
     ggplot2::geom_sf(
       data = graticules,
       color = "#0083b3",
-      size = 0.05,
+      linewidth = 0.05,
       fill = NA
     ) +
     ggplot2::geom_sf(
       data = world,
       color = "#6e6e6e",
-      size = 0.05,
+      linewidth = 0.05,
       fill = "white"
     )
 
@@ -580,7 +580,12 @@ metcor_plot <- function(metcor.raster,
     if (verbose) {
       message("- adding additional provided layers before raster")
     }
+    num.layer <- 0
     for (layer in metcor.plot.options$raster$layers.before) {
+      num.layer <- num.layer + 1
+      if (verbose) {
+        message(paste("    + layer", num.layer))
+      } 
       # check that the layer is a sf object
       if ("sf" %in% class(layer$data)) {
         if(layer$special == TRUE) {
@@ -602,7 +607,7 @@ metcor_plot <- function(metcor.raster,
             ggplot2::geom_sf(
               data = layer$data,
               color = layer$color,
-              size = layer$size,
+              linewidth = layer$linewidth,
               fill = layer$fill
             )
         }
@@ -678,7 +683,7 @@ metcor_plot <- function(metcor.raster,
           ggplot2::geom_sf(
             data = layer$data,
             color = layer$color,
-            size = layer$size,
+            linewidth = layer$linewidth,
             fill = layer$fill
           )
       } else {
@@ -740,14 +745,14 @@ metcor_plot <- function(metcor.raster,
       # add some padding
       metcor.plot <- metcor.plot +
         ggspatial::annotation_north_arrow(location = "br", 
-                                          #which_north = "true", 
+                                          which_north = metcor.plot.options$plot$compass.which_north, 
                                           style = ggspatial::north_arrow_fancy_orienteering,
                                           pad_x = unit(0.0, "in"), 
                                           pad_y = unit(0.2, "in"))
     } else {
       metcor.plot <- metcor.plot +
         ggspatial::annotation_north_arrow(location = "br", 
-                                          #which_north = "true", 
+                                          which_north = metcor.plot.options$plot$compass.which_north, 
                                           style = ggspatial::north_arrow_fancy_orienteering,
                                           pad_x = unit(0.0, "in"), 
                                           pad_y = unit(0.0, "in"))

@@ -32,6 +32,10 @@ plot. Defaults to \code{TRUE}.
 whether a compass pointing to the North should be shown at the lower
 right hand side of the plot. If there is also a scale present, the
 compass will be added on top of the scale. Defaults to \code{TRUE}.
+\item \code{compass.which_north} Has two options: \dQuote{grid} results
+in a north arrow always pointing up; \dQuote{true} always points to the
+north pole from whichever corner of the map the north arrow is in.
+Defaults to \dQuote{grid}
 \item \code{center.from} How to calculate the center point. Can be one of
 \dQuote{raster}, \dQuote{receptor} or \dQuote{manual}. In case of
 \dQuote{manual} the \code{center.point} has to be provided as well.
