@@ -7,25 +7,34 @@
 epa_plot_profile(
   F_matrix,
   xlabel.angle = 45,
-  xlabel.vjust = 0.5,
-  xlabel.hjust = 0.5,
+  xlabel.vjust = NA,
+  xlabel.hjust = NA,
   xlabel.order = NA,
+  xlabel.top.bottom = FALSE,
   y_min = -5,
   ylab = "Concentration of species",
   ylab2 = "EV (\%)",
   xlab = "Species",
   auto.text = TRUE,
   x.font.size = 10,
+  x.n.dodge = 1,
   bar.color = "cadetblue3",
   bar.width = 0.9,
-  point.color = "red",
+  point.color = "firebrick2",
   point.size = 3,
+  point.shape = 19,
   lollipops = TRUE,
-  disp.errorbar = FALSE,
-  disp.errorbar.color = "orange",
+  errorbar = "none",
+  errorbar.color = "darkorange2",
+  errorbar.width = 0.45,
+  errorbar.size = 1,
+  errorbar.point.size = 3,
   show.plot = TRUE,
   expand.mult = c(0.015, 0.005),
-  rm.grid.x = FALSE
+  rm.grid.x = FALSE,
+  perc.x.interval = 20,
+  cp.run.type = "base_run",
+  ...
 )
 }
 \arguments{
@@ -37,14 +46,27 @@ results from a single run should be provided.}
 your labels are long, \code{45} degrees can be useful, which is also the
 default.}
 
-\item{xlabel.vjust}{vertical justification of the xlabel, between [0,1].}
+\item{xlabel.vjust}{vertical justification of the xlabel, between [0,1].
+The default is NA, so that ggplot uses some heuristics to pick the best
+value for this parameter. Any other value is processed by changing theme
+settings,}
 
-\item{xlabel.hjust}{horizontal justification of the xlabel, between [0,1].}
+\item{xlabel.hjust}{horizontal justification of the xlabel, between [0,1].
+The default is NA, so that ggplot uses some heuristics to pick the best
+value for this parameter. Any other value is processed by changing theme
+settings,}
 
 \item{xlabel.order}{The labels containing the species on the x-axis are
 plotted based on the factor levels. This parameter can contain the levels
 and the species are transformed to factors using these levels. N.B. these
 levels can contain code for expressions.}
+
+\item{xlabel.top.bottom}{Boolean used for splitting the xlabels into a top
+and bottom section. The odd indices of the labels will presented at the top
+using a secondary axis, whereas the even indices of the labels are
+presented at the bottom. This works especially well with plots containing
+a lot of species. Instead of using a small font size, the labels are
+distributed to the top and bottom. Default setting is \code{FALSE}}
 
 \item{y_min}{The minimum value for the y-axis, which is used to cut-off the
 logarithmic scale. The default setting is \code{-5}, which corresponds to
@@ -63,27 +85,46 @@ the \sQuote{2} in NO2.}
 
 \item{x.font.size}{The size of the xtick labels. Defaults to 10.}
 
+\item{x.n.dodge}{The number of rows on the x-axis that should be used to
+render the labels. Useful for labels that otherwise overlap, for example
+with a large number of species. Also allows for a larger
+\sQuote{x.font.size}.}
+
 \item{bar.color}{Provide the fill color for the concentration based bars on
 the logarithmic scale. Is set to \sQuote{steelblue}, as an approximation of
 the color used in EPA-PMF program.}
 
-\item{bar.width}{The width of the bar, expressed as a value between 0-1.}
+\item{bar.width}{The width of the bar, expressed as a value between [0,1].}
 
 \item{point.color}{The fill color for the explained variation, with the
 default being \sQuote{red}, similar to the color used in the EPA-PMF
 program.}
 
-\item{point.size}{The size of the point, typically the bar.width / 2}
+\item{point.size}{The size of the point of the explained variation,
+defaults to 3.}
+
+\item{point.shape}{The shape of the point of the explained variation. The
+default is 19 (circle). Using 15 will produce a square.}
 
 \item{lollipops}{Should the dot representing the EV be extended with a line,
 representing so it looks more like a lollipop? Defaults to \code{TRUE}.}
 
-\item{disp.errorbar}{If the F_matrix contains the DISP min and max values,
-the error bars can be plotted in this plot. Note that with this option the
-species concentration is replaced by the DISP average.}
+\item{errorbar}{If the F_matrix contains the results of the error estimates,
+the error bars for one of those estimates can be plotted in this plot.
+Valid options are \sQuote{none} (default), \sQuote{DISP}, \sQuote{BS} or
+\sQuote{BSDISP}.}
 
-\item{disp.errorbar.color}{The color used for plotting the error bars for
+\item{errorbar.color}{The color used for plotting the error bars for
 DISP.}
+
+\item{errorbar.width}{The width of the upper and lower bars for displaying
+the error estimate. Defaults to 0.45 (i.e., the bar.width / 2)}
+
+\item{errorbar.size}{The line size of the errorbars. Defaults to 1.}
+
+\item{errorbar.point.size}{The size of the point used to display the
+average/median error estimates when \code{cp.run.type} is set as
+\sQuote{base_run}.}
 
 \item{show.plot}{A logical argument evaluating to TRUE or FALSE indicating
 whether the plot should be shown as default.}
@@ -98,6 +139,18 @@ and the right by \code{expand.mult[2]}.}
 there are a lot of species, causing the vertical grid lines to clutter the
 plot. If set to \code{TRUE} these lines are removed. Defaults to
 \code{FALSE}.}
+
+\item{perc.x.interval}{The interval used for the x.ticks on the secondary
+axis. The default is 20, leading to intervals of
+\dQuote{c(0, 20, 40, 60, 80, 100)}. The value 25 leads to
+\dQuote{c(0, 25, 50, 75, 100)}.}
+
+\item{cp.run.type}{The concentration and percentage of species are typically
+plotted using the \sQuote{base_run} values (default). However, by changing
+this variable to \sQuote{DISP_avg}, \sQuote{BS_median} or
+\sQuote{BSDISP_avg}, these values (if available) are plotted.}
+
+\item{...}{Other parameters, for example renamed parameters.}
 }
 \value{
 me2tools list containing the ggplot2 with segment and point
@@ -109,3 +162,68 @@ Function to plot PMF factor profiles using data from PMFR (using
 \code{\link[pmfr]{tidy_pmf_profiles}}) or from the ME2tools package using
 \code{\link{me2_read_F}} in the same way as in EPA-PMF.
 }
+\section{Input format of the F-matrix}{
+
+
+The format of the F-matrix as a tibble consists of seven columns. These
+seven columns are
+\itemize{
+\item \code{model_type}: a descriptive column with the name of the model
+used to calculate the results (e.g., \dQuote{ME-2} or \dQuote{EPA-PMF})
+\item \code{factor_profile}: consists of at least two different
+profiles: \dQuote{concentration_of_species} and
+\dQuote{percentage_of_species_sum}. The concentration profile is in
+concentration units, whereas the percentage is in percentages [0,100].
+\item \code{model_run}: integer to denote the model run, for example used
+when reading the results of multiple run. When processing only the
+\dQuote{base_run} from RPA-PMF this column can be set to 1.
+\item \code{species}: the name of the species
+\item \code{run_type}: consists of different types of runs. There should
+be at least one set of data with different \code{factor_profiles} for
+\code{run_type = "base_run"}. Other options for run_type are
+\dQuote{DISP_min}, \dQuote{DISP_avg} and \dQuote{DISP_max} for DISP
+results. For BS results the options are \dQuote{BS_P05},
+\dQuote{BS_median} and \dQuote{BS_P95}, and for BSDISP results options
+\dQuote{"BSDISP_P05}, \dQuote{BSDISP_avg} and \dQuote{BSDISP_P95} can
+be used.
+\item \code{factor}: the names of the resolved factors.
+\item \code{value} : the values, either in concentration units or
+percentages.
+}
+
+A typical plot of the F-matrix shows the concentration of each species on a
+log scale (bars), and the percentage of species sum in a percentage scale
+(points). By default, the values associated with both \code{factor_profiles}
+\dQuote{concentration_of_species} and \dQuote{percentage_of_species_sum} for
+the \code{run_type} \dQuote{base_run} is used.
+}
+
+\section{Plotting of errorbars}{
+
+
+The function is capable of plotting errorbars for the results of either DISP,
+BS or BSDISP. Only one set of results is supported at this point. To use
+this feature, \code{errorbar} should be set to one of the options
+\dQuote{DISP}, \dQuote{BS} or \dQuote{BSDISP} (default is \dQuote{none}).
+Based on the selection the function automatically checks for and uses the
+provided data.
+
+When using \code{cp.run.type = "base_run"}, meaning that the concentration
+bars and the percentage dots are plotted using the values associated with
+the base_run, plotting the error bars only require the run_type of
+\dQuote{DISP_min} and \dQuote{DISP_max} for DISP; the \dQuote{BS_P05} and
+\dQuote{BS_P95} for BS and \dQuote{BSDISP_P05} and \dQuote{BSDISP_P95} for
+BSDISP, respectively. The average/median of the error estimates is plotted
+using \dQuote{DISP_avg}, \dQuote{BS_median}, or \dQuote{BSDISP_avg} and
+displayed as a point within the error bars when
+\code{cp.run.type = "base_run"}. The selected \code{run_type} should at least
+be available in concentration units (i.e.,
+\code{factor_profile = "concentration_of_species"}).
+
+The concentration bars and percentage dots can also be plotted based on the
+average/median of the error estimates. In that case it is important that for
+each average/median of the error estimates also the percentages of the sum
+of the species (i.e., \code{factor_profile = "percentage_of_species_sum"})
+is present in the F-matrix.
+}
+
