@@ -25,6 +25,22 @@ List containing various options that are applicable for the total plot.
 With countries this color is mostly applied to the sea. As such the
 default value for this color is \dQuote{#97dbf2}, but can be any HEX
 formatted code.
+\item \code{world.background} is the fill color of the natural earth
+world country polygons. The default value for this color
+is \dQuote{white} or \dQuote{#ffffff}, but can be any HEX formatted
+code.
+\item \code{world.outline} is the color of the outline of the natural
+earth world country polygons. The default color is set to
+\dQuote{#6e6e6e}, but can be any HEX formatted code.
+\item \code{world.linewidth} is the width of the outline of the worldmap.
+The default value for the width is set at \dQuote{0.05}.
+\item \code{graticules.outline} is the color of the graticules, also known
+as the network of lines on the map that delineate the degrees of
+latitude and longitude. The default color for the lines is set to
+\dQuote{#0083b3}, which matches with the default
+\code{panel.background}.
+\item \code{graticules.linewidth} is the width of the outline of the
+graticules, with a default setting of \dQuote{0.05}.
 \item \code{show.scale} A logical evaluating to TRUE or FALSE indicating
 whether a scale should be shown at the lower right hand side of the
 plot. Defaults to \code{TRUE}.
@@ -48,6 +64,7 @@ larger zoom. Can be overridden by \code{xlim} and \code{ylim}.
 \code{NA}.
 \item \code{ylim} limits of y, used for manual zoom. Defaults are set to
 \code{NA}.
+
 }
 }
 
@@ -95,8 +112,9 @@ breaks.
 \item \code{layers.before} can contain a list with several simple feature
 (SF) layers that are plotted below the MetCor results. Each item in the
 list should contain a list with \dQuote{data}: dataframe with SF;
-\dQuote{color} color of the outline of the shapes; \dQuote{size} size of
-the outline of the shape; \dQuote{fill} the fill color of the shape.
+\dQuote{color} color of the outline of the shapes; \dQuote{linewidth}
+size of the outline of the shape; \dQuote{fill} the fill color of the
+shape.
 \item \code{layers.afer} can contain a list with several SF layers that
 are plotted on top of the MetCor results. See \code{layers.before} for
 requirements.

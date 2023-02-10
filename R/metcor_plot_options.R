@@ -18,6 +18,22 @@
 #'      With countries this color is mostly applied to the sea. As such the
 #'      default value for this color is \dQuote{#97dbf2}, but can be any HEX
 #'      formatted code.
+#'    \item \code{world.background} is the fill color of the natural earth 
+#'      world country polygons. The default value for this color
+#'      is \dQuote{white} or \dQuote{#ffffff}, but can be any HEX formatted 
+#'      code.
+#'    \item \code{world.outline} is the color of the outline of the natural 
+#'      earth world country polygons. The default color is set to 
+#'      \dQuote{#6e6e6e}, but can be any HEX formatted code.
+#'    \item \code{world.linewidth} is the width of the outline of the worldmap.
+#'      The default value for the width is set at \dQuote{0.05}.
+#'    \item \code{graticules.outline} is the color of the graticules, also known
+#'      as the network of lines on the map that delineate the degrees of 
+#'      latitude and longitude. The default color for the lines is set to 
+#'      \dQuote{#0083b3}, which matches with the default 
+#'      \code{panel.background}.
+#'    \item \code{graticules.linewidth} is the width of the outline of the
+#'      graticules, with a default setting of \dQuote{0.05}.
 #'    \item \code{show.scale} A logical evaluating to TRUE or FALSE indicating
 #'      whether a scale should be shown at the lower right hand side of the
 #'      plot. Defaults to \code{TRUE}.
@@ -41,6 +57,7 @@
 #'      \code{NA}.
 #'    \item \code{ylim} limits of y, used for manual zoom. Defaults are set to
 #'      \code{NA}.
+#'      
 #' }
 #'
 #' # Receptor options
@@ -150,6 +167,11 @@ metcor_plot_options <- function() {
       "show.scale" = TRUE,
       "show.compass" = TRUE,
       "compass.which_north" = "grid",
+      "world.background" = "white",
+      "world.outline" = "#6e6e6e",
+      "world.linewidth" = 0.05,
+      "graticules.outline" = "#0083b3",
+      "graticules.linewidth" = 0.05,
       "center.from" = "raster",
       "center.point" = c("lon" = 0, "lat" = 0),
       "zoom.level" = 1,

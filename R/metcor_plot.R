@@ -109,7 +109,7 @@ metcor_plot <- function(metcor.raster,
       if (metcor.plot.options$raster$discrete.breaks == "automatic") {
         # calculate based on the max of the raster
         metcor.plot.options$raster$discrete.breaks <- c(
-          0,
+          raster.minmax[1, 1],
           raster.minmax[2, 1] / 16,
           raster.minmax[2, 1] / 8,
           raster.minmax[2, 1] / 4,
@@ -560,15 +560,15 @@ metcor_plot <- function(metcor.raster,
   metcor.plot <- ggplot2::ggplot() +
     ggplot2::geom_sf(
       data = graticules,
-      color = "#0083b3",
-      linewidth = 0.05,
+      color = metcor.plot.options$plot$graticules.outline,
+      linewidth = metcor.plot.options$plot$graticules.linewidth,
       fill = NA
     ) +
     ggplot2::geom_sf(
       data = world,
-      color = "#6e6e6e",
-      linewidth = 0.05,
-      fill = "white"
+      color = metcor.plot.options$plot$world.outline,
+      linewidth = metcor.plot.options$plot$world.linewidth,
+      fill = metcor.plot.options$plot$world.background
     )
 
 
