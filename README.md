@@ -136,6 +136,9 @@ metcor_plot_options$plot$zoom.level <- 2
 # The legend title can contain HTML and markdown code
 metcor_plot_options$legend$title <- "PM<sub>10</sub>"
 
+# Point the compass to the true north (default setting is "grid")
+metcor_plot_options$plot$compass.which_north <- "true"
+
 # Plot the new figure.
 metcor_plot(metcor.raster = metcor_grid,
             metcor.plot.options = metcor_plot_options)
@@ -174,8 +177,10 @@ metcor_plot(metcor.raster = metcor_grid,
 
 For more detailed usage examples see: 
 
-Mooibroek, D., Sofowote, U.M., Hopke, P.K. (2022) [Source apportionment of ambient PM<sub>10</sub> collected at three sites in an urban-industrial area with multi-time resolution factor analyses](https://doi.org/10.1016/j.scitotenv.2022.157981)
+- Mooibroek, D., Sofowote, U.M., Hopke, P.K. (2022) [Source apportionment of ambient PM<sub>10</sub> collected at three sites in an urban-industrial area with multi-time resolution factor analyses](https://doi.org/10.1016/j.scitotenv.2022.157981).
 *Science of The Total Environment*, Volume 850. 
+- Sofowote, U.M., Mooibroek, D., Healy, R.M., Debosz, J., Munoz, A., Hopke, P.K. (2023) [Source apportionment of ambient PM<sub>2.5</sub> in an industrialized city using dispersion-normalized, multi-time resolution factor analyses](https://doi.org/10.1016/j.envpol.2023.121281).
+*Environmental Pollution*, Volume 323.
 
 ## See also
 
