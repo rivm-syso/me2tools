@@ -588,30 +588,13 @@ metcor_plot <- function(metcor.raster,
       } 
       # check that the layer is a sf object
       if ("sf" %in% class(layer$data)) {
-        if(layer$special == TRUE) {
-          metcor.plot <- metcor.plot +
-            ggplot2::geom_sf(
-              data = layer$data,
-              ggplot2::aes(color = sum),
-              alpha = 0.8,
-              fill = NA,
-              size = 1,
-              stroke = 1.5,
-              shape = 21
-            ) +
-            ggplot2::scale_color_gradient(low = "#008000", high = "#000000", guide="none") +
-            ggnewscale::new_scale_color()
-
-        } else {
-          metcor.plot <- metcor.plot +
-            ggplot2::geom_sf(
-              data = layer$data,
-              color = layer$color,
-              linewidth = layer$linewidth,
-              fill = layer$fill
-            )
-        }
-
+        metcor.plot <- metcor.plot +
+          ggplot2::geom_sf(
+            data = layer$data,
+            color = layer$color,
+            linewidth = layer$linewidth,
+            fill = layer$fill
+          )
       } else {
         cli::cli_abort(c(
           "{.var layers.before} must contain Simple Feature (SF) or SpatRaster objects:",
