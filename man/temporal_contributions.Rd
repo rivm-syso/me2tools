@@ -20,6 +20,8 @@ temporal_contributions(
   whisk.lim = NULL,
   point.size = 1.25,
   line.size = 1,
+  ribbon.alpha = c(0.25, 0.25),
+  box.alpha = 0.5,
   facet.col = 2,
   facet.scales = "fixed",
   ...
@@ -89,6 +91,14 @@ the P05 and P95 for the whisker limits).}
 \item{point.size}{The size of the points. Defaults to 1.25.}
 
 \item{line.size}{The size of the lines. Defaults to 1.}
+
+\item{ribbon.alpha}{The transparency of the ribbons. Defaults to
+\code{c(0.25, 0.25)}, meaning that the min/max and IQR ribbons both have a
+transparency of 0.25. Since the IQR is on top the min/max, the
+transparency of the IQR is effectively 0.50 in this case.}
+
+\item{box.alpha}{The transparency of the IQR box in the box-whisker plot.
+The default setting is 0.5.}
 
 \item{facet.col}{The number of columns for the faceted plot. If the number of
 columns is set to 1, the faceting will be in rows only. Defaults to 2.}

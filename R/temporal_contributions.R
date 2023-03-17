@@ -52,6 +52,12 @@
 #'   the P05 and P95 for the whisker limits).
 #' @param point.size The size of the points. Defaults to 1.25.
 #' @param line.size The size of the lines. Defaults to 1.
+#' @param ribbon.alpha The transparency of the ribbons. Defaults to 
+#'   \code{c(0.25, 0.25)}, meaning that the min/max and IQR ribbons both have a 
+#'   transparency of 0.25. Since the IQR is on top the min/max, the 
+#'   transparency of the IQR is effectively 0.50 in this case.
+#' @param box.alpha The transparency of the IQR box in the box-whisker plot.
+#'   The default setting is 0.5. 
 #' @param facet.col The number of columns for the faceted plot. If the number of
 #'   columns is set to 1, the faceting will be in rows only. Defaults to 2.
 #' @param facet.scales Should scales be fixed ("fixed", the default), free 
@@ -97,6 +103,8 @@ temporal_contributions <- function(mydata,
                                    whisk.lim = NULL,
                                    point.size = 1.25,
                                    line.size = 1,
+                                   ribbon.alpha = c(0.25, 0.25),
+                                   box.alpha = 0.5,
                                    facet.col = 2,
                                    facet.scales = "fixed",
                                    ...) {
@@ -202,7 +210,7 @@ temporal_contributions <- function(mydata,
 
   # create the colors
   myColors <- openair::openColours(cols, nfacet)
-  boxplotColor <- grDevices::adjustcolor(myColors, alpha.f = 0.5)
+  boxplotColor <- grDevices::adjustcolor(myColors, alpha.f = box.alpha)
 
   # cut the data
   mydata <- openair::cutData(mydata, type = vars)
@@ -269,8 +277,8 @@ temporal_contributions <- function(mydata,
         data = box.data,
         ggplot2::aes(x = !!sym(type), y = middle, group = 1)
       ) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymin = ymin, ymax = ymax), fill = myColors, colour = NA, alpha = 0.25) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper), fill = myColors, colour = NA, alpha = 0.25) +
+        ggplot2::geom_ribbon(ggplot2::aes(ymin = ymin, ymax = ymax), fill = myColors, colour = NA, alpha = ribbon.alpha[[1]]) +
+        ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper), fill = myColors, colour = NA, alpha = ribbon.alpha[[2]]) +
         ggplot2::geom_line(colour = myColors, size = line.size) +
         ggplot2::geom_point(colour = myColors, size = point.size) +
         ggplot2::theme_bw() +
@@ -295,7 +303,7 @@ temporal_contributions <- function(mydata,
         ggplot2::theme(legend.position = "none")
   
       # create the colors
-      iqrColor <- adjustcolor(myColors, alpha.f = 0.5)
+      iqrColor <- adjustcolor(myColors, alpha.f = box.alpha)
       # add colored segments to plot
       box.plot <- box.plot +
         ggplot2::geom_segment(
@@ -457,7 +465,7 @@ temporal_contributions <- function(mydata,
         ggplot2::theme(legend.position = "none")
 
       # create the colors
-      iqrColor <- adjustcolor(myColors, alpha.f = 0.5)
+      iqrColor <- adjustcolor(myColors, alpha.f = box.alpha)
       # add colored segments to plot
       box.plot <- box.plot +
         ggplot2::geom_segment(
@@ -565,8 +573,8 @@ temporal_contributions <- function(mydata,
     ) +
       ggplot2::scale_fill_manual(values = myColors) +
       ggplot2::scale_color_manual(values = myColors) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = ymin, ymax = ymax), alpha = 0.25) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper), alpha = 0.25) +
+      ggplot2::geom_ribbon(ggplot2::aes(ymin = ymin, ymax = ymax), alpha = ribbon.alpha[[1]]) +
+      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper), alpha = ribbon.alpha[[2]]) +
       ggplot2::geom_line(ggplot2::aes(colour = !!sym(facet)), size = line.size) +
       ggplot2::geom_point(ggplot2::aes(colour = !!sym(facet)), size = point.size) +
       ggplot2::theme_bw() +
@@ -607,7 +615,7 @@ temporal_contributions <- function(mydata,
     }
 
     # create the colors
-    iqrColor <- adjustcolor(myColors, alpha.f = 0.5)
+    iqrColor <- adjustcolor(myColors, alpha.f = box.alpha)
 
     iqrColor <- rep(iqrColor[1], each = nrow(box.data))
 
