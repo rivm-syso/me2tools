@@ -33,7 +33,7 @@ install_github("rivm-syso/me2tools")
 ## Development
 
 This project is still under active development while we try to generalize the research code into usable functions. As such, features currently available in this package are still being enhanced and new features are continually getting added or updated. 
-Breaking changes of existing code will be documented in [NEWS](NEWS.md). If you encounter any bugs, have a suggestion or improvement please [open an issue](https://github.com/rivm-syso/me2tools/issues) or a [pull requests](https://github.com/rivm-syso/me2tools/pulls).
+Breaking changes of existing code will be documented in [NEWS](NEWS.md). If you encounter any bugs, have a suggestion or improvement please [open an issue](https://github.com/rivm-syso/me2tools/issues) or a [pull request](https://github.com/rivm-syso/me2tools/pulls).
 
 ## Example usage
 
