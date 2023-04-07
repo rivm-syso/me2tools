@@ -38,6 +38,7 @@ tidy_me2_factors <- function(F_matrix,
 
   ## add PMFR identifier columns
   F_matrix <- F_matrix %>%
+    mutate(identifier = factor(identifier, levels = identifier)) %>%
     dplyr::rename(species = identifier) %>%
     tibble::add_column(model_type = "ME-2", .before = "species") %>%
     tibble::add_column(factor_profile = "concentration_of_species", .before = "species") %>%

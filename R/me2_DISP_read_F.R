@@ -205,7 +205,6 @@ me2_DISP_read_F <- function(me2_disp_txt_file,
   }
 
   f_matrix <- f_matrix %>%
-    mutate(identifier = factor(identifier, levels = identifier)) %>%
     tidy_me2_factors(
       run_number = 1,
       dc_species = dc_species,

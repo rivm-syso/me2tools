@@ -205,7 +205,6 @@ me2_read_F <- function(me2_txt_file,
 
     # setting the species as factor, preserving the initial order.
     f_matrix.tmp <- f_matrix.tmp %>%
-      mutate(identifier = factor(identifier, levels = identifier)) %>%
       tidy_me2_factors(run_number = run.number,
                        dc_species = dc_species,
                        tidy_output = tidy_output) %>%
