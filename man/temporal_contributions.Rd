@@ -24,6 +24,7 @@ temporal_contributions(
   box.alpha = 0.5,
   facet.col = 2,
   facet.scales = "fixed",
+  facet.parse.label = FALSE,
   ...
 )
 }
@@ -106,6 +107,10 @@ columns is set to 1, the faceting will be in rows only. Defaults to 2.}
 \item{facet.scales}{Should scales be fixed ("fixed", the default), free
 ("free"), or free in one dimension ("free_x", "free_y")? See also
 ggplot2::facet_wrap or ggplot2::facet_grid.}
+
+\item{facet.parse.label}{Should the labels be parsed using the
+\code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
+will use subscript on the labels shown in the facet.}
 
 \item{...}{Other parameters passed onto \code{cutData}. For example, in the
 case of \code{cutData} the option \code{hemisphere = "southern"}.}

@@ -63,6 +63,9 @@
 #' @param facet.scales Should scales be fixed ("fixed", the default), free 
 #'   ("free"), or free in one dimension ("free_x", "free_y")? See also 
 #'   ggplot2::facet_wrap or ggplot2::facet_grid.
+#' @param facet.parse.label Should the labels be parsed using the 
+#'   \code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
+#'   will use subscript on the labels shown in the facet.
 #' @param ... Other parameters passed onto \code{cutData}. For example, in the
 #'   case of \code{cutData} the option \code{hemisphere = "southern"}.
 #'
@@ -107,6 +110,7 @@ temporal_contributions <- function(mydata,
                                    box.alpha = 0.5,
                                    facet.col = 2,
                                    facet.scales = "fixed",
+                                   facet.parse.label = FALSE,
                                    ...) {
 
   ## extra.args setup
@@ -515,8 +519,18 @@ temporal_contributions <- function(mydata,
     ) +
       ggplot2::geom_boxplot(color = "black", outlier.shape = NA, na.rm = TRUE) +
       ggplot2::theme_bw() +
-      ggplot2::theme(legend.position = "none") +
-      ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col)
+      ggplot2::theme(legend.position = "none")
+    
+    # parse facet labels
+    if (facet.parse.label) {
+      box.plot <- box.plot+
+        ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col, labeller = label_parsed)
+    } else {
+      box.plot <- box.plot+
+        ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col)
+    }
+    
+    
 
     # then we grab the data
     box.data <- ggplot2::layer_data(box.plot)
@@ -583,11 +597,23 @@ temporal_contributions <- function(mydata,
 
     # apply wrapping
     if (facet.col == 1) {
-      default.plot <- default.plot +
-        ggplot2::facet_grid(rows = vars(!!sym(facet)), scales = facet.scales)
+      # parse facet labels
+      if (facet.parse.label) {
+        default.plot <- default.plot +
+          ggplot2::facet_grid(rows = vars(!!sym(facet)), scales = facet.scales, labeller = label_parsed)
+      } else {
+        default.plot <- default.plot +
+          ggplot2::facet_grid(rows = vars(!!sym(facet)), scales = facet.scales)
+      }
     } else {
-      default.plot <- default.plot +
-        ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col, , scales = facet.scales)
+      # parse facet labels
+      if (facet.parse.label) {
+        default.plot <- default.plot +
+          ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col, , scales = facet.scales, labeller = label_parsed)
+      } else {
+        default.plot <- default.plot +
+          ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col, , scales = facet.scales)
+      }
     }
     
     # add boxplot
@@ -607,11 +633,23 @@ temporal_contributions <- function(mydata,
     
     # apply wrapping
     if (facet.col == 1) {
-      box.plot <- box.plot +
-        ggplot2::facet_grid(rows = vars(!!sym(facet)), scales = facet.scales)
+      # parse facet labels
+      if (facet.parse.label) {
+        box.plot <- box.plot +
+          ggplot2::facet_grid(rows = vars(!!sym(facet)), scales = facet.scales, labeller = label_parsed)
+      } else {
+        box.plot <- box.plot +
+          ggplot2::facet_grid(rows = vars(!!sym(facet)), scales = facet.scales)
+      }
     } else {
-      box.plot <- box.plot +
-        ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col, scales = facet.scales)
+      # parse facet labels
+      if (facet.parse.label) {
+        box.plot <- box.plot +
+          ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col, scales = facet.scales, labeller = label_parsed)
+      } else {
+        box.plot <- box.plot +
+          ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col, scales = facet.scales)
+      }
     }
 
     # create the colors
