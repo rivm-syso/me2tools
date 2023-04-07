@@ -45,11 +45,11 @@
 #'   with a large number of species. Also allows for a larger 
 #'   \sQuote{x.font.size}.
 #' @param bar.color Provide the fill color for the concentration based bars on
-#'   the logarithmic scale. Is set to \sQuote{steelblue}, as an approximation of
-#'   the color used in EPA-PMF program.
+#'   the logarithmic scale. Is set to \sQuote{cadetblue3}, as an approximation 
+#'   of the color used in EPA-PMF program.
 #' @param bar.width The width of the bar, expressed as a value between \[0,1\].
 #' @param point.color The fill color for the explained variation, with the
-#'   default being \sQuote{red}, similar to the color used in the EPA-PMF
+#'   default being \sQuote{firebrick2}, similar to the color used in the EPA-PMF
 #'   program.
 #' @param point.size The size of the point of the explained variation, 
 #'   defaults to 3.
@@ -65,7 +65,7 @@
 #'   DISP.
 #' @param errorbar.width The width of the upper and lower bars for displaying
 #'   the error estimate. Defaults to 0.45 (i.e., the bar.width / 2)
-#' @param errorbar.size The line size of the errorbars. Defaults to 1.
+#' @param errorbar.size The line size of the error bars. Defaults to 1.
 #' @param errorbar.point.size The size of the point used to display the 
 #'   average/median error estimates when \code{cp.run.type} is set as 
 #'   \sQuote{base_run}.
@@ -88,6 +88,9 @@
 #'   plotted using the \sQuote{base_run} values (default). However, by changing
 #'   this variable to \sQuote{DISP_avg}, \sQuote{BS_median} or 
 #'   \sQuote{BSDISP_avg}, these values (if available) are plotted.
+#' @param facet.parse.label Should the labels be parsed using the 
+#'   \code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
+#'   will use subscript on the labels shown in the facet.
 #' @param ... Other parameters, for example renamed parameters.
 #'
 #' @return me2tools list containing the ggplot2 with segment and point
@@ -191,6 +194,7 @@ epa_plot_profile <- function(F_matrix,
                              rm.grid.x = FALSE,
                              perc.x.interval = 20,
                              cp.run.type = "base_run",
+                             facet.parse.label = FALSE,
                              ...) {
 
   # The EPA factor profile plot consists of a dual-axis plot containing the
@@ -213,6 +217,8 @@ epa_plot_profile <- function(F_matrix,
       "i" = "The F-matrix should contain a {.var factor} column.",
       "x" = "Did you forget to enable {.var tidy_output} when reading the F-matrix?"
     ))
+  } else {
+    num.factors <- length(unique(F_matrix$factor))
   }
 
   # check if only one model_run
@@ -286,6 +292,18 @@ epa_plot_profile <- function(F_matrix,
       "i" = "The F-matrix seems to be empty.",
       "x" = "Did you select the correct data for {.var F_matrix}?"
     ))
+  }
+  
+  # check colors
+
+  if (length(bar.color) > 1) {
+    if (length(bar.color) != num.factors) {
+      cli::cli_abort(c(
+        "Not enough bar colors:",
+        "i" = "The number of bar colors needs to be equal to 1 or the number of factors.",
+        "x" = "Did you provide the correct amount of colors in {.var bar.color}?"
+      ))
+    }
   }
 
   #################################################################
@@ -442,7 +460,6 @@ epa_plot_profile <- function(F_matrix,
     error_yavg <- "BSDISP_avg"
   }
 
-
   #################################################################
   ##             Plot preparations (axis breaks etc)             ##
   #################################################################
@@ -496,25 +513,39 @@ epa_plot_profile <- function(F_matrix,
   df <- df %>%
     dplyr::mutate(value = if_else(factor_profile == "percentage_of_species_sum", (value / 100) * (length(seq(y_min, max(breaks_log), 1)) - 1) + y_min, as.double(value)))
 
-
+  
+  ##################################################################
+  ##                          Set colors                          ##
+  ##################################################################
+  plot.df <- df %>%
+    filter(
+      factor_profile == "concentration_of_species",
+      stringr::str_detect(run_type, cp.run.type)
+    )
+  
+  myColors <- tibble("factor" = levels(F_matrix$factor),
+                     "color" = openair::openColours(bar.color, num.factors))
+  
+  myColors <- left_join(plot.df %>% select(factor),
+            myColors,
+            by = "factor")
+  
+  myColors <- myColors[["color"]]
+  
   #################################################################
   ##                         Create plot                         ##
   #################################################################
 
   plot <- ggplot2::ggplot() +
     ggplot2::geom_rect(
-      data = df %>%
-        filter(
-          factor_profile == "concentration_of_species",
-          stringr::str_detect(run_type, cp.run.type)
-        ),
+      data = plot.df,
       ggplot2::aes(
         xmin = numeric_x - (bar.width / 2),
         xmax = numeric_x + (bar.width / 2),
         ymin = y_min, ymax = value
       ),
-      col = bar.color,
-      fill = bar.color
+      col = myColors,
+      fill = myColors
     ) +
     ggplot2::geom_point(ggplot2::aes(x = numeric_x, y = value),
       data = df %>%
@@ -582,9 +613,17 @@ epa_plot_profile <- function(F_matrix,
         )
     }
   }
+  
+  if (facet.parse.label) {
+    plot <- plot +
+      ggplot2::facet_grid(factor ~ ., labeller = label_parsed)  
+    
+  } else {
+    plot <- plot +
+      ggplot2::facet_grid(factor ~ .)  
+  }
 
   plot <- plot +
-    ggplot2::facet_grid(factor ~ .) +
     ggplot2::ylab(ylab) +
     ggplot2::scale_y_continuous(
       limits = c(y_min, max(breaks_log)),

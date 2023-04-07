@@ -34,6 +34,7 @@ epa_plot_profile(
   rm.grid.x = FALSE,
   perc.x.interval = 20,
   cp.run.type = "base_run",
+  facet.parse.label = FALSE,
   ...
 )
 }
@@ -91,13 +92,13 @@ with a large number of species. Also allows for a larger
 \sQuote{x.font.size}.}
 
 \item{bar.color}{Provide the fill color for the concentration based bars on
-the logarithmic scale. Is set to \sQuote{steelblue}, as an approximation of
-the color used in EPA-PMF program.}
+the logarithmic scale. Is set to \sQuote{cadetblue3}, as an approximation
+of the color used in EPA-PMF program.}
 
 \item{bar.width}{The width of the bar, expressed as a value between [0,1].}
 
 \item{point.color}{The fill color for the explained variation, with the
-default being \sQuote{red}, similar to the color used in the EPA-PMF
+default being \sQuote{firebrick2}, similar to the color used in the EPA-PMF
 program.}
 
 \item{point.size}{The size of the point of the explained variation,
@@ -120,7 +121,7 @@ DISP.}
 \item{errorbar.width}{The width of the upper and lower bars for displaying
 the error estimate. Defaults to 0.45 (i.e., the bar.width / 2)}
 
-\item{errorbar.size}{The line size of the errorbars. Defaults to 1.}
+\item{errorbar.size}{The line size of the error bars. Defaults to 1.}
 
 \item{errorbar.point.size}{The size of the point used to display the
 average/median error estimates when \code{cp.run.type} is set as
@@ -149,6 +150,10 @@ axis. The default is 20, leading to intervals of
 plotted using the \sQuote{base_run} values (default). However, by changing
 this variable to \sQuote{DISP_avg}, \sQuote{BS_median} or
 \sQuote{BSDISP_avg}, these values (if available) are plotted.}
+
+\item{facet.parse.label}{Should the labels be parsed using the
+\code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
+will use subscript on the labels shown in the facet.}
 
 \item{...}{Other parameters, for example renamed parameters.}
 }
