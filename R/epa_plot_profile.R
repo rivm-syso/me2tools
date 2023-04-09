@@ -279,7 +279,7 @@ epa_plot_profile <- function(F_matrix,
   # create the plot.data
   df <- F_matrix %>%
     dplyr::mutate(value = dplyr::if_else(factor_profile == "concentration_of_species",
-      dplyr::if_else(log10(value) < y_min, y_min, log10(value)),
+      log10(dplyr::if_else(value < 10^y_min, 10^y_min, value)),
       as.double(value)
     )) %>%
     dplyr::mutate_if(is.numeric, list(~ na_if(., Inf))) %>%
@@ -495,9 +495,7 @@ epa_plot_profile <- function(F_matrix,
     breaks_log <- c(breaks_log, max(breaks_log) + 2)
   }
 
-  labels_log <- unlist(lapply(breaks_log, function(x) {
-    x.c <- paste0(ifelse(x >= 0, "1e+0", "1e-0"), ifelse(x >= 0, x, x * -1))
-  }), use.names = FALSE)
+  labels_log <- paste0("10^", breaks_log)
 
   breaks_percentage <- seq(y_min, max(breaks_log), 1) * (length(seq(y_min, max(breaks_log), 1)) - 1) + y_min
 
@@ -523,8 +521,13 @@ epa_plot_profile <- function(F_matrix,
       stringr::str_detect(run_type, cp.run.type)
     )
   
-  myColors <- tibble("factor" = levels(F_matrix$factor),
-                     "color" = openair::openColours(bar.color, num.factors))
+  if (class(F_matrix$factor) == "factor") {
+    myColors <- tibble("factor" = levels(F_matrix$factor),
+                       "color" = openair::openColours(bar.color, num.factors))
+  } else {
+    myColors <- tibble("factor" = unique(F_matrix$factor),
+                       "color" = openair::openColours(bar.color, num.factors))
+  }
   
   myColors <- left_join(plot.df %>% select(factor),
             myColors,
@@ -628,7 +631,7 @@ epa_plot_profile <- function(F_matrix,
     ggplot2::scale_y_continuous(
       limits = c(y_min, max(breaks_log)),
       breaks = breaks_log,
-      labels = labels_log,
+      labels = parse(text = labels_log),
       sec.axis = ggplot2::sec_axis(
         trans = ~ . * (length(seq(y_min, max(breaks_log), 1)) - 1) + y_min,
         name = ylab2,
