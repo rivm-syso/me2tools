@@ -62,7 +62,11 @@
 #'   Valid options are \sQuote{none} (default), \sQuote{DISP}, \sQuote{BS} or
 #'   \sQuote{BSDISP}.
 #' @param errorbar.color The color used for plotting the error bars for
-#'   DISP.
+#'   DISP. Default is a list with default colors for the BS, DISP and BSDISP
+#'   error bars, based on the colors used in \code{epa_plot_errorsummary}. It
+#'   can also be a single color (i.e., \code{errorbar.color = "darkorange3"}. 
+#'   If the function cannot match the colors, a default color of 
+#'   \sQuote{darkorange3} is applied.
 #' @param errorbar.width The width of the upper and lower bars for displaying
 #'   the error estimate. Defaults to 0.45 (i.e., the bar.width / 2)
 #' @param errorbar.size The line size of the error bars. Defaults to 1.
@@ -185,7 +189,9 @@ epa_plot_profile <- function(F_matrix,
                              point.shape = 19,
                              lollipops = TRUE,
                              errorbar = "none",
-                             errorbar.color = "darkorange2",
+                             errorbar.color = list("BS" = "goldenrod2",
+                                                   "BSDISP" = "green4",
+                                                   "DISP" = "royalblue2"),
                              errorbar.width = 0.45,
                              errorbar.size = 1,
                              errorbar.point.size = 3,
@@ -295,7 +301,6 @@ epa_plot_profile <- function(F_matrix,
   }
   
   # check colors
-
   if (length(bar.color) > 1) {
     if (length(bar.color) != num.factors) {
       cli::cli_abort(c(
@@ -303,6 +308,19 @@ epa_plot_profile <- function(F_matrix,
         "i" = "The number of bar colors needs to be equal to 1 or the number of factors.",
         "x" = "Did you provide the correct amount of colors in {.var bar.color}?"
       ))
+    }
+  }
+  
+  # errorbar colors
+  if (is.list(errorbar.color)) {
+    if (exists(errorbar, where=errorbar.color)) {
+      errorbar.color <- errorbar.color[[errorbar]]
+    } else {
+      errorbar.color <- "darkorange3"
+    }
+  } else {
+    if (length(errorbar.color) != 1) {
+      errorbar.color <- "darkorange3"
     }
   }
 
