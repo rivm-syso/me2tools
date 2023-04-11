@@ -347,6 +347,7 @@ me2_read_dat <- function (me2_dat_file,
 
   output <- list("F_matrix" = F_matrix,
                  "G_matrix" = G_matrix,
+                 "total_mass" = factor_mass,
                  call = match.call())
   class(output) <- "me2tools"
   
