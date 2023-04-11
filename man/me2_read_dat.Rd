@@ -6,7 +6,7 @@
 \usage{
 me2_read_dat(
   me2_dat_file,
-  nrow_factor_mass = NA,
+  factor_mass = NA,
   dates = NA,
   species = NA,
   tidy_output = FALSE,
@@ -18,10 +18,11 @@ me2_read_dat(
 \arguments{
 \item{me2_dat_file}{ME2 output file (.dat), containing the G and F matrices}
 
-\item{nrow_factor_mass}{Which row in the F-matrix should be used to transform
-the G contributions from unity to concentration units. This can also be a
-vector with the same length of the number of factors. In that case, the
-first factor is multiplied with the first item in this vector and so on.
+\item{factor_mass}{What mass from the F-matrix should be used to transform
+the G contributions from unity to concentration units. This parameter can
+be an integer (row number), the name of the species, or vector with the
+same length of the number of factors. In the latter case, the first factor
+is multiplied with the first item in this vector and so on.
 Default: \code{NA}, meaning no G matrix in concentration units are
 calculated.}
 

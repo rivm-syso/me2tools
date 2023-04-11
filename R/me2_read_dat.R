@@ -21,10 +21,11 @@
 #' unique number starting from 1.
 #'
 #' @param me2_dat_file ME2 output file (.dat), containing the G and F matrices
-#' @param nrow_factor_mass Which row in the F-matrix should be used to transform
-#'   the G contributions from unity to concentration units. This can also be a
-#'   vector with the same length of the number of factors. In that case, the
-#'   first factor is multiplied with the first item in this vector and so on.
+#' @param factor_mass What mass from the F-matrix should be used to transform
+#'   the G contributions from unity to concentration units. This parameter can
+#'   be an integer (row number), the name of the species, or vector with the 
+#'   same length of the number of factors. In the latter case, the first factor 
+#'   is multiplied with the first item in this vector and so on.
 #'   Default: \code{NA}, meaning no G matrix in concentration units are
 #'   calculated.
 #' @param dates This vector contains the sampling dates associated with the
@@ -100,7 +101,7 @@
 #' @importFrom utils read.table
 #' 
 me2_read_dat <- function (me2_dat_file,
-                          nrow_factor_mass = NA,
+                          factor_mass = NA,
                           dates = NA,
                           species = NA,
                           tidy_output = FALSE,
@@ -133,7 +134,17 @@ me2_read_dat <- function (me2_dat_file,
 
   listoutput <- lapply(splitfilelines,
                        function(x) utils::read.table(textConnection(paste(x, collapse = "\n"))))
-
+  
+  # check and remove possible blocks with only one line of data
+  drop.item <- c()
+  for(list_index in 1:length(listoutput)) {
+    if (nrow(listoutput[[list_index]]) == 1) {
+      # drop this from the list...
+      drop.item <-c(drop.item, list_index)
+    }
+  }
+  listoutput[drop.item] <- NULL
+  
   ##################################################################
   ##                 Creating necessary variables                 ##
   ##################################################################
@@ -141,9 +152,9 @@ me2_read_dat <- function (me2_dat_file,
   # To make sure we have the right data, we always use the index, not the named
   # number
 
-  pb = utils::txtProgressBar(min = 0, max = length(listoutput), initial = 0)
-  progress_i = 1
-
+  # add a progress bar
+  cli::cli_progress_bar("Reading data", total = length(listoutput))
+  
   num_of_runs <- length(listoutput)/2
   g_indices <- seq(from = 1, to = length(listoutput), by = 2)
   f_indices <- seq(from = 2, to = length(listoutput), by = 2)
@@ -215,8 +226,8 @@ me2_read_dat <- function (me2_dat_file,
       F_matrix <- dplyr::bind_rows(F_matrix, tmp_f_tibble)
     }
     run_number <- run_number+1
-    progress_i <- progress_i+1
-    utils::setTxtProgressBar(pb,progress_i)
+    # update progress bar
+    cli::cli_progress_update()
   }
 
   #################################################################
@@ -281,22 +292,34 @@ me2_read_dat <- function (me2_dat_file,
       }
     }
 
-    ## provide a rownumber of species that is used as total mass.
-    ## To get the corresponding F-factor use run_number on the f_indices
-
-    if (length(nrow_factor_mass)==1) {
-      if (!is.na(nrow_factor_mass)) {
-        factor_mass <- listoutput[[f_indices[run_number]]][nrow_factor_mass,]
+    if (length(factor_mass)==1) {
+      if (!is.na(factor_mass)) {
+        if (is.integer(factor_mass)) {
+          factor_mass <- listoutput[[f_indices[run_number]]][factor_mass,]  
+        } else if (is.character(factor_mass)) {
+          # get the F_matrix for the current run_number
+          current.F <- F_matrix %>% 
+            filter(factor_profile == "concentration_of_species",
+                   model_run == run_number,
+                   species == factor_mass)
+          factor_mass <- current.F$value
+        } else {
+          cli::cli_abort(c(
+            "Variable should be integer or character:",
+            "i" = "{.var factor_mass} with length {1} should be an integer or character.",
+            "x" = "Type of length 1 should be integer or character."
+          ))
+        }
       } else {
         factor_mass <- NA
       }
     } else {
-      if (length(nrow_factor_mass)==num_factors) {
-        factor_mass <- nrow_factor_mass
+      if (length(factor_mass)==num_factors) {
+        factor_mass <- factor_mass
       } else {
         cli::cli_abort(c(
           "Length should be 1 or number of factors:",
-          "i" = "{.var nrow_factor_mass} has length {length(nrow_factor_mass)}.",
+          "i" = "{.var factor_mass} has length {length(factor_mass)}.",
           "x" = "Length should be 1 or equal to {num_factors}"
         ))
       }
@@ -318,16 +341,18 @@ me2_read_dat <- function (me2_dat_file,
       G_matrix <- dplyr::bind_rows(G_matrix, tmp_g_tibble)
     }
     run_number <- run_number+1
-    progress_i <- progress_i+1
-    utils::setTxtProgressBar(pb,progress_i)
+    # update progress bar
+    cli::cli_progress_update()
   }
-  close(pb)
 
   output <- list("F_matrix" = F_matrix,
                  "G_matrix" = G_matrix,
                  call = match.call())
   class(output) <- "me2tools"
-
+  
+  # close progress bar
+  cli::cli_progress_done()
+  
   return(output)
 }
 
