@@ -774,9 +774,9 @@ epa_plot_profile <- function(F_matrix,
 
   # run garbage collector
   gc()
-  if (!identical(dev.list(), NULL)) {
-    dev.off()
-  }
+  #if (!identical(dev.list(), NULL)) {
+  #  dev.off()
+  #}
 
   ##################################################################
   ##                        Prepare output                        ##
