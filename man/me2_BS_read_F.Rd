@@ -6,6 +6,8 @@
 \usage{
 me2_BS_read_F(
   me2_bs_txt_file,
+  corr_threshold = 0.6,
+  base_run = 1,
   tidy_output = FALSE,
   block_boundaries = list(start = "^\\\\s*Factor matrix BB*", end =
     "^\\\\s*Factor matrix CC"),
@@ -16,6 +18,13 @@ me2_BS_read_F(
 \arguments{
 \item{me2_bs_txt_file}{ME2 output file (.txt), containing the results and
 auxiliary information for the BS runs.}
+
+\item{corr_threshold}{This parameter is used to filter out the factors that
+have a correlation less to the provided threshold (default = 0.6).
+This way only the BS results for factors with a correlation larger or 
+equal to the threshold are retained for the aggregated results.}
+
+\item{base_run}{The number of the base run associated with the BSDISP results}
 
 \item{tidy_output}{Should the output be reshaped into tidy data? Default:
 FALSE}
@@ -36,26 +45,43 @@ subtracted from the missing mass to account for double counting. See also the
 section about double counting.}
 }
 \value{
-(tidied) tibble containing F-values for multiple BS runs. The output
-of the F-values for the BS results is identical to the output of the
-F-values from the base runs. The only difference is that the BS results
-have different values in the \dQuote{run_type} column. In this case this
-column contains information of the type of bootstrap.
+\code{me2_BS_read_F} returns an object of class ``me2tools''.
+  The object includes four main components: \code{call}, the command used
+  to read the data; \code{data}, the DISP data for each BS run;
+  \code{F_format}, the aggregated DISP data in the same format as the
+  F_matrix; and \code{BS_corr}, the correlations of the BS factors with the
+  base run factors. 
+  
+  The only difference between the format of the F-values of the base_run and
+  the results in \code{data} is that the BS results have different values 
+  in the \dQuote{run_type} column. In this case this column contains 
+  information of the type of bootstrap.
+  
+  If retained, e.g., using \code{output <- me2_BSDISP_read_res(file)}, this 
+  output can be used to recover the data, reproduce, or undertake further 
+  analysis.
+
+  An me2tools output can be manipulated using a number of generic operations,
+  including \code{print}, \code{plot} and \code{summary}.
 }
 \description{
-Typical use of Bootstrap using Multilinear Engine version 2 (ME-2) will
-provide three different files after a run: \dQuote{.dat}: machine readable
-format, \dQuote{.rsd}: results for the residuals and \dQuote{.txt}: text file
-with auxiliary information (i.e. headers). The headers in the text (.txt)
-file are used in me2tools to split the data into several blocks. In this
-function the F values are read using the following header information,
-denoting the \dQuote{start} and \dQuote{end} lines of the block containing
-the required data.
+Files stored after a BS run are named with a user-specific prefix, shown 
+here as an asterisk (*). Three output files (*_BS.dat,  *_BS.txt and 
+*_BS.rsd) are stored after a BS run, and in this function the data provided 
+in the \dQuote{.txt} file are read. The function \code{me2_BS_read_F} (this 
+function) reads all the factor profiles in the text file and 
+\code{me2_BS_read_G} reads all the factor contributions. 
+Based on the provided \code{corr_threshold} in the \code{me2_BS_read_F} 
+function only factors mapped to base factors with a correlation larger 
+than \code{corr_threshold} are retained when aggregating the BS results 
+(i.e., \dQuote{BS_P05}, \dQuote{BS_P95} and \dQuote{BS_median}). The 
+residuals, stored in the *_BS.rsd file, can be read using 
+\code{me2_read_residuals}.
 }
 \section{Defining the block with data}{
 
 
-The \dQuote{.dat} file contains a lot of empty lines, which are stripped
+The \dQuote{.txt} file contains a lot of empty lines, which are stripped
 immediately after reading the file. This is important, as this ensures that
 each block of data is contained withing two identifying strings.
 
@@ -87,13 +113,14 @@ character array. The easiest way to work with this data is by re-coding this
 vector as \code{factor}. Then the order of the factor profiles and the
 correct names can be easily set using the following code.
 
-\if{html}{\out{<div class="sourceCode R">}}\preformatted{mydata$factor <- factor(mydata$factor)
+\preformatted{
+mydata$factor <- factor(mydata$factor)
 mydata$factor <- dplyr::recode_factor(mydata$factor,
                                       `factor_01` = "MyFirstName",
                                       `factor_02` = "MySecondName",
                                       ...
 )
-}\if{html}{\out{</div>}}
+}
 
 Please note that the above will only work when the data is read with the
 \code{tidy_output = TRUE} setting.
@@ -141,6 +168,6 @@ account for double counting.
 
 \seealso{
 \code{\link{me2_read_F}}, \code{\link{me2_BS_read_F}},
-\code{\link{me2_DISP_read_F}}, \code{\link{me2_DISP_read_minmax}},
+\code{\link{me2_DISP_read_F}}, \code{\link{me2_DISP_read_res}},
 \code{\link{me2_read_all}}, \code{\link{me2_read_dat}}
 }
