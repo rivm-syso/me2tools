@@ -1,13 +1,23 @@
 #' Get the minimum and maximum DISP values from the DISP results file
 #'   (DISPres_x.txt)
 #'
-#' The minimum and the maximum DISP values are stored in 4 different files,
-#' corresponding to dQmax = 4, 8, 16, 32. Each of these files have the same
-#' format, containing minimum and maximum DISP values in concentration units and
-#' as percentage of species units. These are all read and stored in the output.
+#' Files stored after a DISP run are named with a user-specific prefix, shown 
+#' here as an asterisk (*). Three output files (*_DISP.dat,  *_DISP.txt and 
+#' *_DISP.rsd) are stored after a DISP run. The function \code{me2_DISP_read_F} 
+#' reads all the factor profiles in the text file and \code{me2_DISP_read_G} 
+#' reads all the factor contributions. The residuals, stored in the 
+#' *_DISP.rsd file, can be read using \code{ me2_read_residuals}. Besides these 
+#' three files, four other files are produced as output, corresponding to 
+#' dQmax = [4, 8, 16, 32] and are *_DISPres1.txt, *_DISPres2.txt, 
+#' *_DISPres3.txt and *_DISPres4.txt. These files contain the minimum and 
+#' maximum DISP results for a specific dQmax and any of these files can be read 
+#' using this function. Each of these files have the same format, containing 
+#' minimum and maximum DISP values in concentration units and as percentage of 
+#' species units. These are all read and stored in the output.
 #'
-#' @param DISPres_file location and file name of the \dQuote{DISPres_x} file,
-#'   corresponding to dQmax = 4, 8, 16, 32.
+#' @param DISPres_file location and file name of the \dQuote{DISPres_?.txt} file,
+#'   corresponding to either dQmax = [4, 8, 16, 32].
+#' @param base_run The number of the base run associated with the DISP results
 #' @param tidy_output Should the output be reshaped into tidy data? Default:
 #'   FALSE
 #' @param species A vector containing the names of the species for the rows in
@@ -33,26 +43,32 @@
 #' vector as \code{factor}. Then the order of the factor profiles and the
 #' correct names can be easily set using the following code.
 #'
-#' ```R
+#' \preformatted{
 #' mydata$factor <- factor(mydata$factor)
 #' mydata$factor <- dplyr::recode_factor(mydata$factor,
 #'                                       `factor_01` = "MyFirstName",
 #'                                       `factor_02` = "MySecondName",
 #'                                       ...
 #' )
-#' ```
+#' }
 #'
 #' Please note that the above will only work when the data is read with the
 #' \code{tidy_output = TRUE} setting.
 #'
-#' @return (tidied) tibble containing the minimum and maximum values for the
-#'   Best-fit with original values for the DISP runs. The output of the
-#'   min/max-values for the DISP result is identical to the output of the
-#'   F-values from the base runs. The only difference is that the DISP results
-#'   have different values in the \dQuote{run_type} column. In this case this
-#'   column contains either \dQuote{DISP_min} or \dQuote{DISP_max}.
+#' @return \code{me2_DISP_read_res} returns an object of class ``me2tools''.
+#'   The object includes three main components: \code{call}, the command used
+#'   to read the data; \code{data}, the DISP data for each BS run;
+#'   and \code{F_format}, the aggregated DISP data in the same format as the
+#'   F_matrix. If retained, e.g., using 
+#'   \code{output <- me2_BSDISP_read_res(file)}, this output can be used to
+#'   recover the data, reproduce, or undertake further analysis.
+#'
+#'   An me2tools output can be manipulated using a number of generic operations,
+#'   including \code{print}, \code{plot} and \code{summary}.
 #'
 #' @export
+#' 
+#' @noMd
 #'
 #' @seealso \code{\link{me2_read_F}}, \code{\link{me2_BS_read_F}}, 
 #' \code{\link{me2_DISP_read_F}}, \code{\link{me2_read_all}}, 
@@ -65,9 +81,10 @@
 #' @import tibble
 #' @import dplyr
 #'
-me2_DISP_read_minmax <- function(DISPres_file,
-                                 tidy_output = FALSE,
-                                 species = NA) {
+me2_DISP_read_res <- function(DISPres_file,
+                              base_run = 1,
+                              tidy_output = FALSE,
+                              species = NA) {
 
 
   # check if file exists
@@ -103,6 +120,9 @@ me2_DISP_read_minmax <- function(DISPres_file,
 
   blocks <- seq(1, 4, 1)
 
+  # add a progress bar
+  cli::cli_progress_bar("Reading data", total = length(blocks))
+  
   matrix <- tibble()
   for (block in blocks) {
     line_start <- start_blocks[[block]]
@@ -180,11 +200,11 @@ me2_DISP_read_minmax <- function(DISPres_file,
       # block 1 & 2 are concentrations
       matrix.tmp <- matrix.tmp %>%
         tibble::add_column(factor_profile = "concentration_of_species", .before = "species") %>%
-        tibble::add_column(model_run = 1, .before = "species")
+        tibble::add_column(model_run = base_run, .before = "species")
     } else {
       matrix.tmp <- matrix.tmp %>%
         tibble::add_column(factor_profile = "percentage_of_species_sum", .before = "species") %>%
-        tibble::add_column(model_run = 1, .before = "species")
+        tibble::add_column(model_run = base_run, .before = "species")
     }
 
     if ((block == 1) || (block == 3)) {
@@ -201,20 +221,88 @@ me2_DISP_read_minmax <- function(DISPres_file,
     } else {
       matrix <- matrix.tmp
     }
+    
+    # update progress bar
+    cli::cli_progress_update()
   }
+  
+  # Set id variables
+  id_variables <- c("factor_profile", "model_run", "species", "model_type", "run_type")
+  
+  # Make the table longer, so we can calculate the mid point
+  matrix <- matrix %>%
+    tidyr::pivot_longer(-dplyr::all_of(id_variables), 
+                        names_to = "factor",
+                        values_to = "value") %>%
+    arrange(factor,
+            factor_profile,
+            species) %>% 
+    tidyr::pivot_wider(id_cols = dplyr::all_of(c(id_variables[1:4], "factor")),
+                       names_from = "run_type",
+                       values_from = "value") %>% 
+    dplyr::mutate(DISP_avg = (DISP_max+DISP_min)/2) %>% 
+    tidyr::pivot_longer(-dplyr::all_of(c(id_variables[1:4], "factor")), 
+                        names_to = "run_type", 
+                        values_to = "value") %>%
+    arrange(run_type,
+            factor_profile,
+            factor,
+            species) 
+  
 
-  if(tidy_output) {
-    # Set id variables
-    id_variables <- c("factor_profile", "model_run", "species", "model_type", "run_type")
-
-    # Make the table longer
-    matrix <- matrix %>%
-      tidyr::pivot_longer(-dplyr::all_of(id_variables), names_to = "factor") %>%
-      arrange(factor,
+  if(!tidy_output) {
+    data <- matrix  %>% 
+      tidyr::pivot_wider(id_cols = dplyr::all_of(id_variables), 
+                         names_from = "factor", 
+                         values_from = "value") %>%
+      arrange(run_type,
               factor_profile,
-              species)
-
+              species) 
+    
+  } else {
+    data <- matrix
   }
+  
+  output <- list("data" = data,
+                 "F_format" = matrix,
+                 call = match.call())
+  class(output) <- "me2tools"
+  
+  # close progress bar
+  cli::cli_progress_done()
+  
+  return(output)
+}
 
-  return(matrix)
+############################################################################
+############################################################################
+###                                                                      ###
+###                         DEPRECATED FUNCTIONS                         ###
+###                                                                      ###
+############################################################################
+############################################################################
+
+
+#' Get the minimum and maximum DISP values from the DISP results file
+#'   (DISPres_x.txt)
+#'
+#' This function has been renamed to \code{me2_DISP_read_res}.
+#'
+#' @export
+#'
+#' @seealso \code{\link{me2_DISP_read_res}}
+#'
+me2_DISP_read_minmax <- function(DISPres_file,
+                                 tidy_output = FALSE,
+                                 species = NA) {
+  
+  cli::cli_warn(c(
+    "DEPRECATED FUNCTION:",
+    "i" = "This function is deprecated. Please use `me2_DISP_read_res` instead."
+  ))
+  
+  output <- me2_DISP_read_res(DISPres_file = DISPres_file,
+                              tidy_output = tidy_output,
+                              species = species)
+  return(output)
 }
