@@ -1,13 +1,18 @@
 #' Get the G values from the BS results file (.txt)
 #'
-#' Typical use of DISP using Multilinear Engine version 2 (ME-2) will
-#' provide three different files after a run: \dQuote{.dat}: machine readable
-#' format, \dQuote{.rsd}: results for the residuals and \dQuote{.txt}: text file
-#' with auxiliary information (i.e. headers). The headers in the text (.txt)
-#' file are used in me2tools to split the data into several blocks. In this
-#' function the F values are read using the following header information,
-#' denoting the \dQuote{start} and \dQuote{end} lines of the block containing
-#' the required data.
+#' Files stored after a DISP run are named with a user-specific prefix, shown 
+#' here as an asterisk (*). Three output files (*_DISP.dat,  *_DISP.txt and 
+#' *_DISP.rsd) are stored after a DISP run, and in this function, the data 
+#' provided in the \code{.txt} file are read. The function 
+#' \code{me2_DISP_read_F} reads all the factor profiles in the 
+#' text file and \code{me2_DISP_read_G} (this function) reads all the factor 
+#' contributions. The residuals, stored in the *_DISP.rsd file, can be read 
+#' using \code{ me2_read_residuals}. Besides these three files, four other 
+#' files are produced as output, corresponding to dQmax = [4, 8, 16, 32] and 
+#' are *_DISPres1.txt, *_DISPres2.txt, *_DISPres3.txt and *_DISPres4.txt. These 
+#' files contain the minimum and the maximum DISP results for a specific dQmax 
+#' and any of these files can be read using the \code{ me2_DISP_read_res} 
+#' function.
 #'
 #' @param me2_disp_txt_file output file (.txt), containing the results and
 #'  auxiliary information for the DISP runs.
@@ -60,25 +65,27 @@
 #' vector as \code{factor}. Then the order of the factor profiles and the
 #' correct names can be easily set using the following code.
 #'
-#' ```R
+#' \preformatted{
 #' mydata$factor <- factor(mydata$factor)
 #' mydata$factor <- dplyr::recode_factor(mydata$factor,
 #'                                       `factor_01` = "MyFirstName",
 #'                                       `factor_02` = "MySecondName",
 #'                                       ...
 #' )
-#' ```
+#' }
 #'
 #' Please note that the above will only work when the data is read with the
 #' \code{tidy_output = TRUE} setting.
 #'
-#' @return (tidied) tibble containing G for multiple BS runs. The output of the
+#' @return (tidied) tibble containing G for multiple DISP runs. The output of the
 #'   G-values for the BS results is nearly identical to the output of the
-#'   G-values from the base runs. The only difference is that the BS results
-#'   have different values in the \dQuote{run_type} column. In this case this
-#'   column contains information of the type of bootstrap.
+#'   G-values from the base runs. The only difference is that the DISP results
+#'   have different values in the \dQuote{run_type} column. In this case this 
+#'   column contains the value \dQuote{DISP_bestfit}.
 #'
 #' @export
+#' 
+#' @noMd
 #'
 #' @seealso \code{\link{me2_read_G}}, \code{\link{me2_BS_read_G}}, 
 #' \code{\link{me2_read_all}}, \code{\link{me2_read_dat}}
@@ -206,7 +213,7 @@ me2_DISP_read_G <- function(me2_disp_txt_file,
     )
 
   g_matrix <- g_matrix %>%
-    tibble::add_column(run_type = "DISP_avg", .after = "model_run")
+    tibble::add_column(run_type = "DISP_bestfit", .after = "model_run")
 
 
   return(g_matrix)

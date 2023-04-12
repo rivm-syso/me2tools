@@ -1,13 +1,17 @@
 #' Get the G values from the BS results file (.txt)
 #'
-#' Typical use of Bootstrap using Multilinear Engine version 2 (ME-2) will
-#' provide three different files after a run: \dQuote{.dat}: machine readable
-#' format, \dQuote{.rsd}: results for the residuals and \dQuote{.txt}: text file
-#' with auxiliary information (i.e. headers). The headers in the text (.txt)
-#' file are used in me2tools to split the data into several blocks. In this
-#' function the F values are read using the following header information,
-#' denoting the \dQuote{start} and \dQuote{end} lines of the block containing
-#' the required data.
+#' Files stored after a BS run are named with a user-specific prefix, shown 
+#' here as an asterisk (*). Three output files (*_BS.dat,  *_BS.txt and 
+#' *_BS.rsd) are stored after a BS run, and in this function the data provided 
+#' in the \dQuote{.txt} file are read. The function \code{me2_BS_read_F}  
+#' reads all the factor profiles in the text file and 
+#' \code{me2_BS_read_G} (this function) reads all the factor contributions. 
+#' Based on the provided \code{corr_threshold} in the \code{me2_BS_read_F} 
+#' function only factors mapped to base factors with a correlation larger 
+#' than \code{corr_threshold} are retained when aggregating the BS results 
+#' (i.e., \dQuote{BS_P05}, \dQuote{BS_P95} and \dQuote{BS_median}). The 
+#' residuals, stored in the *_BS.rsd file, can be read using 
+#' \code{me2_read_residuals}.
 #'
 #' @param me2_bs_txt_file output file (.txt), containing the results and
 #'  auxiliary information for the BS runs.
@@ -35,7 +39,7 @@
 #'
 #' @section Defining the block with data:
 #'
-#' The \dQuote{.dat} file contains a lot of empty lines, which are stripped
+#' The \dQuote{.txt} file contains a lot of empty lines, which are stripped
 #' immediately after reading the file. This is important, as this ensures that
 #' each block of data is contained withing two identifying strings.
 #'
@@ -60,14 +64,14 @@
 #' vector as \code{factor}. Then the order of the factor profiles and the
 #' correct names can be easily set using the following code.
 #'
-#' ```R
+#' \preformatted{
 #' mydata$factor <- factor(mydata$factor)
 #' mydata$factor <- dplyr::recode_factor(mydata$factor,
 #'                                       `factor_01` = "MyFirstName",
 #'                                       `factor_02` = "MySecondName",
 #'                                       ...
 #' )
-#' ```
+#' }
 #'
 #' Please note that the above will only work when the data is read with the
 #' \code{tidy_output = TRUE} setting.
@@ -79,6 +83,8 @@
 #'   column contains information of the type of bootstrap.
 #'
 #' @export
+#' 
+#' @noMd
 #'
 #' @seealso \code{\link{me2_read_G}}, \code{\link{me2_DISP_read_G}}, 
 #' \code{\link{me2_read_all}}, \code{\link{me2_read_dat}}
