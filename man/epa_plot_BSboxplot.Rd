@@ -54,14 +54,28 @@ the \sQuote{2} in NO2.}
 
 \item{x.font.size}{The size of the xtick labels. Defaults to 10.}
 
-\item{outlier.color}{The fill color for the base results, with the
+\item{box.color}{Provide the fill color of the IQR box. Is set to
+\sQuote{burlywood1}, as an approximation of the color used in EPA-PMF
+program.}
+
+\item{outlier.color}{The fill color for the outliers, with the
+default being \sQuote{firebrick}, similar to the color used in the EPA-PMF
+program.}
+
+\item{outlier.size}{The size of the point of the outliers,
+defaults to 2.}
+
+\item{outlier.shape}{The shape of the point of the outliers. The
+default is 3 (+).}
+
+\item{base.color}{The fill color for the base results, with the
 default being \sQuote{royalblue}, similar to the color used in the EPA-PMF
 program.}
 
-\item{outlier.size}{The size of the point for the base results,
+\item{base.size}{The size of the point for the base results,
 defaults to 2.}
 
-\item{outlier.shape}{The shape of the point for the base results. The
+\item{base.shape}{The shape of the point for the base results. The
 default is 23 (diamond).}
 
 \item{show.plot}{A logical argument evaluating to TRUE or FALSE indicating
@@ -75,10 +89,6 @@ plot. If set to \code{TRUE} these lines are removed. Defaults to
 \item{facet.parse.label}{Should the labels be parsed using the
 \code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
 will use subscript on the labels shown in the facet.}
-
-\item{burlywood1}{Provide the fill color of the IQR box. Is set to
-\sQuote{cadetblue3}, as an approximation of the color used in EPA-PMF
-program.}
 }
 \value{
 me2tools list containing the ggplot2 with box plot results for the

@@ -28,8 +28,8 @@
 #'   axis labels, pollutant names and units properly, e.g., by subscripting
 #'   the \sQuote{2} in NO2.
 #' @param x.font.size The size of the xtick labels. Defaults to 10.
-#' @param burlywood1 Provide the fill color of the IQR box. Is set to
-#'   \sQuote{cadetblue3}, as an approximation of the color used in EPA-PMF
+#' @param box.color Provide the fill color of the IQR box. Is set to
+#'   \sQuote{burlywood1}, as an approximation of the color used in EPA-PMF
 #'   program.
 #' @param outlier.color The fill color for the outliers, with the
 #'   default being \sQuote{firebrick}, similar to the color used in the EPA-PMF
@@ -38,14 +38,13 @@
 #'   defaults to 2.
 #' @param outlier.shape The shape of the point of the outliers. The
 #'   default is 3 (+).
-#' @param outlier.color The fill color for the base results, with the
+#' @param base.color The fill color for the base results, with the
 #'   default being \sQuote{royalblue}, similar to the color used in the EPA-PMF
 #'   program.
-#' @param outlier.size The size of the point for the base results,
+#' @param base.size The size of the point for the base results,
 #'   defaults to 2.
-#' @param outlier.shape The shape of the point for the base results. The
+#' @param base.shape The shape of the point for the base results. The
 #'   default is 23 (diamond).
-
 #' @param show.plot A logical argument evaluating to TRUE or FALSE indicating
 #'   whether the plot should be shown as default.
 #' @param rm.grid.x Should the vertical grid lines be removed? In some cases
@@ -59,7 +58,13 @@
 #' @return me2tools list containing the ggplot2 with box plot results for the
 #'   selected BS runs and the call to produce the plots.
 #'
-
+#' @export
+#'
+#' @import cli
+#' @import dplyr
+#' @import tidyr
+#' @import ggplot2
+#' 
 epa_plot_BSboxplot <- function(BS_results,
                                xlabel.angle = 45,
                                xlabel.order = NA,
