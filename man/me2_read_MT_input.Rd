@@ -4,10 +4,26 @@
 \alias{me2_read_MT_input}
 \title{Get the multi time data}
 \usage{
-me2_read_MT_input(file, tz = "Etc/GMT-1")
+me2_read_MT_input(
+  file,
+  unc_identifier = c(".std", "_std", "_unc", ".unc", "U_", "U.", "unc_", "unc."),
+  sep = "\\t",
+  tz = "Etc/GMT-1"
+)
 }
 \arguments{
 \item{file}{File name of the multi time data file.}
+
+\item{unc_identifier}{Vector containing the prefix/suffix to denote the
+uncertainty for a species. Examples are \code{xx_std}, \code{xx_unc},
+\code{U_xx} and so on. The function splits the data into a data and
+uncertainty set by splitting the columns that contain one or more of the
+\code{unc_identifier}. Default is
+\code{c(".std", "_std", "_unc", ".unc", "U_", "U.", "unc_", "unc.")}.}
+
+\item{sep}{The column separator used to separate values on one line. The
+default is \code{"\t"} which is a TAB character. Other options are
+\code{";"} or \code{","}}
 
 \item{tz}{Time zone for date time, defaults to \code{Etc/GMT-1}}
 }
