@@ -30,6 +30,13 @@ are used in me2tools to split the data into several blocks. In this function
 the Q values are read using user provided header information, denoting the
 \dQuote{start} line of the block containing the required data.
 }
+\details{
+This function can also read the Q values created by the modified EPA-PMF
+ME2 script. While reading the file, the function checks for both formats
+prior to using the \code{block_boundaries} and tries to read the Q values
+based on the format found. The \code{block_boundaries} are not used when
+reading data from the modified EPA-PMF ME2 script.
+}
 \seealso{
 \code{\link{me2_read_all}}
 }

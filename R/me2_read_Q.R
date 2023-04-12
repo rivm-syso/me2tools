@@ -7,6 +7,12 @@
 #' are used in me2tools to split the data into several blocks. In this function
 #' the Q values are read using user provided header information, denoting the
 #' \dQuote{start} line of the block containing the required data.
+#' 
+#' This function can also read the Q values created by the modified EPA-PMF
+#' ME2 script. While reading the file, the function checks for both formats
+#' prior to using the \code{block_boundaries} and tries to read the Q values 
+#' based on the format found. The \code{block_boundaries} are not used when 
+#' reading data from the modified EPA-PMF ME2 script.
 #'
 #' @param me2_txt_file ME2 output file (.txt), containing the results and
 #'   auxiliary information.
@@ -41,42 +47,58 @@ me2_read_Q <- function(me2_txt_file,
   text <- readr::read_lines(me2_txt_file)
   text_filter <- text[text != ""]
 
-  # check if we only have one parameter block
-  me2_dupl_block_check(text_filter)
-
-  # Get the Q-values (at the line containing "  Sum-of-squares  Q, Qmain, Qaux")
-  index_start <- stringr::str_which(text_filter, block_boundaries$start)
-
-  if (length(index_start) == 0) {
-    cli::cli_abort(c(
-      "Header not found:",
-      "i" = "The start header of the data block could not be found in '{me2_txt_file}'.",
-      "x" = "Did you provide the correct file?"
+  # The file can also be from the modified EPA script, so if this is the case
+  # we need to read the Q-values in an other way.
+  
+  if(stringr::str_detect(text_filter[[1]], "iniparams.txt")) {
+    # this is likely from the EPA modified script.
+    q_values <- me2_BS_read_correlations(me2_bs_txt_file = me2_txt_file) %>% 
+      dplyr::select(- tidyr::all_of(tidyr::contains("factor")))
+    
+    names(q_values)[1] <- "base_run"
+    
+    cli::cli_alert_info(c(
+      "Input looks like modified EPA-script, returning found Q-values."
     ))
-  }
-
-  q_values <- tibble::tibble()
-  for (run.number in seq(1, length(index_start), 1)) {
-    split_result <- strsplit(
-      trimws(text_filter[index_start[run.number]],
-        which = "both"
-      ),
-      "\\s+"
-    )
-
-    q_values_tmp <- tibble::tibble(
-      base_run = run.number,
-      Q = as.numeric(split_result[[1]][5]),
-      Qmain = as.numeric(split_result[[1]][6]),
-      Qaux = as.numeric(split_result[[1]][7])
-    )
-
-    if (nrow(q_values) > 0) {
-      q_values <- dplyr::bind_rows(q_values, q_values_tmp)
-    } else {
-      q_values <- q_values_tmp
+    
+  } else {
+    # check if we only have one parameter block
+    me2_dupl_block_check(text_filter)
+  
+    # Get the Q-values (at the line containing "  Sum-of-squares  Q, Qmain, Qaux")
+    index_start <- stringr::str_which(text_filter, block_boundaries$start)
+  
+    if (length(index_start) == 0) {
+      cli::cli_abort(c(
+        "Header not found:",
+        "i" = "The start header of the data block could not be found in '{me2_txt_file}'.",
+        "x" = "Did you provide the correct file?"
+      ))
     }
-    rm(q_values_tmp)
+  
+    q_values <- tibble::tibble()
+    for (run.number in seq(1, length(index_start), 1)) {
+      split_result <- strsplit(
+        trimws(text_filter[index_start[run.number]],
+          which = "both"
+        ),
+        "\\s+"
+      )
+  
+      q_values_tmp <- tibble::tibble(
+        base_run = run.number,
+        Q = as.numeric(split_result[[1]][5]),
+        Qmain = as.numeric(split_result[[1]][6]),
+        Qaux = as.numeric(split_result[[1]][7])
+      )
+  
+      if (nrow(q_values) > 0) {
+        q_values <- dplyr::bind_rows(q_values, q_values_tmp)
+      } else {
+        q_values <- q_values_tmp
+      }
+      rm(q_values_tmp)
+    }
   }
 
   return(q_values)
