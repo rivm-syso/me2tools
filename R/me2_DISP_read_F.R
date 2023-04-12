@@ -1,13 +1,18 @@
 #' Get the best fit F-matrix from the DISP results file
 #'
-#' Typical use of DISP using Multilinear Engine version 2 (ME-2) will
-#' provide three different files after a run: \dQuote{.dat}: machine readable
-#' format, \dQuote{.rsd}: results for the residuals and \dQuote{.txt}: text file
-#' with auxiliary information (i.e. headers). The headers in the text (.txt)
-#' file are used in me2tools to split the data into several blocks. In this
-#' function the F values are read using the following header information,
-#' denoting the \dQuote{start} and \dQuote{end} lines of the block containing
-#' the required data.
+#' Files stored after a DISP run are named with a user-specific prefix, shown 
+#' here as an asterisk (*). Three output files (*_DISP.dat,  *_DISP.txt and 
+#' *_DISP.rsd) are stored after a DISP run, and in this function, the data 
+#' provided in the \code{.txt} file are read. The function 
+#' \code{me2_DISP_read_F} (this function) reads all the factor profiles in the 
+#' text file and \code{me2_DISP_read_G} reads all the factor contributions. 
+#' The residuals, stored in the *_DISP.rsd file, can be read using 
+#' \code{ me2_read_residuals}. Besides these three files, four other files are 
+#' produced as output, corresponding to dQmax = [4, 8, 16, 32] and are 
+#' *_DISPres1.txt, *_DISPres2.txt, *_DISPres3.txt and *_DISPres4.txt. These 
+#' files contain the minimum and the maximum DISP results for a specific dQmax 
+#' and any of these files can be read using the \code{ me2_DISP_read_res} 
+#' function.
 #'
 #' @param me2_disp_txt_file ME2 output file (.txt), containing the results and
 #'   auxiliary information for the DISP runs.
@@ -56,14 +61,14 @@
 #' vector as \code{factor}. Then the order of the factor profiles and the
 #' correct names can be easily set using the following code.
 #'
-#' ```R
+#' \preformatted{
 #' mydata$factor <- factor(mydata$factor)
 #' mydata$factor <- dplyr::recode_factor(mydata$factor,
 #'                                       `factor_01` = "MyFirstName",
 #'                                       `factor_02` = "MySecondName",
 #'                                       ...
 #' )
-#' ```
+#' }
 #'
 #' Please note that the above will only work when the data is read with the
 #' \code{tidy_output = TRUE} setting.
@@ -110,10 +115,12 @@
 #'   values for the DISP runs. The output of the F-values for the DISP result
 #'   is identical to the output of the F-values from the base runs. The only
 #'   difference is that the DISP results have different values in the
-#'   \dQuote{run_type} column. In this case this column contains
-#'   \dQuote{DISP_avg}.
+#'   \dQuote{run_type} column. In this case this column contains the value
+#'   \dQuote{DISP_bestfit}.
 #'
 #' @export
+#' 
+#' @noMd
 #'
 #' @seealso \code{\link{me2_read_F}}, \code{\link{me2_BS_read_F}}, 
 #' \code{\link{me2_DISP_read_minmax}}, \code{\link{me2_read_all}}, 
@@ -174,37 +181,13 @@ me2_DISP_read_F <- function(me2_disp_txt_file,
     index_end[[1]],
     headers = FALSE
   )
+  
+  ## check species
+  check.species <- add_existing_species(f_matrix.tmp = f_matrix,
+                                        species = species)
 
-  ## Check length of species against length of data!
-  if (length(species) > 1) {
-    if (length(species) == nrow(f_matrix)) {
-      f_matrix <- f_matrix %>%
-        tibble::add_column(
-          identifier = species,
-          .before = "factor_01"
-        )
-    } else {
-      cli::cli_abort(c(
-        "Different lengths:",
-        "i" = "{.var species} has a different length ({length(species)})
-           compared to the F-matrix ({nrow(f_matrix)})",
-        "x" = "{.var species} must have the same length as the number of
-          rows in the F-matrix"
-      ))
-    }
-  } else {
-    if (!is.na(species)) {
-      cli::cli_abort(c(
-        "Different lengths:",
-        "i" = "{.var species} has a different length ({length(species)})
-           compared to the F-matrix ({nrow(f_matrix)})",
-        "x" = "{.var species} must have the same length as the number of
-          rows in the F-matrix or should be set to 'NA'"
-      ))
-    }
-  }
 
-  f_matrix <- f_matrix %>%
+  f_matrix <- check.species$f_matrix.tmp %>%
     tidy_me2_factors(
       run_number = 1,
       dc_species = dc_species,
@@ -213,7 +196,20 @@ me2_DISP_read_F <- function(me2_disp_txt_file,
 
   # add run_type
   f_matrix <- f_matrix %>%
-    tibble::add_column(run_type = "DISP_avg", .before = "species")
+    tibble::add_column(run_type = "DISP_bestfit", .before = "species")
 
+  # info
+  if (check.species$flags$species.present) {
+    cli::cli_alert_success(c(
+      "Species already present: input file has a column with species which will be used."
+    ))
+  }
+  if (check.species$flags$species.overwrite) {
+    cli::cli_alert_info(c(
+      "Available species overwritten with user-provided species."
+    ))
+    
+  }
+  
   return(f_matrix)
 }

@@ -168,43 +168,13 @@ me2_read_F <- function(me2_txt_file,
   for (run.number in seq(1, length(index_start), 1)) {
     f_matrix.tmp <- extract_me2_matrix_between(text, index_start[run.number], index_end[run.number])
 
-    # check if we need to add species
-    ## Check length of species against length of data!
-    if (length(species) > 1) {
-      if (length(species) == nrow(f_matrix.tmp)) {
-        if (!any(grepl("identifier", colnames(f_matrix.tmp)))) {
-          f_matrix.tmp <- f_matrix.tmp %>%
-            tibble::add_column(
-              identifier = species,
-              .before = "factor_01"
-            )
-        } else {
-          f_matrix.tmp <- f_matrix.tmp %>%
-            mutate(identifier == species)
-        }
-      } else {
-        cli::cli_abort(c(
-          "Different lengths:",
-          "i" = "{.var species} has a different length ({length(species)})
-           compared to the F-matrix ({nrow(f_matrix)})",
-          "x" = "{.var species} must have the same length as the number of
-          rows in the F-matrix"
-        ))
-      }
-    } else {
-      if (!is.na(species)) {
-        cli::cli_abort(c(
-          "Different lengths:",
-          "i" = "{.var species} has a different length ({length(species)})
-           compared to the F-matrix ({nrow(f_matrix)})",
-          "x" = "{.var species} must have the same length as the number of
-          rows in the F-matrix or should be set to 'NA'"
-        ))
-      }
-    }
+    ## check species
+    check.species <- add_existing_species(f_matrix.tmp = f_matrix.tmp,
+                                          species = species)
+    
 
     # setting the species as factor, preserving the initial order.
-    f_matrix.tmp <- f_matrix.tmp %>%
+    f_matrix.tmp <- check.species$f_matrix.tmp %>%
       tidy_me2_factors(run_number = run.number,
                        dc_species = dc_species,
                        tidy_output = tidy_output) %>%
@@ -217,5 +187,19 @@ me2_read_F <- function(me2_txt_file,
     }
     rm(f_matrix.tmp)
   }
+  
+  # info
+  if (check.species$flags$species.present) {
+    cli::cli_alert_success(c(
+      "Species already present: input file has a column with species which will be used."
+    ))
+  }
+  if (check.species$flags$species.overwrite) {
+    cli::cli_alert_info(c(
+      "Available species overwritten with user-provided species."
+    ))
+    
+  }
+  
   return(f_matrix)
 }
