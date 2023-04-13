@@ -37,11 +37,16 @@ tibble containing scaled residuals for each run.
 Typical use of Multilinear Engine version 2 (ME-2) will provide three
 different files after a run: \dQuote{.dat}: machine readable format,
 \dQuote{.rsd}: results for the residuals and \dQuote{.txt}: text file with
-auxiliary information (i.e. headers). The headers in file containing the
-residual results (.rsd) file are used in me2tools to split the data into
-several blocks. In this function the residuals are read using user provided
-header information, denoting the \dQuote{start}line of the block containing
-the required data.
+auxiliary information (i.e. headers). This function reads the residual file
+and supports two different formats. The first format is based on the EPA_PMF
+format which consists of a block of residuals and a block of scaled residuals
+for each run. The second format is based on the multi-time script, which only
+provides the scaled residuals. In this file the blocks are separated by a
+header row. The contents of this header row can be provided through the
+\code{block_boundaries} parameter. This parameter is ignored in cae of
+reading the EPA-PMF formated results.
+The column \code{residual_type} in the output denotes the type of residual,
+being \dQuote{residual} and \dQuote{residual_scaled}.
 }
 \seealso{
 \code{\link{me2_read_all}}
