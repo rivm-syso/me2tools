@@ -12,7 +12,7 @@ me2_read_input(
 )
 }
 \arguments{
-\item{file}{File name of the multi time data file.}
+\item{file}{File name of the input data file.}
 
 \item{unc_identifier}{Vector containing the prefix/suffix to denote the
 uncertainty for a species. Examples are \code{xx_std}, \code{xx_unc},
@@ -36,7 +36,7 @@ also performs some clean up, allowing the use of data in R.
 }
 \section{Data format}{
 
-The format of the multi time data has to consists of the following columns,
+The format of the input  data has to consists of the following columns,
 in the same order as given in the table.
 
 \tabular{ll}{

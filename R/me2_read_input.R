@@ -4,7 +4,7 @@
 #' also performs some clean up, allowing the use of data in R.
 #'
 #' @section Data format:
-#'   The format of the multi time data has to consists of the following columns,
+#'   The format of the input  data has to consists of the following columns,
 #'   in the same order as given in the table.
 #'
 #'   \tabular{ll}{
@@ -13,7 +13,7 @@
 #'   ...              \tab Columns of species with their appropriate names, alternating concentrations and uncertainties for each specie (i.e. specie1, unc_specie1, specie2, ...)\cr
 #'   }
 #'
-#' @param file File name of the multi time data file.
+#' @param file File name of the input data file.
 #' @param unc_identifier Vector containing the prefix/suffix to denote the
 #'   uncertainty for a species. Examples are \code{xx_std}, \code{xx_unc},
 #'   \code{U_xx} and so on. The function splits the data into a data and
@@ -64,20 +64,20 @@ me2_read_input <- function(file,
     stringsAsFactors = FALSE
   )
   # always use default date_time name for first column.
-  names(input.data)[1] <- "date_time"
+  names(input.data)[1] <- "date"
 
   if (!is.na(suppressWarnings(lubridate::ymd_hm(input.data[1, 1])))) {
-    input.data$date_time <- lubridate::ymd_hm(input.data$date_time, tz = tz)
+    input.data$date <- lubridate::ymd_hm(input.data$date_time, tz = tz)
   } else if (!is.na(suppressWarnings(lubridate::dmy_hm(input.data[1, 1])))) {
-    input.data$date_time <- lubridate::dmy_hm(input.data$date_time, tz = tz)
+    input.data$date <- lubridate::dmy_hm(input.data$date_time, tz = tz)
   } else if (!is.na(suppressWarnings(lubridate::mdy_hm(input.data[1, 1])))) {
-    input.data$date_time <- lubridate::mdy_hm(input.data$date_time, tz = tz)
+    input.data$date <- lubridate::mdy_hm(input.data$date_time, tz = tz)
   } else if (!is.na(suppressWarnings(lubridate::ymd_hms(input.data[1, 1])))) {
-    input.data$date_time <- lubridate::ymd_hms(input.data$date_time, tz = tz)
+    input.data$date <- lubridate::ymd_hms(input.data$date_time, tz = tz)
   } else if (!is.na(suppressWarnings(lubridate::dmy_hms(input.data[1, 1])))) {
-    input.data$date_time <- lubridate::dmy_hms(input.data$date_time, tz = tz)
+    input.data$date <- lubridate::dmy_hms(input.data$date_time, tz = tz)
   } else if (!is.na(suppressWarnings(lubridate::mdy_hms(input.data[1, 1])))) {
-    input.data$date_time <- lubridate::mdy_hms(input.data$date_time, tz = tz)
+    input.data$date <- lubridate::mdy_hms(input.data$date_time, tz = tz)
   } else {
     cli::cli_abort(c(
       "Datetime must be in 'yyyy-mm-dd hh:mm' or 'dd-mm-yyyy hh:mm' format:",
