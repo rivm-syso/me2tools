@@ -146,7 +146,7 @@ tidy_me2_contributions <- function(G_matrix,
                                                     unit,
                                                     model_run,
                                                     date) %>%
-                                             mutate(unit = "concentrations"),
+                                             mutate(unit = "concentration"),
                                            concentration.data)
     ## combine to one dataframe
     G_matrix <- dplyr::bind_rows(G_matrix, concentration.data)

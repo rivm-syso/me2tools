@@ -189,7 +189,7 @@ compare_obs_mod <- function(measurements,
 
   ##############################################################################
   if (identical(factor_mass, NA)) {
-    if (!"concentrations" %in% unique(G_matrix$unit)) {
+    if (!"concentration" %in% unique(G_matrix$unit)) {
       # there are no concentrations in the G_matrix, we now use the coefficients
       # of the MLR as the factor mass
       factor_mass <- as.numeric(modelMLR$coefficients)
@@ -232,7 +232,7 @@ compare_obs_mod <- function(measurements,
           model_run,
           date
         ) %>%
-        mutate(unit = "concentrations"),
+        mutate(unit = "concentration"),
       concentration.data
     )
     ## combine to one dataframe
@@ -246,9 +246,9 @@ compare_obs_mod <- function(measurements,
   # create the data for regression
   regr_data <- left_join(measurements,
     G_matrix %>%
-      filter(unit == "concentrations") %>%
+      filter(unit == "concentration") %>%
       mutate(pred = rowSums(G_matrix %>%
-        filter(unit == "concentrations") %>%
+        filter(unit == "concentration") %>%
         select(all_of(mod)))) %>%
       select(all_of(c("date", "pred"))),
     by = "date"
