@@ -54,6 +54,7 @@
 #' @param facet.parse.label Should the labels be parsed using the
 #'   \code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
 #'   will use subscript on the labels shown in the facet.
+#' @param ... Other parameters, for example renamed parameters.
 #'
 #' @return me2tools list containing the ggplot2 with box plot results for the
 #'   selected BS runs and the call to produce the plots.
@@ -64,6 +65,9 @@
 #' @import dplyr
 #' @import tidyr
 #' @import ggplot2
+#' @importFrom scales trans_breaks
+#' @importFrom scales trans_format
+#' @importFrom scales math_format
 #' 
 epa_plot_BSboxplot <- function(BS_results,
                                xlabel.angle = 45,

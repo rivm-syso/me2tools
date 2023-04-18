@@ -1,7 +1,7 @@
 Package: me2tools
 Type: Package
-Title: Tools for processing the input and output of the Multilineair Engine version 2 (ME-2) and MetCor
-Version: 0.1.0
+Title: Tools for Processing the Input and Output of the Multilineair Engine Version 2 (ME-2) and MetCor
+Version: 0.2.0
 Authors@R: c(
     person("Dennis", "Mooibroek", email = "dennis.mooibroek@rivm.nl", role = c("aut", "cre")),
     person("Uwayemi", "Sofowote", email = "uwayemi.sofowote@ontario.ca", role = c("aut")))
@@ -27,6 +27,7 @@ Imports:
     readxl,
     rnaturalearth,
     rnaturalearthdata,
+    scales,
     sf,
     stringr,
     terra,

@@ -1,4 +1,4 @@
-#' Get the F values from the results file (.txt)
+#' Get the F values from the results file (.txt).
 #'
 #' Typical use of Multilinear Engine version 2 (ME-2) will provide three
 #' different files after a run: \dQuote{.dat}: machine readable format,
@@ -111,8 +111,7 @@
 #' @export
 #'
 #' @seealso \code{\link{me2_BS_read_F}}, \code{\link{me2_DISP_read_F}},
-#' \code{\link{me2_DISP_read_minmax}}, \code{\link{me2_read_all}},
-#' \code{\link{me2_read_dat}}
+#' \code{\link{me2_read_all}}, \code{\link{me2_read_dat}}
 #'
 #' @import cli
 #' @import readxl

@@ -1,11 +1,10 @@
 #' Plot profiles using the EPA-PMF style
 #'
 #' Function to plot PMF factor profiles using data from PMFR (using
-#' \code{\link[pmfr]{read_pmf_factor_profiles}} and
-#' \code{\link[pmfr]{tidy_pmf_profiles}}) or from the ME2tools package using
-#' \code{\link{me2_read_F}} in the same way as in EPA-PMF.
+#' [pmfr::read_pmf_factor_profiles()] and [pmfr::tidy_pmf_profiles()] or from 
+#' the metools package using [me2_read_F()] in the same way as in EPA-PMF.
 #'
-#' @param F_matrix Tibble from \code{\link[pmfr]{me2_read_F}} containing
+#' @param F_matrix Tibble from [me2_read_F()] containing
 #'   the results for the F_matrix. In order to use this function only the
 #'   results from a single run should be provided.
 #' @param xlabel.angle What angle should the x-axis labels be presented in? If
@@ -539,7 +538,7 @@ epa_plot_profile <- function(F_matrix,
       stringr::str_detect(run_type, cp.run.type)
     )
   
-  if (class(F_matrix$factor) == "factor") {
+  if ("factor" %in% class(F_matrix$factor)) {
     myColors <- tibble("factor" = levels(F_matrix$factor),
                        "color" = openair::openColours(bar.color, num.factors))
   } else {

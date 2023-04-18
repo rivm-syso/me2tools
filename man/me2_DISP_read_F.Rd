@@ -149,6 +149,6 @@ account for double counting.
 
 \seealso{
 \code{\link{me2_read_F}}, \code{\link{me2_BS_read_F}}, 
-\code{\link{me2_DISP_read_minmax}}, \code{\link{me2_read_all}}, 
+\code{\link{me2_DISP_read_res}}, \code{\link{me2_read_all}}, 
 \code{\link{me2_read_dat}}
 }

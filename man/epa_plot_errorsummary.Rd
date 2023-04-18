@@ -65,6 +65,12 @@ and the color for the average of the base run.}
 \item{show.plot}{A logical argument evaluating to TRUE or FALSE indicating
 whether the plot should be shown as default.}
 
+\item{expand.mult}{Vector of multiplicative range expansion factors used on
+the x-axis . Defaults to \code{c(0.015,0.005)}, as this seems to work best.
+If length is 1, then both left and right x-axis are multiplied with this
+factor. If length is 2, the left limit is expanded by \code{expand.mult[1]}
+and the right by \code{expand.mult[2]}.}
+
 \item{rm.grid.x}{Should the vertical grid lines be removed? In some cases
 there are a lot of species, causing the vertical grid lines to clutter the
 plot. If set to \code{TRUE} these lines are removed. Defaults to
@@ -73,6 +79,8 @@ plot. If set to \code{TRUE} these lines are removed. Defaults to
 \item{facet.parse.label}{Should the labels be parsed using the
 \code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
 will use subscript on the labels shown in the facet.}
+
+\item{...}{Other parameters, for example renamed parameters.}
 }
 \value{
 me2tools list containing the ggplot2 with error estimates summary

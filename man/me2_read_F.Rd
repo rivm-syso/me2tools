@@ -2,7 +2,7 @@
 % Please edit documentation in R/me2_read_F.R
 \name{me2_read_F}
 \alias{me2_read_F}
-\title{Get the F values from the results file (.txt)}
+\title{Get the F values from the results file (.txt).}
 \usage{
 me2_read_F(
   me2_txt_file,
@@ -137,6 +137,5 @@ account for double counting.
 
 \seealso{
 \code{\link{me2_BS_read_F}}, \code{\link{me2_DISP_read_F}},
-\code{\link{me2_DISP_read_minmax}}, \code{\link{me2_read_all}},
-\code{\link{me2_read_dat}}
+\code{\link{me2_read_all}}, \code{\link{me2_read_dat}}
 }

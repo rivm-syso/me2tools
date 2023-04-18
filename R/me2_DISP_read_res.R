@@ -286,11 +286,23 @@ me2_DISP_read_res <- function(DISPres_file,
 #' Get the minimum and maximum DISP values from the DISP results file
 #'   (DISPres_x.txt)
 #'
-#' This function has been renamed to \code{me2_DISP_read_res}.
+#' This function has been renamed to [me2_DISP_read_res()] and will be 
+#' deprecated in the near-future.
 #'
+#' @param DISPres_file location and file name of the \dQuote{DISPres_?.txt} file,
+#'   corresponding to either dQmax = \[4, 8, 16, 32\].
+#' @param tidy_output Should the output be reshaped into tidy data? Default:
+#'   FALSE
+#' @param species A vector containing the names of the species for the rows in
+#'   the F-matrix. If these species name are outputted in the ME-2 output as the
+#'   second column (a column of row numbers being the first), then these values
+#'   are used when \code{species = NA}. If this second column with names is not
+#'   available all species are named as \dQuote{species_xx}, with xx being an
+#'   unique number starting at 1.
+#'   
 #' @export
-#'
-#' @seealso \code{\link{me2_DISP_read_res}}
+#' 
+#' @seealso [me2_DISP_read_res()]
 #'
 me2_DISP_read_minmax <- function(DISPres_file,
                                  tidy_output = FALSE,

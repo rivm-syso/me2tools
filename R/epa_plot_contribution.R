@@ -31,12 +31,13 @@
 #' @param facet.parse.label Should the labels be parsed using the
 #'   \code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
 #'   will use subscript on the labels shown in the facet.
+#' @param ... Other parameters, for example renamed parameters.
 #'   
 #' @return me2tools list containing the ggplot2 with contributions 
 #'   plot and the call used to create this plot.
 #'   
 
-epa_plot_contributions <- function(G_matrix,
+epa_plot_contribution <- function(G_matrix,
                                    unit = "concentration",
                                    xlabel.angle = 45,
                                    xlabel.order = NA,

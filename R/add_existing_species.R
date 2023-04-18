@@ -31,7 +31,7 @@ add_existing_species <- function(f_matrix.tmp,
   # The user might not be aware that they have species in there
   species.present <- FALSE
   species.overwrite <- FALSE
-  if (class(f_matrix.tmp[[1]]) == "character") {
+  if ("character" %in% class(f_matrix.tmp[[1]])) {
     # fix it and warn the user
     names(f_matrix.tmp)[2:ncol(f_matrix.tmp)] <- names(f_matrix.tmp)[1:ncol(f_matrix.tmp)-1]
     names(f_matrix.tmp)[1] <- "identifier"

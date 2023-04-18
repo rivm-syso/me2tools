@@ -89,6 +89,8 @@ plot. If set to \code{TRUE} these lines are removed. Defaults to
 \item{facet.parse.label}{Should the labels be parsed using the
 \code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
 will use subscript on the labels shown in the facet.}
+
+\item{...}{Other parameters, for example renamed parameters.}
 }
 \value{
 me2tools list containing the ggplot2 with box plot results for the
