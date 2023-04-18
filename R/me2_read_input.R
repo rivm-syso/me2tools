@@ -63,28 +63,29 @@ me2_read_input <- function(file,
     sep = sep,
     stringsAsFactors = FALSE
   )
+
   # always use default date_time name for first column.
   names(input.data)[1] <- "date"
 
   if (!is.na(suppressWarnings(lubridate::ymd_hm(input.data[1, 1])))) {
-    input.data$date <- lubridate::ymd_hm(input.data$date_time, tz = tz)
+    input.data$date <- lubridate::ymd_hm(input.data$date, tz = tz)
   } else if (!is.na(suppressWarnings(lubridate::dmy_hm(input.data[1, 1])))) {
-    input.data$date <- lubridate::dmy_hm(input.data$date_time, tz = tz)
+    input.data$date <- lubridate::dmy_hm(input.data$date, tz = tz)
   } else if (!is.na(suppressWarnings(lubridate::mdy_hm(input.data[1, 1])))) {
-    input.data$date <- lubridate::mdy_hm(input.data$date_time, tz = tz)
+    input.data$date <- lubridate::mdy_hm(input.data$date, tz = tz)
   } else if (!is.na(suppressWarnings(lubridate::ymd_hms(input.data[1, 1])))) {
-    input.data$date <- lubridate::ymd_hms(input.data$date_time, tz = tz)
+    input.data$date <- lubridate::ymd_hms(input.data$date, tz = tz)
   } else if (!is.na(suppressWarnings(lubridate::dmy_hms(input.data[1, 1])))) {
-    input.data$date <- lubridate::dmy_hms(input.data$date_time, tz = tz)
+    input.data$date <- lubridate::dmy_hms(input.data$date, tz = tz)
   } else if (!is.na(suppressWarnings(lubridate::mdy_hms(input.data[1, 1])))) {
-    input.data$date <- lubridate::mdy_hms(input.data$date_time, tz = tz)
+    input.data$date <- lubridate::mdy_hms(input.data$date, tz = tz)
   } else {
     cli::cli_abort(c(
       "Datetime must be in 'yyyy-mm-dd hh:mm' or 'dd-mm-yyyy hh:mm' format:",
       "x" = "The datetime formats in '{file}' are not supported."
     ))
   }
-
+  
   # all in list
   input <- list("org" = input.data, "conc" = input.data, "unc" = input.data)
   class(input) <- "me2tools"
@@ -93,7 +94,7 @@ me2_read_input <- function(file,
     -contains(unc_identifier)
   )
   input$unc <- input.data %>% select(
-    date_time,
+    date,
     contains(unc_identifier)
   )
   # remove unc_identifier
