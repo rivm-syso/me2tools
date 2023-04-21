@@ -65,7 +65,9 @@ if (getRversion() >= "2.15.1") {
     "Length", "End", "run_type","value", "numeric_x", "DISP_min", "DISP_max",
     "PANEL", "metcor.ne.graticules", "pred", "predict","conf_lwr","conf_upr",
     "CI.linetype", "pred_lwr", "pred_upr", "PI.linetype",  "plot_type", 
-    "group_type", ".x", "dummy","run_number_final", "corr"
+    "group_type", ".x", "dummy","run_number_final", "corr", "fit", "eq.label",
+    "adj.rr.label", "residual_type", "concentration", "uncertainty", "sn",
+    "guidance"
   )
   
   # Squash the notes
