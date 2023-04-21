@@ -5,44 +5,110 @@
 \title{Compare the observed total mass vs the modelled contributions in the G-matrix}
 \usage{
 compare_obs_mod(
-  measurements,
-  obs = "pm10",
-  G_matrix,
-  mod = c("factor_01", "factor_02"),
-  factor_mass = NA,
+  data,
+  x = "pm10",
+  y = "sum_factors",
   robust = FALSE,
+  intercept = FALSE,
+  mod.line = FALSE,
+  regress.details = TRUE,
+  CI = TRUE,
+  CI.type = "area",
+  CI.level = 0.95,
+  CI.color = "dodgerblue4",
+  CI.alpha = 0.4,
+  CI.linetype = "dotted",
+  CI.linewidth = 1,
+  PI = TRUE,
+  PI.type = "area",
+  PI.level = 0.95,
+  PI.color = "dodgerblue4",
+  PI.linetype = "dashed",
+  PI.linewidth = 1,
+  PI.alpha = 0.4,
   show.plot = TRUE,
   line.color = "dodgerblue4",
   line.size = 1,
   point.color = "red",
   point.shape = 16,
   point.size = 2,
-  point.alpha = 0.25,
+  point.alpha = 0.8,
   ylab = "Modelled",
   xlab = "Observed",
-  auto.text = TRUE
+  auto.text = TRUE,
+  asp.ratio.1 = FALSE
 )
 }
 \arguments{
-\item{measurements}{Tibble containing the date and the observations against
-which a regression should be performed. Typical usage would be to provide
-the total mass (i.e., PM2.5 or PM10).}
+\item{data}{Tibble containing at least two columns of data: 1) the
+measured mass concentrations (i.e., PM2.5 or PM10) and 2) the sum of the
+factors in concentration units. Additional information can be present, but
+will not be used.}
 
-\item{obs}{The name of the column in the "measurement" tibble containing the
+\item{x}{The name of the column in the "data" tibble containing the
 observations for the regression.}
 
-\item{G_matrix}{The preliminary output from functions reading G values in a
-non-tidied format.}
-
-\item{mod}{Vector containing the names of the columns in the G matrix which
-are considered the factors and should be used in the regression.}
-
-\item{factor_mass}{This is a vector with the same length as the number of
-factor profiles. It contains the total mass in concentration units which is
-used to transform the G matrix from unity to concentration units.}
+\item{y}{The name of the column in the "data" tibble containing the
+sum of all factors for the regression.}
 
 \item{robust}{Boolean used to switch between normal (OLS) or robust (RLS)
 regression.}
+
+\item{intercept}{Should an intercept be used when doing the regression?
+Default is FALSE, forcing the regression through the origin.}
+
+\item{mod.line}{This option will add three lines to assist with model
+evaluations. These three lines are the 1:1 line (solid) and the 1:0.5 and
+1:2 lines (dashed). Adding these lines will help to evaluate how close the
+points are to the 1:1 relation. Points within the dashed lines will be
+within a factor of two.}
+
+\item{regress.details}{Show the equation and R2 (non-robust only) on the
+plot. Default usage is \code{TRUE} or \code{FALSE}.}
+
+\item{CI}{Should the confidence levels (CI) be shown? Default of this
+parameter is set to \dQuote{FALSE}.}
+
+\item{CI.type}{How should the CI be displayed? There are two options:
+\dQuote{area} and \dQuote{line}. With \dQuote{area} a shaded area is
+created, whereas \dQuote{line} just plots the upper and lower limits of the
+interval.}
+
+\item{CI.level}{= Confidence level, between [0,1], defaults to
+\dQuote{0.95} corresponding to 95\%.}
+
+\item{CI.color}{The color of the CI area of line, depending on the
+\code{CI.type}. Defaults to "dodgerblue4".}
+
+\item{CI.alpha}{The alpha transparency for the CI area. Is ignored when
+\code{PI.type = "area"}}
+
+\item{CI.linetype}{The type of the lines. Is ignored when
+\code{CI.type = "area"}}
+
+\item{CI.linewidth}{The width of the lines. Is ignored when
+\code{CI.type = "area"}}
+
+\item{PI}{= Should the prediction levels (PI) be shown? Default of this
+parameter is set to \dQuote{FALSE}.}
+
+\item{PI.type}{How should the PI be displayed? See \code{CI.type} for more
+info.}
+
+\item{PI.level}{= Confidence level, between [0,1], defaults to
+\dQuote{0.95} corresponding to 95\%.}
+
+\item{PI.color}{= The color of the PI area of line, depending on the
+\code{PI.type}. Defaults to "dodgerblue4".}
+
+\item{PI.linetype}{The type of the lines. Is ignored when
+\code{PI.type = "area"}}
+
+\item{PI.linewidth}{The width of the lines. Is ignored when
+\code{PI.type = "area"}}
+
+\item{PI.alpha}{=  The alpha transparency for the PI area. Is ignored when
+\code{PI.type = "area"}}
 
 \item{show.plot}{A logical argument evaluating to TRUE or FALSE indicating
 whether the plot should be shown as default.}
@@ -68,6 +134,9 @@ whether the plot should be shown as default.}
 \code{TRUE} attempts will be made to automatically format titles,
 axis labels, pollutant names and units properly, e.g., by subscripting
 the \sQuote{2} in NO2.}
+
+\item{asp.ratio.1}{Output the plot with an aspect ratio of 1. For this to
+work the minimum and maximum of x and y axis are used.}
 }
 \value{
 me2tools list containing the ggplot2 for the regression of the
