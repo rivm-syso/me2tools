@@ -16,6 +16,8 @@
 #'
 #' @param me2_res_file ME2 output file (.rsd), containing the results for the
 #'   residuals.
+#' @param tidy_output Should the output of both G and F be reshaped into tidy
+#'   data? Default: FALSE
 #' @param block_boundaries A list containing the \dQuote{start} string used to
 #'   identify the boundaries of the block containing the values for the
 #'   residuals. For residuals the \dQuote{end} string is automatically derived
@@ -41,6 +43,7 @@
 #' @import lubridate
 #'
 me2_read_residuals <- function(me2_res_file,
+                               tidy_output = FALSE,
                                block_boundaries = list("start" = "^\\s*Scaled Residuals"),
                                species = NA,
                                dates = NA,
@@ -85,7 +88,7 @@ me2_read_residuals <- function(me2_res_file,
       )) %>%
         select(-dplyr::last(names(.))) %>%
         tibble::add_column(residual_type = "residual_scaled", .before = "X1") %>%
-        tibble::add_column(base_run = run.number, .before = "X1")
+        tibble::add_column(model_run = run.number, .before = "X1")
       
       # we need to add the species names and datetime to the residuals.
       # set the names of the columns to the correct species
@@ -128,7 +131,7 @@ me2_read_residuals <- function(me2_res_file,
           matrix.tmp <- matrix.tmp %>%
             tibble::add_column(
               date = dates,
-              .after = "base_run"
+              .after = "model_run"
             )
         } else {
           cli::cli_abort(c(
@@ -155,7 +158,7 @@ me2_read_residuals <- function(me2_res_file,
           matrix.tmp <- matrix.tmp %>%
             tibble::add_column(
               date = dates_default,
-              .after = "base_run"
+              .after = "model_run"
             )
         } else {
           cli::cli_abort(c(
@@ -220,7 +223,7 @@ me2_read_residuals <- function(me2_res_file,
       ))  %>%
         select(-dplyr::first(names(.))) %>%
         tibble::add_column(residual_type = "residual", .before = "X2") %>%
-        tibble::add_column(base_run = run.number, .before = "X2")
+        tibble::add_column(model_run = run.number, .before = "X2")
       
       
       # we need to add the species names and datetime to the residuals.
@@ -265,7 +268,7 @@ me2_read_residuals <- function(me2_res_file,
           matrix.tmp <- matrix.tmp %>%
             tibble::add_column(
               date = dates,
-              .after = "base_run"
+              .after = "model_run"
             )
         } else {
           cli::cli_abort(c(
@@ -292,7 +295,7 @@ me2_read_residuals <- function(me2_res_file,
           matrix.tmp <- matrix.tmp %>%
             tibble::add_column(
               date = dates_default,
-              .after = "base_run"
+              .after = "model_run"
             )
         } else {
           cli::cli_abort(c(
@@ -329,7 +332,7 @@ me2_read_residuals <- function(me2_res_file,
       ))  %>%
         select(-dplyr::first(names(.))) %>%
         tibble::add_column(residual_type = "residual_scaled", .before = "X2") %>%
-        tibble::add_column(base_run = run.number, .before = "X2")
+        tibble::add_column(model_run = run.number, .before = "X2")
       
       
       # we need to add the species names and datetime to the residuals.
@@ -373,7 +376,7 @@ me2_read_residuals <- function(me2_res_file,
           matrix.tmp <- matrix.tmp %>%
             tibble::add_column(
               date = dates,
-              .after = "base_run"
+              .after = "model_run"
             )
         } else {
           cli::cli_abort(c(
@@ -400,7 +403,7 @@ me2_read_residuals <- function(me2_res_file,
           matrix.tmp <- matrix.tmp %>%
             tibble::add_column(
               date = dates_default,
-              .after = "base_run"
+              .after = "model_run"
             )
         } else {
           cli::cli_abort(c(
@@ -420,6 +423,16 @@ me2_read_residuals <- function(me2_res_file,
       }
       rm(matrix.tmp)
     }
+  }
+  
+  if (tidy_output) {
+    species.order <- names(res_matrix[4:length(res_matrix)])
+    
+    res_matrix <- res_matrix %>% 
+      pivot_longer(cols = -c("residual_type", "model_run", "date"),
+                   names_to = "species",
+                   values_to = "value") %>% 
+      mutate(species = factor(species, levels = species.order))
   }
 
   return(res_matrix)

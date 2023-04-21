@@ -18,7 +18,7 @@ to identify the boundaries of the block containing the values
 for the log file.}
 }
 \value{
-tibble containing the following information over each base_run:
+tibble containing the following information over each model_run:
 \dQuote{convergence} (T/F); \dQuote{self.cancel} (T/F);
 \dQuote{iter.steps} (#); \dQuote{precon_mode} (#) and \dQuote{messages}.
 }

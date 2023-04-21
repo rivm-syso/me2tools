@@ -13,7 +13,7 @@
 #'   to identify the boundaries of the block containing the values
 #'   for the log file.
 #'
-#' @return tibble containing the following information over each base_run:
+#' @return tibble containing the following information over each model_run:
 #'   \dQuote{convergence} (T/F); \dQuote{self.cancel} (T/F);
 #'   \dQuote{iter.steps} (#); \dQuote{precon_mode} (#) and \dQuote{messages}.
 #'
@@ -105,7 +105,7 @@ me2_read_log <- function(me2_log_file,
 
     # create tibble
     log_tmp <- tibble::tibble(
-      "base_run" = run.number,
+      "model_run" = run.number,
       "convergence" = convergence,
       "self.cancel" = self_cancel,
       "iter.steps" = iter_steps,

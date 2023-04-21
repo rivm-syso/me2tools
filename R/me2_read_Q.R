@@ -55,7 +55,7 @@ me2_read_Q <- function(me2_txt_file,
     q_values <- me2_BS_read_correlations(me2_bs_txt_file = me2_txt_file) %>% 
       dplyr::select(- tidyr::all_of(tidyr::contains("factor")))
     
-    names(q_values)[1] <- "base_run"
+    names(q_values)[1] <- "model_run"
     
     cli::cli_alert_info(c(
       "Input looks like modified EPA-script, returning found Q-values."
@@ -86,7 +86,7 @@ me2_read_Q <- function(me2_txt_file,
       )
   
       q_values_tmp <- tibble::tibble(
-        base_run = run.number,
+        model_run = run.number,
         Q = as.numeric(split_result[[1]][5]),
         Qmain = as.numeric(split_result[[1]][6]),
         Qaux = as.numeric(split_result[[1]][7])

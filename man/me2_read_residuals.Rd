@@ -6,6 +6,7 @@
 \usage{
 me2_read_residuals(
   me2_res_file,
+  tidy_output = FALSE,
   block_boundaries = list(start = "^\\\\s*Scaled Residuals"),
   species = NA,
   dates = NA,
@@ -15,6 +16,9 @@ me2_read_residuals(
 \arguments{
 \item{me2_res_file}{ME2 output file (.rsd), containing the results for the
 residuals.}
+
+\item{tidy_output}{Should the output of both G and F be reshaped into tidy
+data? Default: FALSE}
 
 \item{block_boundaries}{A list containing the \dQuote{start} string used to
 identify the boundaries of the block containing the values for the

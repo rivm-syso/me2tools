@@ -200,7 +200,7 @@ me2_read_G <- function(me2_txt_file,
 
     # add run_type
     g_matrix.tmp <- g_matrix.tmp %>%
-      tibble::add_column(run_type = "base_runs", .after = "model_run")
+      tibble::add_column(run_type = "base_run", .after = "model_run")
 
     if (nrow(g_matrix) > 0) {
       g_matrix <- dplyr::bind_rows(g_matrix, g_matrix.tmp)
