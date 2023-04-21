@@ -8,19 +8,19 @@
 **me2tools** is an R package developed for the processing of the outputs of the Multilinear Engine version 2 (ME-2) and [**MetCor**](https://github.com/ankitrasto/metcor).
 A license of the Multilinear Engine can be obtained from Dr. P. Paatero or the ME-2 version provided with the 
 [**Positive Matrix Factorization Model for Environmental Data Analyses (EPA-PMF version 5.0)**](https://www.epa.gov/air-research/positive-matrix-factorization-model-environmental-data-analyses)
-can be used for source apportionment. The use of **me2tools** for reading the outcome of a ME-2 analysis into R is strongly based on the package [**pmfr**](https://github.com/skgrange/pmfr) by Stuart Grange.
-As such, the output of the `me2_read_*` functions can be used by the plotting routines of **pmfr**. In addition to the plotting routines available in **pmfr**, the package **me2tools** also contains some
-plotting routines, for example to create an EPA-PMF style factor profiles plot.
+can be used for source apportionment. The use of **me2tools** for reading the outcome of a ME-2 analysis into R is firmly based on the package [**pmfr**](https://github.com/skgrange/pmfr) by Stuart Grange.
+As such, the the `me2_read_*` output can be used by the plotting routines of **pmfr**. In addition to the plotting routines available in **pmfr**, the package **me2tools** also contains some
+plotting routines, for example, to create an EPA-PMF style factor profiles plot.
 
-Next to reading the output of the ME-2 analysis **me2tools** also contains some reading and plotting routines for the output of open source advanced trajectory statistics 
-modelling using [**MetCor**](https://github.com/ankitrasto/metcor). Using **me2tools**, the raster grids provided by **MetCor** can be read and projected on a map using a variety of different options.
+Next to reading the output of the ME-2 analysis **me2tools** also contains some reading and plotting routines for the output of open-source advanced trajectory statistics 
+modelling using [**MetCor**](https://github.com/ankitrasto/metcor). Using **me2tools**, the raster grids provided by **MetCor** can be read and projected on a map using various options.
 The plotting of the **MetCor** results uses the background maps [**rnaturalearth**](https://github.com/ropensci/rnaturalearth) (or their high resolution equivalent [**rnaturalearthhires**](https://github.com/ropensci/rnaturalearthhires)) 
-as background layer to display the raster grid. Please note that the installation of [**rnaturalearthdata**](https://github.com/ropensci/rnaturalearthdata) is mandatory to use the data from **rnaturalearth**. To install
+as a background layer to display the raster grid. Please note that installing [**rnaturalearthdata**](https://github.com/ropensci/rnaturalearthdata) is mandatory to use the data from **rnaturalearth**. To install
 the **rnaturalearth** packages, please follow the installation instructions for each package as displayed in the readme files available at the above locations.
 
 ## Installation
 
-Currently only the development version of **me2tools** is available through GitHub. To install this version, the [**remotes**](https://github.com/r-lib/remotes) package will need to be installed first. Then:
+Only the development version of **me2tools** is currently available through GitHub. The [**remotes**](https://github.com/r-lib/remotes) package will need to be installed first to install the development version of **me2tools**. Then:
 
 ```R
 # Load helper package
@@ -32,16 +32,16 @@ install_github("rivm-syso/me2tools")
 
 ## Development
 
-This project is still under active development while we try to generalize the research code into usable functions. As such, features currently available in this package are still being enhanced and new features are continually getting added or updated. 
-Breaking changes of existing code will be documented in [NEWS](NEWS.md). If you encounter any bugs, have a suggestion or improvement please [open an issue](https://github.com/rivm-syso/me2tools/issues) or a [pull request](https://github.com/rivm-syso/me2tools/pulls).
+This project is still under active development while we try to generalize the research code into usable functions. As such, features currently available in this package are still being enhanced, and new features are continually getting added or updated. 
+Breaking changes in existing code will be documented in [NEWS](NEWS.md). If you encounter any bugs or have a suggestion or improvement, please [open an issue](https://github.com/rivm-syso/me2tools/issues) or a [pull request](https://github.com/rivm-syso/me2tools/pulls).
 
 ## Example usage
 
 ### ME-2 data files
-For the examples we use the multitime demo file provided with the ME-2 package from Dr. Paatero. We ran the "2wmtdemo.ini" with numtaks = 10, generating results for 10 runs in the output files. It should be noted, as mentioned in the accompaying description of the original demo package, that this analysis should not be regarded as fully optimal, it is only offered in order to illustrate the overall setup and for example purposes.
+We use the multi-time demo file provided with the ME-2 package from Dr. Paatero for the examples. We ran the "2wmtdemo.ini" with numtaks = 10, generating results for 10 runs in the output files. As mentioned in the accompanying description of the original demo package, it should be noted that this analysis should not be regarded as fully optimal. It is only offered to illustrate the overall setup and for example purposes.
 
 > **Note**
-> The initial "2wmtdemo.ini" featured two similar blocks of data before printing the F and G matrix. In this version we have commented out lines 513 - 534 in the ini file to prevent the inclusion of the duplicate block of data to make it easier to read the data into R.
+> The initial "2wmtdemo.ini" featured two similar data blocks before printing the F and G matrix. In this version, we have commented out lines 513 - 534 in the ini file to prevent the inclusion of the same data block to make it easier to read the data into R. It should be noted that the headers for the duplicate blocks of data were different, and these blocks can co-exists if needed.
 
 ```R
 # Load packages
