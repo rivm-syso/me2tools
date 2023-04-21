@@ -112,7 +112,7 @@
 #'     concentration units, whereas the percentage is in percentages \[0,100\].
 #'   \item \code{model_run}: integer to denote the model run, for example used 
 #'     when reading the results of multiple run. When processing only the 
-#'     \dQuote{base_run} from RPA-PMF this column can be set to 1.
+#'     \dQuote{base_run} from EPA-PMF this column can be set to 1.
 #'   \item \code{species}: the name of the species
 #'   \item \code{run_type}: consists of different types of runs. There should 
 #'     be at least one set of data with different \code{factor_profiles} for 

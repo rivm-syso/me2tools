@@ -9,7 +9,7 @@ me2_DISP_read_minmax(DISPres_file, tidy_output = FALSE, species = NA)
 }
 \arguments{
 \item{DISPres_file}{location and file name of the \dQuote{DISPres_?.txt} file,
-corresponding to either dQmax = \link{4, 8, 16, 32}.}
+corresponding to either dQmax = [4, 8, 16, 32].}
 
 \item{tidy_output}{Should the output be reshaped into tidy data? Default:
 FALSE}
