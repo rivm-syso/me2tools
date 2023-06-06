@@ -47,18 +47,20 @@ the \sQuote{2} in NO2.}
 
 \item{bin.number}{The number of bins used, defaults to 30,}
 
-\item{bin.color}{The color of the bins, defaults to "steelblue",}
+\item{bin.color}{The color of the bins, defaults to "steelblue". This is
+also the fill color for the box and whisker and violin plots.}
 
-\item{bin.alpha}{The transparency of the bins, defaults to 0.7,}
+\item{bin.alpha}{The transparency of the bins, defaults to 0.7. This is
+also the alpha for the box and whisker and violin plots.}
 
 \item{guide.color}{= The color of the guidelines based on the
-residual.limits.Defaults to "red".}
+residual.limits. Defaults to "red" for all the plots.}
 
 \item{guide.linetype}{= The line type of the guidelines based on the
-residual.limits.Defaults to "solid".}
+residual.limits. Defaults to "solid"  for all the plots.}
 
 \item{guide.linewidth}{The line width of the guidelines based on the
-residual.limits.Defaults to 1.}
+residual.limits. Defaults to 1.}
 
 \item{x.font.size}{The size of the xtick labels. Defaults to 10.}
 
@@ -67,10 +69,11 @@ your labels are long, \code{45} degrees can be useful, which is also the
 default.}
 
 \item{facet.col}{The number of columns for the faceted plot. If the number of
-columns is set to 1, the faceting will be in rows only. Defaults to 3.}
+columns is set to 1, the faceting will be in rows only. Defaults to 3 and
+is only applied to the histogram plot.}
 
 \item{show.plot}{A logical argument evaluating to TRUE or FALSE indicating
-whether the plot should be shown as default.}
+whether the histogram plot should be shown as default.}
 
 \item{rm.grid.x}{Should the vertical grid lines be removed? In some cases
 there are a lot of species, causing the vertical grid lines to clutter the
@@ -83,7 +86,9 @@ will use subscript on the labels shown in the facet.}
 }
 \value{
 me2tools list containing the ggplot2 with scaled residual results
-for the selected species and the call to produce the plot.
+for the selected species in a histogram, a box and whisker plot of the
+same data, a violin plot of the same data, the residual limits and the
+call to produce the plot.
 }
 \description{
 This function plots the results of the scaled residuals using histograms.

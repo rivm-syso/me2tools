@@ -16,22 +16,25 @@
 #'   axis labels, pollutant names and units properly, e.g., by subscripting
 #'   the \sQuote{2} in NO2.
 #' @param bin.number The number of bins used, defaults to 30,
-#' @param bin.color The color of the bins, defaults to "steelblue",
-#' @param bin.alpha The transparency of the bins, defaults to 0.7,
+#' @param bin.color The color of the bins, defaults to "steelblue". This is 
+#'   also the fill color for the box and whisker and violin plots.
+#' @param bin.alpha The transparency of the bins, defaults to 0.7. This is 
+#'   also the alpha for the box and whisker and violin plots.
 #' @param guide.color = The color of the guidelines based on the 
-#'   residual.limits.Defaults to "red".
+#'   residual.limits. Defaults to "red" for all the plots.
 #' @param guide.linetype = The line type of the guidelines based on the 
-#'   residual.limits.Defaults to "solid".
+#'   residual.limits. Defaults to "solid"  for all the plots.
 #' @param guide.linewidth The line width of the guidelines based on the 
-#'   residual.limits.Defaults to 1.
+#'   residual.limits. Defaults to 1.
 #' @param x.font.size The size of the xtick labels. Defaults to 10.
 #' @param xlabel.angle What angle should the x-axis labels be presented in? If
 #'   your labels are long, \code{45} degrees can be useful, which is also the
 #'   default.
 #' @param facet.col The number of columns for the faceted plot. If the number of
-#'   columns is set to 1, the faceting will be in rows only. Defaults to 3.
+#'   columns is set to 1, the faceting will be in rows only. Defaults to 3 and 
+#'   is only applied to the histogram plot.
 #' @param show.plot A logical argument evaluating to TRUE or FALSE indicating
-#'   whether the plot should be shown as default.
+#'   whether the histogram plot should be shown as default.
 #' @param rm.grid.x Should the vertical grid lines be removed? In some cases
 #'   there are a lot of species, causing the vertical grid lines to clutter the
 #'   plot. If set to \code{TRUE} these lines are removed. Defaults to
@@ -41,7 +44,9 @@
 #'   will use subscript on the labels shown in the facet.
 #'
 #' @return me2tools list containing the ggplot2 with scaled residual results 
-#'   for the selected species and the call to produce the plot.   
+#'   for the selected species in a histogram, a box and whisker plot of the 
+#'   same data, a violin plot of the same data, the residual limits and the 
+#'   call to produce the plot.   
 
 epa_plot_residuals <- function(me2_residuals,
                                limit.species = NA,
@@ -170,11 +175,73 @@ epa_plot_residuals <- function(me2_residuals,
                                                        hjust = 1,
                                                        size = x.font.size),
                    legend.position="none",
-                   panel.grid.minor = element_blank())
+                   panel.grid.minor = element_blank()) +
+    ggplot2::ylab(ylab) +
+    ggplot2::xlab(xlab)
 
+  # create a boxplot
+  boxplot.output <- ggplot2::ggplot(data = plot.data,
+                                    aes(x=species, y = value)) +
+    geom_hline(yintercept=residual.limits, 
+               linetype=guide.linetype,
+               linewidth = guide.linewidth,
+               color = guide.color) +
+    geom_boxplot(fill = bin.color,
+                 alpha = bin.alpha) +
+    theme_bw() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = xlabel.angle, 
+                                                       hjust = 1,
+                                                       size = x.font.size),
+                   legend.position="none",
+                   panel.grid.minor = element_blank()) +
+    ggplot2::ylab(xlab) +
+    ggplot2::xlab("Species")
+  
+  # violin plot
+  violinplot.output <- ggplot2::ggplot(data = plot.data,
+                                    aes(x=species, y = value)) +
+    geom_hline(yintercept=residual.limits, 
+               linetype=guide.linetype,
+               linewidth = guide.linewidth,
+               color = guide.color) +
+    geom_violin(fill = bin.color,
+                alpha = bin.alpha) +
+    theme_bw() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = xlabel.angle, 
+                                                       hjust = 1,
+                                                       size = x.font.size),
+                   legend.position="none",
+                   panel.grid.minor = element_blank()) +
+    ggplot2::ylab(xlab) +
+    ggplot2::xlab("Species")
+  
+  # remove vertical grid lines?
+  if (rm.grid.x) {
+    plot.output <- plot.output +
+      ggplot2::theme(
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()
+      )
+    
+    boxplot.output <- boxplot.output +
+      ggplot2::theme(
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()
+      )
+    
+    violinplot.output <- violinplot.output +
+      ggplot2::theme(
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()
+      )
+  }  
+    
+  
   # generate output
   output <- list(
     "residual.plot" = plot.output,
+    "box.residual.plot" = boxplot.output,
+    "violin.residual.plot" = violinplot.output,
     "outside.limits" = outside.limits,
     call = match.call()
   )
