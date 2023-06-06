@@ -6,7 +6,7 @@
 ## Introduction
 
 **me2tools** is an R package developed for the processing of the outputs of the Multilinear Engine version 2 (ME-2) and [**MetCor**](https://github.com/ankitrasto/metcor).
-A license of the Multilinear Engine can be obtained from Dr. P. Paatero or the ME-2 version provided with the 
+A license of the Multilinear Engine can be obtained from [**Datalystica, Switzerland**](https://datalystica.com/me-2-solver/) or the ME-2 version provided with the 
 [**Positive Matrix Factorization Model for Environmental Data Analyses (EPA-PMF version 5.0)**](https://www.epa.gov/air-research/positive-matrix-factorization-model-environmental-data-analyses)
 can be used for source apportionment. The use of **me2tools** for reading the outcome of a ME-2 analysis into R is firmly based on the package [**pmfr**](https://github.com/skgrange/pmfr) by Stuart Grange.
 As such, the the `me2_read_*` output can be used by the plotting routines of **pmfr**. In addition to the plotting routines available in **pmfr**, the package **me2tools** also contains some
