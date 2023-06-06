@@ -1,8 +1,9 @@
-#' Modify ME-2 ini file using R
+#' Modify ME-2 ini file needed for Multi-time runs using R
 #' 
 #' The .ini file, which is needed to  provide information to ME-2, can be 
 #' programmatically changed using this function. Not all information can be
-#' changed yet.
+#' changed yet and the function is currently specifically tailored for the 
+#' Multi-time runs.
 #'
 #' @param file name of the ME-2 ini file, can include path. This is also the
 #'   file where the output is written to.

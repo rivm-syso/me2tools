@@ -50,9 +50,9 @@
 #'
 #' However, in the case of multi-time (MT) factor analysis it might be
 #' difficult to estimate the \dQuote{m.mass} due to the various time resolutions
-#' in the data. Often only part of the available constituents can be summed and
-#' subtracted from total mass (if they have the same sampling interval/time
-#' resolution), leaving an overestimation of the \dQuote{m.mass}. After factor
+#' in the input data. Often only part of the available constituents can be summed 
+#' and subtracted from total mass (if they have the same sampling interval/time
+#' resolution), leading to an overestimation of the \dQuote{m.mass}. After factor
 #' analysis, this overestimation in the \dQuote{m.mass} still exists. Summing
 #' the results of the factor analysis for each constituents, including
 #' \dQuote{m.mass}, will therefore also be an overestimation due to double
@@ -63,10 +63,11 @@
 #' corrected for double counting. A viable way to do this in MT-factor analysis
 #' is to subtract the sum of constituents that should have been used in the
 #' initial calculation of \dQuote{m.mass} but could not be applied due to
-#' different time resolutions. Since the F matrix from the factor analysis
-#' is provided with unified time resolutions, the mass associated with these
-#' constituents in the F matrix can now be subtracted to provide a better
-#' estimate of \dQuote{m.mass}.
+#' different time resolutions (e.g., sum of metals or any other species collected
+#' on a lower time resolution)' from the m.mass value for that factor. Since the 
+#' F matrix from the factor analysis is provided with unified time resolutions, 
+#' the mass associated with these constituents in the F matrix can now be 
+#' subtracted to provide a better estimate of \dQuote{m.mass}.
 #'
 #' The variable \dQuote{dc_species} is a character vector containing
 #' constituents that should be subtracted from the \dQuote{m.mass} variable to

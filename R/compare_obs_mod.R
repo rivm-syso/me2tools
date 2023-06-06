@@ -32,7 +32,7 @@
 #'   interval.
 #' @param CI.level = Confidence level, between \[0,1\], defaults to 
 #'   \dQuote{0.95} corresponding to 95%.
-#' @param CI.color The color of the CI area of line, depending on the 
+#' @param CI.color The color of the CI area or line, depending on the 
 #'   \code{CI.type}. Defaults to "dodgerblue4".
 #' @param CI.linetype The type of the lines. Is ignored when 
 #'   \code{CI.type = "area"}
@@ -46,7 +46,7 @@
 #'   info.
 #' @param PI.level = Confidence level, between \[0,1\], defaults to 
 #'   \dQuote{0.95} corresponding to 95%.
-#' @param PI.color = The color of the PI area of line, depending on the 
+#' @param PI.color = The color of the PI area or line, depending on the 
 #'   \code{PI.type}. Defaults to "dodgerblue4".
 #' @param PI.linetype The type of the lines. Is ignored when 
 #'   \code{PI.type = "area"}
@@ -75,7 +75,7 @@
 #' @returns me2tools list containing the ggplot2 for the regression of the
 #'  observations and the sum of the factors in concentration units (LR). The
 #'  results of both the MLR and the LR models are also given, as well as the
-#'  data used to calculate these models. Additionally information is provided
+#'  data used to calculate these models. Additional information is provided
 #'  regarding the use of the concentration units in G and if robust regression
 #'  has been applied.
 #'
@@ -93,12 +93,12 @@
 #'  concentration units are present in G, then the coefficients of the MLR are
 #'  used as the \code{factor_mass}.
 #'
-#'  If concentration units are present in G, than this will take precedence,
-#'  unless the \code{factor_mass} is defined. In the latter case the existing
+#'  If concentration units are present in G, then this will take precedence,
+#'  unless the \code{factor_mass} is defined. In the latter case, the existing
 #'  concentration data is overwritten with the new concentrations based on the
 #'  provided \code{factor_mass}.
 #'
-#'  In the output of the function a variable is used to denote the application
+#'  In the output of the function, a variable is used to denote the application
 #'  of \code{factor_mass} and the possible concentrations in G matrix in the
 #'  regression.
 #'

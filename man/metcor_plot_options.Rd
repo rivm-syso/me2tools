@@ -52,9 +52,10 @@ compass will be added on top of the scale. Defaults to \code{TRUE}.
 in a north arrow always pointing up; \dQuote{true} always points to the
 north pole from whichever corner of the map the north arrow is in.
 Defaults to \dQuote{grid}
-\item \code{center.from} How to calculate the center point. Can be one of
-\dQuote{raster}, \dQuote{receptor} or \dQuote{manual}. In case of
-\dQuote{manual} the \code{center.point} has to be provided as well.
+\item \code{center.from} How to calculate the center point of the plot.
+Can be one of \dQuote{raster}, \dQuote{receptor} or \dQuote{manual}.
+In case of \dQuote{manual} the \code{center.point} has to be provided
+as well.
 \item \code{center.point} A vector containing lon and lat coordinates:
 \code{c("lon" = 0, "lat" = 0)} to be used as the center point.
 \item \code{zoom.level} This is the zoom level, works the same way as
@@ -115,7 +116,7 @@ list should contain a list with \dQuote{data}: dataframe with SF;
 \dQuote{color} color of the outline of the shapes; \dQuote{linewidth}
 size of the outline of the shape; \dQuote{fill} the fill color of the
 shape.
-\item \code{layers.afer} can contain a list with several SF layers that
+\item \code{layers.after} can contain a list with several SF layers that
 are plotted on top of the MetCor results. See \code{layers.before} for
 requirements.
 }

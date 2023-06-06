@@ -30,7 +30,7 @@ for the F-matrix.}
 G-matrix. If these dates are outputted in the ME-2 output as the
 second column (a column of row numbers being the first), then these values
 are used when \code{dates = NA}. The values inside the ME-2 output are
-overwritten when a vector if \code{dates} are provided. If this second
+overwritten when a vector of \code{dates} are provided. If this second
 column with dates is not available new daily dates, starting from
 1970-01-01 will be automatically provided.}
 

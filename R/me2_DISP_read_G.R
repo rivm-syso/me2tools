@@ -1,4 +1,4 @@
-#' Get the G values from the BS results file (.txt)
+#' Get the G values from the DISP results file (.txt)
 #'
 #' Files stored after a DISP run are named with a user-specific prefix, shown 
 #' here as an asterisk (*). Three output files (*_DISP.dat,  *_DISP.txt and 
@@ -25,7 +25,7 @@
 #'   G-matrix. If these dates are outputted in the ME-2 output as the
 #'   second column (a column of row numbers being the first), then these values
 #'   are used when \code{dates = NA}. The values inside the ME-2 output are
-#'   overwritten when a vector if \code{dates} are provided.If this second
+#'   overwritten when a vector of \code{dates} are provided.If this second
 #'   column with dates is not available new daily dates, starting from
 #'   1970-01-01 will be automatically provided.
 #' @param factor_mass This is a vector with the same length as the number of

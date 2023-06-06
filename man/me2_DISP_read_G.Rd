@@ -2,7 +2,7 @@
 % Please edit documentation in R/me2_DISP_read_G.R
 \name{me2_DISP_read_G}
 \alias{me2_DISP_read_G}
-\title{Get the G values from the BS results file (.txt)}
+\title{Get the G values from the DISP results file (.txt)}
 \usage{
 me2_DISP_read_G(
   me2_disp_txt_file,
@@ -31,7 +31,7 @@ for the F-matrix.}
 G-matrix. If these dates are outputted in the ME-2 output as the
 second column (a column of row numbers being the first), then these values
 are used when \code{dates = NA}. The values inside the ME-2 output are
-overwritten when a vector if \code{dates} are provided.If this second
+overwritten when a vector of \code{dates} are provided.If this second
 column with dates is not available new daily dates, starting from
 1970-01-01 will be automatically provided.}
 

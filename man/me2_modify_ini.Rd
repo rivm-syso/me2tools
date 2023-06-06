@@ -2,7 +2,7 @@
 % Please edit documentation in R/me2_modify_ini.R
 \name{me2_modify_ini}
 \alias{me2_modify_ini}
-\title{Modify ME-2 ini file using R}
+\title{Modify ME-2 ini file needed for Multi-time runs using R}
 \usage{
 me2_modify_ini(
   file,
@@ -59,7 +59,8 @@ overwriting the provided \code{ini} file with the updated version.
 \description{
 The .ini file, which is needed to  provide information to ME-2, can be
 programmatically changed using this function. Not all information can be
-changed yet.
+changed yet and the function is currently specifically tailored for the
+Multi-time runs.
 }
 \examples{
 \dontrun{

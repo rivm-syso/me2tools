@@ -21,11 +21,11 @@
 #' @param tidy_output Should the output be reshaped into tidy data? Default:
 #'   FALSE
 #' @param species A vector containing the names of the species for the rows in
-#'   the F-matrix. If these species name are outputted in the ME-2 output as the
-#'   second column (a column of row numbers being the first), then these values
-#'   are used when \code{species = NA}. If this second column with names is not
-#'   available all species are named as \dQuote{species_xx}, with xx being an
-#'   unique number starting at 1.
+#'   the F-matrix. If these species names are outputted in the ME-2 output as 
+#'   the second column (a column of row numbers being the first), then these 
+#'   values are used when \code{species = NA}. If this second column with names 
+#'   is not available, all species are named as \dQuote{species_xx}, with xx 
+#'   being an unique number starting at 1.
 #'
 #' @section Adding species to min/max:
 #' By far the easiest way to add \dQuote{species} to the DISP min/max results is

@@ -10,10 +10,12 @@
 #'   a single run.
 #' @param source source F.matrix or source G.matrix. This function can only
 #'   handle comparison between one other matrix from a single run.
-#' @param F.profile where should the correlation be calculated on when using
-#'   the F matrix? Defaults to \code{percentage_of_species_sum}
-#' @param G.unit where should the correlation be calculated on when using the
-#'   G matrix? Defaults to \code{normalised}
+#' @param F.profile what version of the F matrix should be used for the 
+#'   correlations, i.e., concentration units or percentage of species sum. 
+#'   Defaults to \code{percentage_of_species_sum}
+#' @param G.unit what version of the G matrix should the correlations be 
+#'   performed on? Normalized (avg = 1) or concentration units? Defaults to 
+#'   \code{normalised}
 #' @param corr.threshold value for the Pearson correlation threshold, defaults
 #'   to 0.6 as stipulated by the EPA-PMF 5.0 manual.
 #' @param extended.output provide extended output (besides the factor output
@@ -29,10 +31,11 @@
 #'
 #' The function can also be used to assess the correlations of F and G factors
 #' with partly overlapping species (F) or samples (G). If different amount of
-#' species or samples are found, these are added to the matrices who do not have
-#' them and their contribution is set to 0. If the user wishes to compare only
-#' those species or samples present in both base and source, the input should
-#' be modified as such.
+#' species or samples are found (i.e., non-overlapping species/samples), these 
+#' are added to the matrices that do not have these and their contribution is 
+#' set to 0 by default. If the user wishes to compare only those species or 
+#' samples present in both base and source, the input should be modified as 
+#' such prior to running this function.
 #'
 #' @export
 #'

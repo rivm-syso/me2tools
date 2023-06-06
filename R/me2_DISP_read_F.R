@@ -25,7 +25,7 @@
 #'   the F-matrix. If these species name are outputted in the ME-2 output as the
 #'   second column (a column of row numbers being the first), then these values
 #'   are used when \code{species = NA}. If this second column with names is not
-#'   available all species are named as \dQuote{species_xx}, with xx being an
+#'   available all species are named as \dQuote{species_xx}, with xx being a
 #'   unique number starting at 1.
 #' @param dc_species character vector containing the species that should be
 #' subtracted from the missing mass to account for double counting. See also the
@@ -45,7 +45,7 @@
 #' can be preceded by \code{^\\s*} which tells the function that the string can
 #' begin with an undefined number of spaces.
 #'
-#' @section Adding species to F:
+#' @section Adding species names to F:
 #' By far the easiest way to add \dQuote{species} to F is to provide them as
 #' input parameters. The species names can probably be found in the original
 #' data input used for ME-2 calculations.
@@ -89,9 +89,9 @@
 #'
 #' However, in the case of multi-time (MT) factor analysis it might be
 #' difficult to estimate the \dQuote{m.mass} due to the various time resolutions
-#' in the data. Often only part of the available constituents can be summed and
-#' subtracted from total mass (if they have the same sampling interval/time
-#' resolution), leaving an overestimation of the \dQuote{m.mass}. After factor
+#' in the input data. Often only part of the available constituents can be summed 
+#' and subtracted from total mass (if they have the same sampling interval/time
+#' resolution), leading to an overestimation of the \dQuote{m.mass}. After factor
 #' analysis, this overestimation in the \dQuote{m.mass} still exists. Summing
 #' the results of the factor analysis for each constituents, including
 #' \dQuote{m.mass}, will therefore also be an overestimation due to double
@@ -102,10 +102,11 @@
 #' corrected for double counting. A viable way to do this in MT-factor analysis
 #' is to subtract the sum of constituents that should have been used in the
 #' initial calculation of \dQuote{m.mass} but could not be applied due to
-#' different time resolutions. Since the F matrix from the factor analysis
-#' is provided with unified time resolutions, the mass associated with these
-#' constituents in the F matrix can now be subtracted to provide a better
-#' estimate of \dQuote{m.mass}.
+#' different time resolutions (e.g., sum of metals or any other species collected
+#' on a lower time resolution)' from the m.mass value for that factor. Since the 
+#' F matrix from the factor analysis is provided with unified time resolutions, 
+#' the mass associated with these constituents in the F matrix can now be 
+#' subtracted to provide a better estimate of \dQuote{m.mass}.
 #'
 #' The variable \dQuote{dc_species} is a character vector containing
 #' constituents that should be subtracted from the \dQuote{m.mass} variable to
@@ -116,7 +117,8 @@
 #'   is identical to the output of the F-values from the base runs. The only
 #'   difference is that the DISP results have different values in the
 #'   \dQuote{run_type} column. In this case this column contains the value
-#'   \dQuote{DISP_bestfit}.
+#'   \dQuote{DISP_bestfit}. For example, these values can be used to replace the 
+#'   \dQuote{DISP_avg} when plotting the DISP results.
 #'
 #' @export
 #' 
