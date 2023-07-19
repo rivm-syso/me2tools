@@ -344,8 +344,8 @@ compare_obs_mod <- function(data,
     if (robust) {
       scatter <- scatter +
         ggpmisc::stat_poly_eq(mapping = ggpmisc::use_label("eq"), 
-                              formula = y ~ x + 0,
-                              method = "MASS::rlm")
+                              formula = fm,
+                              method = MASS::rlm)
     } else {
       scatter <- scatter +
         ggpmisc::stat_poly_eq(ggplot2::aes(label = paste("atop(", ggplot2::after_stat(eq.label), ",", ggplot2::after_stat(adj.rr.label), ")", sep = "")),
