@@ -2,6 +2,8 @@
 
 [![R-CMD-check](https://github.com/rivm-syso/me2tools/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rivm-syso/me2tools/actions/workflows/R-CMD-check.yaml)
 [![Lifecycle Status](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
+[![CRAN status](https://www.r-pkg.org/badges/version/me2tools)](https://CRAN.R-project.org/package=me2tools)
+<!--- ![DOI](https://zenodo.org/badge/{github_id}.svg)](https://zenodo.org/badge/latestdoi/555425930) -->
 
 ## Introduction
 
