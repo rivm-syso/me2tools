@@ -35,7 +35,9 @@
 #'   and the color for the average of the base run.
 #' @param bar.width The width of the bar, expressed as a value between \[0,1\].
 #' @param show.plot A logical argument evaluating to TRUE or FALSE indicating
-#'   whether the plot should be shown as default.
+#'   whether the plot should be shown by default.
+#' @param show.legend A logical argument evaluating to TRUE or FALSE indicating
+#'   whether the legend should be shown by default.  
 #' @param expand.mult Vector of multiplicative range expansion factors used on
 #'   the x-axis . Defaults to \code{c(0.015,0.005)}, as this seems to work best.
 #'   If length is 1, then both left and right x-axis are multiplied with this
@@ -79,6 +81,7 @@ epa_plot_errorsummary <- function(F_matrix,
                                                "base" = "black"),
                              bar.width = 0.9,
                              show.plot = TRUE,
+                             show.legend = FALSE,
                              expand.mult = c(0.015, 0.005),
                              rm.grid.x = FALSE,
                              facet.parse.label = FALSE,
@@ -194,59 +197,68 @@ epa_plot_errorsummary <- function(F_matrix,
   
   # define plot
   plot.output <- ggplot2::ggplot()
+  plot.data <- tibble()
   
   group.type <- group.types[1]
   index <- 1
   for (group.type in group.types) {
     # with three segments, we need to correct the mid point
-    plot.data <- segments %>% 
+    tmp.plot.data <- segments %>% 
       filter(group_type == group.type)
     
     if (num.segments == 3) {
       if (index == 1) {
-        plot.data <- plot.data %>% 
+        tmp.plot.data <- tmp.plot.data %>% 
           dplyr::mutate(xmin = numeric_x - (individual.bar.width + (individual.bar.width/2)),
                         xmax = numeric_x - (individual.bar.width/2))
       } else if(index == 2) {
-        plot.data <- plot.data %>% 
+        tmp.plot.data <- tmp.plot.data %>% 
           dplyr::mutate(xmin = numeric_x - (individual.bar.width/2),
                         xmax = numeric_x + (individual.bar.width/2))
       } else if(index == 3) {
-        plot.data <- plot.data %>% 
+        tmp.plot.data <- tmp.plot.data %>% 
           dplyr::mutate(xmin = numeric_x + (individual.bar.width/2),
                         xmax = numeric_x + (individual.bar.width + (individual.bar.width/2)))
       }
     } else if (num.segments == 2) {
       if (index == 1) {
-        plot.data <- plot.data %>% 
+        tmp.plot.data <- tmp.plot.data %>% 
           dplyr::mutate(xmin = numeric_x - (individual.bar.width),
                         xmax = numeric_x)
       } else if(index == 2) {
-        plot.data <- plot.data %>% 
+        tmp.plot.data <- tmp.plot.data %>% 
           dplyr::mutate(xmin = numeric_x,
                         xmax = numeric_x + (individual.bar.width))
       }
     } else {
       if (index == 1) {
-        plot.data <- plot.data %>% 
+        tmp.plot.data <- tmp.plot.data %>% 
           dplyr::mutate(xmin = numeric_x - (individual.bar.width/2),
                         xmax = numeric_x + (individual.bar.width/2))
       }
     }
-    plot.output <- plot.output +
-      ggplot2::geom_rect(
-        data = plot.data,
-        ggplot2::aes(
-          xmin = xmin,
-          xmax = xmax,
-          ymin = min, 
-          ymax = max,
-        ),
-        fill = bar.colors[[group.type]]
-      )
     
+    if (nrow(plot.data) == 0) {
+      plot.data <- tmp.plot.data 
+    } else {
+      plot.data <- dplyr::bind_rows(plot.data,
+                                    tmp.plot.data)
+    }
     index <- index + 1
   }
+
+  plot.output <- plot.output +
+    ggplot2::geom_rect(
+      data = plot.data,
+      ggplot2::aes(
+        xmin = xmin,
+        xmax = xmax,
+        ymin = min, 
+        ymax = max,
+        fill = group_type,
+      ),
+      #fill = bar.colors[[group.type]]
+    )
   
   # add the base line
   base.line <- df %>%
@@ -264,10 +276,11 @@ epa_plot_errorsummary <- function(F_matrix,
       data = base.line, aes(
         x = numeric_x,
         ymin = mean,
-        ymax = mean
+        ymax = mean,
+        color = "base"
       ),
       width = bar.width,
-      color = bar.colors[["base"]],
+      #color = bar.colors[["base"]],
       linewidth = 1,
       position = position_dodge(.9)
     )
@@ -292,7 +305,6 @@ epa_plot_errorsummary <- function(F_matrix,
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = xlabel.angle, 
                                                        hjust = 1,
                                                        size = x.font.size),
-          legend.position="none",
           panel.grid.minor = element_blank()) +
     ggplot2::scale_x_continuous(
       name = xlab,
@@ -302,9 +314,47 @@ epa_plot_errorsummary <- function(F_matrix,
       guide = ggplot2::guide_axis(angle = xlabel.angle, 
                                   n.dodge = x.n.dodge)
     ) +
-    ylab(ylab)
+    ylab(ylab)  +
+    scale_fill_manual(
+      labels = c("BS" = "BS",
+                 "BSDISP" = "BSDISP",
+                 "DISP" = "DISP",
+                 "base" = "BASE"),
+      values = c("BS" = bar.colors[["BS"]], 
+                 "BSDISP" = bar.colors[["BSDISP"]],
+                 "DISP" = bar.colors[["DISP"]],
+                 "base" = bar.colors[["base"]]),
+      breaks = c("BS", 
+                 "BSDISP",
+                 "DISP",
+                 "base")) +
+    scale_color_manual(
+      labels = c("BS" = "BS",
+                 "BSDISP" = "BSDISP",
+                 "DISP" = "DISP",
+                 "base" = "BASE"),
+      values = c("BS" = bar.colors[["BS"]], 
+                 "BSDISP" = bar.colors[["BSDISP"]],
+                 "DISP" = bar.colors[["DISP"]],
+                 "base" = bar.colors[["base"]]),
+      breaks = c("BS", 
+                 "BSDISP",
+                 "DISP",
+                 "base")) +
+      guides(color = guide_legend(order = 1,
+                                  title = NULL),
+             fill = guide_legend(order = 2,
+                                  title = NULL))+
+    theme(legend.position = "top",
+          legend.justification = "right",
+          legend.margin=margin(b=-10)) 
   
-  
+  # remove legend?
+  if(!show.legend) {
+    plot <- plot +
+      ggplot2::theme(legend.position = "none")
+  }
+
   # remove vertical grid lines?
   if (rm.grid.x) {
     plot.output <- plot.output +
