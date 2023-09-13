@@ -102,6 +102,14 @@ epa_plot_BSboxplot <- function(BS_results,
   } else {
     BS.results <- BS_results
   }
+  
+  if(!"value" %in% names(BS.results)) {
+    cli::cli_abort(c(
+      "{.var value} not detected:",
+      "i" = "The {.var data} in {.var BS_results} should contain a {.var value} column.",
+      "x" = "Did you set {.var tidy_output} to {.var TRUE} when calling {.function me2_BS_read_F}?"
+    ))
+  }
 
   BS.base.results <- BS.results %>%
     filter(
