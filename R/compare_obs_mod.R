@@ -15,6 +15,9 @@
 #'   sum of all factors for the regression.
 #' @param robust Boolean used to switch between normal (OLS) or robust (RLS)
 #'   regression.
+#' @param maxit The limit on the number of IWLS iterations used when robust
+#'   regression is performed. Defaults to 200. Can be increased in case of error
+#'   messages related to failed convergence in the number of steps used.
 #' @param intercept Should an intercept be used when doing the regression?
 #'   Default is FALSE, forcing the regression through the origin.
 #' @param regress.details Show the equation and R2 (non-robust only) on the 
@@ -115,6 +118,7 @@ compare_obs_mod <- function(data,
                             x = "pm10",
                             y = "sum_factors",
                             robust = FALSE,
+                            maxit = 200,
                             intercept = FALSE,
                             mod.line = FALSE,
                             regress.details = TRUE,
@@ -196,7 +200,7 @@ compare_obs_mod <- function(data,
 
   # calculate model
   if (robust) {
-    modelLM <- MASS::rlm(fm, data = regr_data, maxit = 200)
+    modelLM <- MASS::rlm(fm, data = regr_data, maxit = maxit)
   } else {
     modelLM <- stats::lm(fm, data = regr_data)
   }
@@ -345,7 +349,8 @@ compare_obs_mod <- function(data,
       scatter <- scatter +
         ggpmisc::stat_poly_eq(mapping = ggpmisc::use_label("eq"), 
                               formula = fm,
-                              method = MASS::rlm)
+                              method = MASS::rlm,
+                              method.args = list("maxit" = maxit))
     } else {
       scatter <- scatter +
         ggpmisc::stat_poly_eq(ggplot2::aes(label = paste("atop(", ggplot2::after_stat(eq.label), ",", ggplot2::after_stat(adj.rr.label), ")", sep = "")),
