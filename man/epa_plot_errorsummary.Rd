@@ -18,6 +18,7 @@ epa_plot_errorsummary(
     "black"),
   bar.width = 0.9,
   show.plot = TRUE,
+  show.legend = FALSE,
   expand.mult = c(0.015, 0.005),
   rm.grid.x = FALSE,
   facet.parse.label = FALSE,
@@ -63,7 +64,10 @@ and the color for the average of the base run.}
 \item{bar.width}{The width of the bar, expressed as a value between [0,1].}
 
 \item{show.plot}{A logical argument evaluating to TRUE or FALSE indicating
-whether the plot should be shown as default.}
+whether the plot should be shown by default.}
+
+\item{show.legend}{A logical argument evaluating to TRUE or FALSE indicating
+whether the legend should be shown by default.}
 
 \item{expand.mult}{Vector of multiplicative range expansion factors used on
 the x-axis . Defaults to \code{c(0.015,0.005)}, as this seems to work best.

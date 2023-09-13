@@ -9,6 +9,7 @@ compare_obs_mod(
   x = "pm10",
   y = "sum_factors",
   robust = FALSE,
+  maxit = 200,
   intercept = FALSE,
   mod.line = FALSE,
   regress.details = TRUE,
@@ -53,6 +54,10 @@ sum of all factors for the regression.}
 
 \item{robust}{Boolean used to switch between normal (OLS) or robust (RLS)
 regression.}
+
+\item{maxit}{The limit on the number of IWLS iterations used when robust
+regression is performed. Defaults to 200. Can be increased in case of error
+messages related to failed convergence in the number of steps used.}
 
 \item{intercept}{Should an intercept be used when doing the regression?
 Default is FALSE, forcing the regression through the origin.}

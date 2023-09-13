@@ -20,6 +20,7 @@ epa_plot_profile(
   x.n.dodge = 1,
   bar.color = "cadetblue3",
   bar.width = 0.9,
+  bar.alpha = 0.8,
   point.color = "firebrick2",
   point.size = 3,
   point.shape = 19,
@@ -27,9 +28,10 @@ epa_plot_profile(
   errorbar = "none",
   errorbar.color = list(BS = "goldenrod2", BSDISP = "green4", DISP = "royalblue2"),
   errorbar.width = 0.45,
-  errorbar.size = 1,
+  errorbar.linewidth = 1,
   errorbar.point.size = 3,
   show.plot = TRUE,
+  show.legend = FALSE,
   expand.mult = c(0.015, 0.005),
   rm.grid.x = FALSE,
   perc.x.interval = 20,
@@ -97,6 +99,9 @@ of the color used in EPA-PMF program.}
 
 \item{bar.width}{The width of the bar, expressed as a value between [0,1].}
 
+\item{bar.alpha}{The alpha transparency of the fill color of the bar,
+expressed as a value between [0,1].}
+
 \item{point.color}{The fill color for the explained variation, with the
 default being \sQuote{firebrick2}, similar to the color used in the EPA-PMF
 program.}
@@ -125,14 +130,17 @@ If the function cannot match the colors, a default color of
 \item{errorbar.width}{The width of the upper and lower bars for displaying
 the error estimate. Defaults to 0.45 (i.e., the bar.width / 2)}
 
-\item{errorbar.size}{The line size of the error bars. Defaults to 1.}
+\item{errorbar.linewidth}{The line size of the error bars. Defaults to 1.}
 
 \item{errorbar.point.size}{The size of the point used to display the
 average/median error estimates when \code{cp.run.type} is set as
 \sQuote{base_run}.}
 
 \item{show.plot}{A logical argument evaluating to TRUE or FALSE indicating
-whether the plot should be shown as default.}
+whether the plot should be shown by default.}
+
+\item{show.legend}{A logical argument evaluating to TRUE or FALSE indicating
+whether the legend should be shown by default.}
 
 \item{expand.mult}{Vector of multiplicative range expansion factors used on
 the x-axis . Defaults to \code{c(0.015,0.005)}, as this seems to work best.
