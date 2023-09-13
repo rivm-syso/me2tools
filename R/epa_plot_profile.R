@@ -47,6 +47,8 @@
 #'   the logarithmic scale. Is set to \sQuote{cadetblue3}, as an approximation 
 #'   of the color used in EPA-PMF program.
 #' @param bar.width The width of the bar, expressed as a value between \[0,1\].
+#' @param bar.alpha The alpha transparency of the fill color of the bar, 
+#'   expressed as a value between \[0,1\].
 #' @param point.color The fill color for the explained variation, with the
 #'   default being \sQuote{firebrick2}, similar to the color used in the EPA-PMF
 #'   program.
@@ -68,12 +70,14 @@
 #'   \sQuote{darkorange3} is applied.
 #' @param errorbar.width The width of the upper and lower bars for displaying
 #'   the error estimate. Defaults to 0.45 (i.e., the bar.width / 2)
-#' @param errorbar.size The line size of the error bars. Defaults to 1.
+#' @param errorbar.linewidth The line size of the error bars. Defaults to 1.
 #' @param errorbar.point.size The size of the point used to display the 
 #'   average/median error estimates when \code{cp.run.type} is set as 
 #'   \sQuote{base_run}.
 #' @param show.plot A logical argument evaluating to TRUE or FALSE indicating
-#'   whether the plot should be shown as default.
+#'   whether the plot should be shown by default.
+#' @param show.legend A logical argument evaluating to TRUE or FALSE indicating
+#'   whether the legend should be shown by default.
 #' @param expand.mult Vector of multiplicative range expansion factors used on
 #'   the x-axis . Defaults to \code{c(0.015,0.005)}, as this seems to work best.
 #'   If length is 1, then both left and right x-axis are multiplied with this
@@ -183,6 +187,7 @@ epa_plot_profile <- function(F_matrix,
                              x.n.dodge = 1,
                              bar.color = "cadetblue3",
                              bar.width = 0.9,
+                             bar.alpha = 0.8,
                              point.color = "firebrick2",
                              point.size = 3,
                              point.shape = 19,
@@ -192,9 +197,10 @@ epa_plot_profile <- function(F_matrix,
                                                    "BSDISP" = "green4",
                                                    "DISP" = "royalblue2"),
                              errorbar.width = 0.45,
-                             errorbar.size = 1,
+                             errorbar.linewidth = 1,
                              errorbar.point.size = 3,
                              show.plot = TRUE,
+                             show.legend = FALSE,
                              expand.mult = c(0.015, 0.005),
                              rm.grid.x = FALSE,
                              perc.x.interval = 20,
@@ -532,12 +538,7 @@ epa_plot_profile <- function(F_matrix,
   ##################################################################
   ##                          Set colors                          ##
   ##################################################################
-  plot.df <- df %>%
-    filter(
-      factor_profile == "concentration_of_species",
-      stringr::str_detect(run_type, cp.run.type)
-    )
-  
+
   if ("factor" %in% class(F_matrix$factor)) {
     myColors <- tibble("factor" = levels(F_matrix$factor),
                        "color" = openair::openColours(bar.color, num.factors))
@@ -546,36 +547,70 @@ epa_plot_profile <- function(F_matrix,
                        "color" = openair::openColours(bar.color, num.factors))
   }
   
-  myColors <- left_join(plot.df %>% select(factor),
+  myColors <- left_join(df %>%
+                          filter(
+                            factor_profile == "concentration_of_species",
+                            stringr::str_detect(run_type, cp.run.type)
+                          ) %>% 
+                          select(factor),
             myColors,
             by = "factor")
-  
   myColors <- myColors[["color"]]
+  ##################################################################
+  ##                    Create error bars data                    ##
+  ##################################################################
+  
+  if (errorbar != "none") {
+    disp.df <- df %>%
+      filter(
+        factor_profile == "concentration_of_species",
+        stringr::str_detect(run_type, error_run_type)
+      ) %>%
+      select(factor_profile, numeric_x, factor, run_type, value) %>%
+      pivot_wider(id_cols = c(factor_profile, numeric_x, factor),
+                  names_from = run_type, 
+                  values_from = value)
+    # join with original data
+    df = left_join(df,
+                   disp.df,
+                   by = join_by(factor_profile, factor, numeric_x))
+    
+    rm(disp.df)
+  }
   
   #################################################################
   ##                         Create plot                         ##
   #################################################################
 
-  plot <- ggplot2::ggplot() +
+  plot <- ggplot2::ggplot(df) +
     ggplot2::geom_rect(
-      data = plot.df,
+      data = df %>%
+        filter(
+          factor_profile == "concentration_of_species",
+          stringr::str_detect(run_type, cp.run.type)
+        ),
       ggplot2::aes(
         xmin = numeric_x - (bar.width / 2),
         xmax = numeric_x + (bar.width / 2),
-        ymin = y_min, ymax = value
+        ymin = y_min, ymax = value,
+        alpha = "concentration.bars",
       ),
       col = myColors,
       fill = myColors
     ) +
-    ggplot2::geom_point(ggplot2::aes(x = numeric_x, y = value),
+    ggplot2::geom_point(
       data = df %>%
         filter(
           factor_profile == "percentage_of_species_sum",
           stringr::str_detect(run_type, cp.run.type)
         ),
-      size = point.size,
-      shape = point.shape,
-      col = point.color
+      ggplot2::aes(
+        x = numeric_x, 
+        y = value,
+        size = "percentage_of_species_sum",
+        shape = "percentage_of_species_sum",
+        col = "percentage_of_species_sum"
+      )
     )
 
   # plot lollipop lines
@@ -598,37 +633,42 @@ epa_plot_profile <- function(F_matrix,
       )
   }
 
-  # plot errorbars
+  # plot error bars
   if (errorbar != "none") {
-    disp.df <- df %>%
-      filter(
-        factor_profile == "concentration_of_species",
-        stringr::str_detect(run_type, error_run_type)
-      ) %>%
-      select(numeric_x, factor, run_type, value) %>%
-      pivot_wider(names_from = run_type, values_from = value)
-
     plot <- plot +
       geom_errorbar(
-        data = disp.df, aes(
+        data = df %>%
+          filter(
+            factor_profile == "concentration_of_species",
+            stringr::str_detect(run_type, error_run_type)
+          ), 
+        aes(
           x = numeric_x,
           ymin = !!sym(error_ymin),
-          ymax = !!sym(error_ymax)
+          ymax = !!sym(error_ymax),
+          color = "errorbar.point",
         ),
         width = errorbar.width,
-        color = errorbar.color,
-        size = errorbar.size,
+        linewidth = errorbar.linewidth,
         position = position_dodge(.9)
       )
 
     if (cp.run.type == "base_run") {
       # add point for the average/median
       plot <- plot +
-        ggplot2::geom_point(ggplot2::aes(x = numeric_x, y = !!sym(error_yavg)),
-          data = disp.df,
-          size = errorbar.point.size,
-          shape = 18,
-          col = errorbar.color,
+        ggplot2::geom_point(
+          data = df %>%
+            filter(
+              factor_profile == "concentration_of_species",
+              stringr::str_detect(run_type, error_run_type)
+            ),
+          ggplot2::aes(
+            x = numeric_x, 
+            y = !!sym(error_yavg),
+            size = "errorbar.point",  
+            col = "errorbar.point",
+            shape = "errorbar.point"
+            ),
           position = position_dodge(.9)
         )
     }
@@ -641,6 +681,21 @@ epa_plot_profile <- function(F_matrix,
   } else {
     plot <- plot +
       ggplot2::facet_grid(factor ~ .)  
+  }
+  
+  # Define some legend items
+  label_percentage_species <- "EV"
+  if(length(bar.color) > 1) {
+    label_concentration_species <- "Concentration (multiple colors)"
+    color_concentration_species <- bar.color[1]
+  } else {
+    label_concentration_species <- "Concentration"
+    color_concentration_species <- bar.color[1]
+  }
+  if (errorbar == "none") {
+    overide.linetype = c(0)
+  } else {
+    overide.linetype = c(0,1)
   }
 
   plot <- plot +
@@ -658,7 +713,75 @@ epa_plot_profile <- function(F_matrix,
       expand = expansion(mult = c(0, 0.05))
     ) +
     ggplot2::annotation_logticks(sides = "l") +
-    ggplot2::theme_bw()
+    ggplot2::theme_bw() +
+    scale_fill_manual(
+      labels = c("percentage_of_species_sum" = label_percentage_species,
+                 "errorbar.point" = errorbar,
+                 "concentration.bars" = "test"),
+      values = c("percentage_of_species_sum" = point.color, 
+                 "errorbar.point" = errorbar.color,
+                 "concentration.bars" = myColors),
+      breaks = c("percentage_of_species_sum", 
+                 "errorbar.point",
+                 "concentration.bars")) +
+    scale_color_manual(
+      labels = c("percentage_of_species_sum" = label_percentage_species, 
+                 "errorbar.point" = errorbar),
+      values = c("percentage_of_species_sum" = point.color,
+                 "errorbar.point" = errorbar.color),
+      breaks = c("percentage_of_species_sum", 
+                 "errorbar.point")) +
+    scale_shape_manual(
+      labels = c("percentage_of_species_sum" = label_percentage_species, 
+                 "errorbar.point" = errorbar),
+      values = c("percentage_of_species_sum" = point.shape, 
+                 "errorbar.point" = 18),
+      breaks = c("percentage_of_species_sum", 
+                 "errorbar.point")) +
+    scale_size_manual(
+      labels = c("percentage_of_species_sum" = label_percentage_species, 
+                 "errorbar.point" = errorbar),
+      values = c("percentage_of_species_sum" = point.size, 
+                 "errorbar.point" = errorbar.point.size),
+      breaks = c("percentage_of_species_sum", 
+                 "errorbar.point")) +
+    scale_alpha_manual(values = c("concentration.bars" = bar.alpha),
+                       labels = c("concentration.bars" = label_concentration_species),
+                       breaks = c("concentration.bars"))
+  
+  # when different colors for factors are used, showing only one color in the
+  # legend might be confusing. So we remove the guide
+  if(length(bar.color) > 1) {
+    plot <- plot +
+      guides(alpha = "none",
+             color = guide_legend(order = 2,
+                                  title = NULL,
+                                  override.aes = list(linetype = overide.linetype)),
+             shape = guide_legend(order = 2,
+                                  title = NULL),
+             size = guide_legend(order = 2,
+                                 title = NULL))
+  } else {
+    plot <- plot +
+      guides(alpha = guide_legend(order = 1,
+                                  title = NULL,
+                                  override.aes = list(color = color_concentration_species,
+                                                      fill = color_concentration_species)),
+             color = guide_legend(order = 2,
+                                  title = NULL,
+                                  override.aes = list(linetype = overide.linetype)),
+             shape = guide_legend(order = 2,
+                                  title = NULL),
+             size = guide_legend(order = 2,
+                                 title = NULL))
+  }
+  
+  # continue plot
+  
+  plot <- plot +
+    theme(legend.position = "top",
+          legend.justification = "right",
+          legend.margin=margin(b=-10)) 
   
   # get the labels
   x_labels <- levels(df$species)
@@ -760,6 +883,12 @@ epa_plot_profile <- function(F_matrix,
         axis.title.y.right = ggplot2::element_text(color = point.color),
         panel.grid.major.x = element_blank()
       )
+  }
+  
+  # remove legend?
+  if(!show.legend) {
+    plot <- plot +
+      ggplot2::theme(legend.position = "none")
   }
   
   # remove vertical grid lines?
