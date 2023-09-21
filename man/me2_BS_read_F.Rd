@@ -10,7 +10,9 @@ me2_BS_read_F(
   base_run = 1,
   tidy_output = FALSE,
   block_boundaries = list(start = "^\\\\s*Factor matrix BB*", end =
-    "^\\\\s*Factor matrix CC"),
+    "^\\\\s*Factor matrix CC", start_Fmap =
+    "^\\\\s*Correlations of weighted F factors:*", end_Fmap =
+    "^\\\\s*Correlations of G factors:"),
   species = NA,
   dc_species = NA
 )
@@ -22,7 +24,10 @@ auxiliary information for the BS runs.}
 \item{corr_threshold}{This parameter is used to filter out the factors that
 have a correlation less to the provided threshold (default = 0.6).
 This way only the BS results for factors with a correlation larger or 
-equal to the threshold are retained for the aggregated results.}
+equal to the threshold are retained for the aggregated results. The
+threshold is also used in the mapping. When the maximum correlation for the
+BS factors is below the threshold, the factor is considered to be 
+"unmapped".}
 
 \item{base_run}{The number of the base run associated with the BSDISP results}
 
@@ -31,7 +36,10 @@ FALSE}
 
 \item{block_boundaries}{A list containing the \dQuote{start} and \dQuote{end}
 string used to identify the boundaries of the block containing the values
-for the F-matrix.}
+for the F-matrix. The \dQuote{start_Fmap} and \dQuote{end_Fmap} are used to
+identify the boundaries of the block with the F weighted correlations which
+are use to produce a mapping table (i.e., which factor has the highest
+correlation) that can be used to check swaps between factors.}
 
 \item{species}{A vector containing the names of the species for the rows in
 the F-matrix. If these species name are outputted in the ME-2 output as the
@@ -46,16 +54,24 @@ section about double counting.}
 }
 \value{
 \code{me2_BS_read_F} returns an object of class ``me2tools''.
-  The object includes four main components: \code{call}, the command used
+  The object includes five main components: \code{call}, the command used
   to read the data; \code{data}, the DISP data for each BS run;
   \code{F_format}, the aggregated DISP data in the same format as the
-  F_matrix; and \code{BS_corr}, the correlations of the BS factors with the
-  base run factors. 
+  F_matrix; \code{BS_corr}, the correlations of the BS factors with the
+  base run factors;  and the \code{Fmapping}, the mapping data based on F 
+  correlations of each BS run.. 
   
   The only difference between the format of the F-values of the base_run and
   the results in \code{data} is that the BS results have different values 
   in the \dQuote{run_type} column. In this case this column contains 
   information of the type of bootstrap.
+  
+  The mapping data is constructed with the BASE factors in the columns and
+  the row factors being the BS factors. Hence, by reading the rows one can
+  observe swaps from BS factors into different BASE factors. Ideally, a
+  BS factor should only be mapped to the same BASE factor. When the maximum 
+  correlation for the BS factors is below the \dQuote{corr_threshold}, the 
+  factor is considered to be "unmapped".
   
   If retained, e.g., using \code{output <- me2_BSDISP_read_res(file)}, this 
   output can be used to recover the data, reproduce, or undertake further 

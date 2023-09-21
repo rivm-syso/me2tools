@@ -6,9 +6,11 @@
 \usage{
 me2_BS_read_G(
   me2_bs_txt_file,
+  corr_threshold = 0.6,
   tidy_output = FALSE,
   block_boundaries = list(start = "^\\\\s*Factor matrix AA*", end =
-    "^\\\\s*Factor matrix BB"),
+    "^\\\\s*Factor matrix BB", start_Gmap = "^\\\\s*Correlations of G factors:*",
+    end_Gmap = "^\\\\s*Regression matrix T1 of fitted G vs. reference G:*"),
   dates = NA,
   factor_mass = NA,
   rescale_unity = FALSE,
@@ -19,12 +21,23 @@ me2_BS_read_G(
 \item{me2_bs_txt_file}{output file (.txt), containing the results and
 auxiliary information for the BS runs.}
 
+\item{corr_threshold}{This parameter is used to filter out the factors that
+have a correlation less to the provided threshold (default = 0.6).
+This way only the BS results for factors with a correlation larger or 
+equal to the threshold are retained for the aggregated results. The
+threshold is also used in the mapping. When the maximum correlation for the
+BS factors is below the threshold, the factor is considered to be 
+"unmapped".}
+
 \item{tidy_output}{Should the output be reshaped into tidy data? Default:
 FALSE}
 
 \item{block_boundaries}{A list containing the \dQuote{start} and \dQuote{end}
 string used to identify the boundaries of the block containing the values
-for the F-matrix.}
+for the G-matrix. The \dQuote{start_Gmap} and \dQuote{end_Gmap} are used to
+identify the boundaries of the block with the G correlations which
+are use to produce a mapping table (i.e., which factor has the highest
+correlation) that can be used to check swaps between factors.}
 
 \item{dates}{A vector containing the sample dates for the rows in the
 G-matrix. If these dates are outputted in the ME-2 output as the
@@ -47,11 +60,31 @@ With this parameter set to \code{TRUE} each factor is multiplied by
 not used. Default: 'Etc/GMT-1'#'}
 }
 \value{
-(tidied) tibble containing G for multiple BS runs. The output of the
-  G-values for the BS results is nearly identical to the output of the
-  G-values from the base runs. The only difference is that the BS results
-  have different values in the \dQuote{run_type} column. In this case this
-  column contains information of the type of bootstrap.
+\code{me2_BS_read_G} returns an object of class ``me2tools''.
+  The object includes three main components: \code{call}, the command used
+  to read the data; \code{data}, the G data for each BS run; \code{G_format},
+  the tidied G data for each BS run where the correlation between the BASE 
+  and BS factor is larger than the \dQuote{corr_threshold} and the 
+  \code{G_mapping}, the mapping data based on G correlations of each BS run. 
+  
+  The output of the G-values for the BS results is nearly identical to the 
+  output of the G-values from the base runs. The only difference is that the
+  BS results have different values in the \dQuote{run_type} column. In this 
+  case this column contains information of the type of bootstrap.
+  
+  The mapping data is constructed with the BASE factors in the columns and
+  the row factors being the BS factors. Hence, by reading the rows one can
+  observe swaps from BS factors into different BASE factors. Ideally, a
+  BS factor should only be mapped to the same BASE factor. When the maximum 
+  correlation for the BS factors is below the \dQuote{corr_threshold}, the 
+  factor is considered to be "unmapped".
+  
+  If retained, e.g., using \code{output <- me2_BSDISP_read_res(file)}, this 
+  output can be used to recover the data, reproduce, or undertake further 
+  analysis.
+
+  An me2tools output can be manipulated using a number of generic operations,
+  including \code{print}, \code{plot} and \code{summary}.
 }
 \description{
 Files stored after a BS run are named with a user-specific prefix, shown 
@@ -60,12 +93,12 @@ here as an asterisk (*). Three output files (*_BS.dat,  *_BS.txt and
 in the \dQuote{.txt} file are read. The function \code{me2_BS_read_F}  
 reads all the factor profiles in the text file and 
 \code{me2_BS_read_G} (this function) reads all the factor contributions. 
-Based on the provided \code{corr_threshold} in the \code{me2_BS_read_F} 
-function only factors mapped to base factors with a correlation larger 
-than \code{corr_threshold} are retained when aggregating the BS results 
-(i.e., \dQuote{BS_P05}, \dQuote{BS_P95} and \dQuote{BS_median}). The 
-residuals, stored in the *_BS.rsd file, can be read using 
-\code{me2_read_residuals}.
+Based on the provided \code{corr_threshold} in the \code{me2_BS_read_F} and
+\code{me2_BS_read_G} functions only factors mapped to base factors with a 
+correlation larger than \code{corr_threshold} are retained when aggregating 
+the BS results (i.e., \dQuote{BS_P05}, \dQuote{BS_P95} and 
+\dQuote{BS_median}). The residuals, stored in the *_BS.rsd file, can be 
+read using \code{me2_read_residuals}.
 }
 \section{Defining the block with data}{
 
