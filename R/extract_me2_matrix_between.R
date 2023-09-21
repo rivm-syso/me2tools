@@ -41,6 +41,19 @@ extract_me2_matrix_between <- function(text,
     )) %>%
       select(-dplyr::first(names(.)), -dplyr::last(names(.))) %>%
       purrr::set_names(colnames[[1]])
+    
+    # new method, using the default edition of readr (2)
+    matrix.text <- stringr::str_squish(matrix.text)
+    matrix.tmp_2 <-readr::read_delim(I(matrix.text),
+                                     delim = " ",
+                                     trim_ws = TRUE,
+                                     col_names = FALSE,
+                                     show_col_types = FALSE
+    )  %>%
+      select(-dplyr::first(names(.)), -dplyr::last(names(.))) %>%
+      purrr::set_names(colnames[[1]]) 
+    
+    
   } else {
     matrix.text <- text_filter[seq(line.start + 1, line.end - 1, 1)]
 
@@ -56,7 +69,31 @@ extract_me2_matrix_between <- function(text,
 
     matrix.tmp <- matrix.tmp %>%
       purrr::set_names(colnames)
+    
+    # new method, using the default edition of readr (2)
+    matrix.text <- stringr::str_squish(matrix.text)
+    matrix.tmp_2 <-readr::read_delim(I(matrix.text),
+                                     delim = " ",
+                                     trim_ws = TRUE,
+                                     col_names = FALSE,
+                                     show_col_types = FALSE
+    )  %>%
+      select(-dplyr::first(names(.))) # drop the first column with only numbers
+    
+    matrix.tmp_2 <- matrix.tmp_2 %>%
+      purrr::set_names(colnames)
+  }
+  
+  # check if new method is identical to old method
+  check_output <- all.equal(matrix.tmp, 
+                            matrix.tmp_2, 
+                            trim.levels = FALSE, 
+                            check.attributes = FALSE)
+  
+  if(!check_output) {
+    cli::cli_abort("The old and new output from `readr` are not equal!")
   }
 
+  # return old output
   return(matrix.tmp)
 }
