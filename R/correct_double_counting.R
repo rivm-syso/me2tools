@@ -47,7 +47,10 @@ correct_double_counting <- function(F_matrix,
 
       if (F.subset[F.subset$species == m.mass, ][[paste0("factor_0", n.factor)]] < 0) {
         if (F.subset[F.subset$species == m.mass, ][[paste0("factor_0", n.factor)]] < threshold) {
-          warning("Negative value < threshold has been found!")
+          cli::cli_warn(c(
+            "Sum of species is larger than {.var {m.mass}}",
+            "x" = "A negative value < threshold has been found for factor_0{n.factor}!"
+          ))
         }
         # check if neg.rm == TRUE
         if (neg.rm == TRUE) {
