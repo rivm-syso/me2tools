@@ -18,13 +18,19 @@
 #' @param corr_threshold This parameter is used to filter out the factors that
 #'   have a correlation less to the provided threshold (default = 0.6).
 #'   This way only the BS results for factors with a correlation larger or 
-#'   equal to the threshold are retained for the aggregated results.
+#'   equal to the threshold are retained for the aggregated results. The
+#'   threshold is also used in the mapping. When the maximum correlation for the
+#'   BS factors is below the threshold, the factor is considered to be 
+#'   "unmapped".
 #' @param base_run The number of the base run associated with the BSDISP results
 #' @param tidy_output Should the output be reshaped into tidy data? Default:
 #'   FALSE
 #' @param block_boundaries A list containing the \dQuote{start} and \dQuote{end}
 #'   string used to identify the boundaries of the block containing the values
-#'   for the F-matrix.
+#'   for the F-matrix. The \dQuote{start_Fmap} and \dQuote{end_Fmap} are used to
+#'   identify the boundaries of the block with the F weighted correlations which
+#'   are use to produce a mapping table (i.e., which factor has the highest
+#'   correlation) that can be used to check swaps between factors.
 #' @param species A vector containing the names of the species for the rows in
 #'   the F-matrix. If these species name are outputted in the ME-2 output as the
 #'   second column (a column of row numbers being the first), then these values
@@ -117,16 +123,24 @@
 #' account for double counting.
 #'
 #' @return \code{me2_BS_read_F} returns an object of class ``me2tools''.
-#'   The object includes four main components: \code{call}, the command used
+#'   The object includes five main components: \code{call}, the command used
 #'   to read the data; \code{data}, the DISP data for each BS run;
 #'   \code{F_format}, the aggregated DISP data in the same format as the
-#'   F_matrix; and \code{BS_corr}, the correlations of the BS factors with the
-#'   base run factors. 
+#'   F_matrix; \code{BS_corr}, the correlations of the BS factors with the
+#'   base run factors;  and the \code{Fmapping}, the mapping data based on F 
+#'   correlations of each BS run.. 
 #'   
 #'   The only difference between the format of the F-values of the base_run and
 #'   the results in \code{data} is that the BS results have different values 
 #'   in the \dQuote{run_type} column. In this case this column contains 
 #'   information of the type of bootstrap.
+#'   
+#'   The mapping data is constructed with the BASE factors in the columns and
+#'   the row factors being the BS factors. Hence, by reading the rows one can
+#'   observe swaps from BS factors into different BASE factors. Ideally, a
+#'   BS factor should only be mapped to the same BASE factor. When the maximum 
+#'   correlation for the BS factors is below the \dQuote{corr_threshold}, the 
+#'   factor is considered to be "unmapped".
 #'   
 #'   If retained, e.g., using \code{output <- me2_BSDISP_read_res(file)}, this 
 #'   output can be used to recover the data, reproduce, or undertake further 
@@ -157,11 +171,13 @@ me2_BS_read_F <- function(me2_bs_txt_file,
                           tidy_output = FALSE,
                           block_boundaries = list(
                             "start" = "^\\s*Factor matrix BB*",
-                            "end" = "^\\s*Factor matrix CC"
+                            "end" = "^\\s*Factor matrix CC",
+                            "start_Fmap" = "^\\s*Correlations of weighted F factors:*",
+                            "end_Fmap" = "^\\s*Correlations of G factors:"
                           ),
                           species = NA,
                           dc_species = NA) {
-
+  
   # check if file exists
   if (!file.exists(me2_bs_txt_file)) {
     cli::cli_abort(c(
@@ -193,6 +209,13 @@ me2_BS_read_F <- function(me2_bs_txt_file,
       {var. block_boundaries}?"
     ))
   }
+  
+  ## Get the locations of the individual correlations of F for each
+  ## BS run in order to determine the mapping of the factor.
+  
+  index_Fmap_start <- stringr::str_which(text_filter, block_boundaries$start_Fmap)
+  index_Fmap_end <- stringr::str_which(text_filter, block_boundaries$end_Fmap)
+  Fmapping <- tibble()
   
   # add a progress bar
   cli::cli_progress_bar("Reading data", total = length(index_start))
@@ -244,11 +267,37 @@ me2_BS_read_F <- function(me2_bs_txt_file,
     }
     rm(f_matrix.tmp)
     
+    ## Create the Fmap and Gmap output, but always skip the first run
+    if (run.number > 1) {
+      # read data
+      f_corr_run <- extract_me2_matrix_between(
+        text,
+        index_Fmap_start[run.number],
+        index_Fmap_end[run.number],
+        headers = FALSE
+      )
+      # prepare data container
+      if (nrow(Fmapping) == 0) {
+        Fmapping <- replace(f_corr_run, f_corr_run > -999, 0)
+        Fmapping$unmappped <- 0 # add unmapping variable
+      }
+      for(row_num in seq(from=1, to=nrow(f_corr_run), by=1)){
+        Fmap_i <- which.max(f_corr_run[row_num,])
+        if (f_corr_run[row_num,Fmap_i] < corr_threshold) {
+          # this factor is considered to be unmapped, so update the last column
+          Fmapping[row_num, ncol(Fmapping)] <- Fmapping[row_num, ncol(Fmapping)] + 1  
+        } else {
+          # update a know factor count
+          Fmapping[row_num, Fmap_i] <- Fmapping[row_num, Fmap_i] + 1  
+        }
+      }
+    }
+
     # update progress bar
     cli::cli_progress_update()
   }
   
-  # aggregate resuls
+  # aggregate results
   factor.correlations <- me2_BS_read_correlations(me2_bs_txt_file = me2_bs_txt_file,
                                                   tidy_output = TRUE)
 
@@ -271,11 +320,12 @@ me2_BS_read_F <- function(me2_bs_txt_file,
                                 by = c("model_run", "factor")) %>% 
     filter(corr >= corr_threshold,
            factor_profile == "concentration_of_species") %>% 
-    group_by(factor, species) %>%
+    #group_by(factor, species) %>%
     summarise(BS_median = median(value),
               BS_P05 = epa_percentile(value, prob = 0.05),
-              BS_P95 = epa_percentile(value, prob = 0.95)) %>%
-    ungroup(factor, species) %>% 
+              BS_P95 = epa_percentile(value, prob = 0.95),
+              .by = c(factor, species)) %>%
+    #ungroup(factor, species) %>% 
     pivot_longer(cols = c("BS_median", "BS_P05", "BS_P95"),
                  names_to = "run_type",
                  values_to = "value") %>% 
@@ -300,6 +350,7 @@ me2_BS_read_F <- function(me2_bs_txt_file,
   output <- list("data" = f_matrix,
                  "F_format" = aggr.data,
                  "BS_corr" = factor.correlations,
+                 "F_mapping" = Fmapping,
                  call = match.call())
   class(output) <- "me2tools"
   
