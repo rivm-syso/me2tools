@@ -6,20 +6,30 @@
 #' in the \dQuote{.txt} file are read. The function \code{me2_BS_read_F}  
 #' reads all the factor profiles in the text file and 
 #' \code{me2_BS_read_G} (this function) reads all the factor contributions. 
-#' Based on the provided \code{corr_threshold} in the \code{me2_BS_read_F} 
-#' function only factors mapped to base factors with a correlation larger 
-#' than \code{corr_threshold} are retained when aggregating the BS results 
-#' (i.e., \dQuote{BS_P05}, \dQuote{BS_P95} and \dQuote{BS_median}). The 
-#' residuals, stored in the *_BS.rsd file, can be read using 
-#' \code{me2_read_residuals}.
+#' Based on the provided \code{corr_threshold} in the \code{me2_BS_read_F} and
+#' \code{me2_BS_read_G} functions only factors mapped to base factors with a 
+#' correlation larger than \code{corr_threshold} are retained when aggregating 
+#' the BS results (i.e., \dQuote{BS_P05}, \dQuote{BS_P95} and 
+#' \dQuote{BS_median}). The residuals, stored in the *_BS.rsd file, can be 
+#' read using \code{me2_read_residuals}.
 #'
 #' @param me2_bs_txt_file output file (.txt), containing the results and
 #'  auxiliary information for the BS runs.
+#' @param corr_threshold This parameter is used to filter out the factors that
+#'   have a correlation less to the provided threshold (default = 0.6).
+#'   This way only the BS results for factors with a correlation larger or 
+#'   equal to the threshold are retained for the aggregated results. The
+#'   threshold is also used in the mapping. When the maximum correlation for the
+#'   BS factors is below the threshold, the factor is considered to be 
+#'   "unmapped".
 #' @param tidy_output Should the output be reshaped into tidy data? Default:
 #'   FALSE
 #' @param block_boundaries A list containing the \dQuote{start} and \dQuote{end}
 #'   string used to identify the boundaries of the block containing the values
-#'   for the F-matrix.
+#'   for the G-matrix. The \dQuote{start_Gmap} and \dQuote{end_Gmap} are used to
+#'   identify the boundaries of the block with the G correlations which
+#'   are use to produce a mapping table (i.e., which factor has the highest
+#'   correlation) that can be used to check swaps between factors.
 #' @param dates A vector containing the sample dates for the rows in the
 #'   G-matrix. If these dates are outputted in the ME-2 output as the
 #'   second column (a column of row numbers being the first), then these values
@@ -76,11 +86,31 @@
 #' Please note that the above will only work when the data is read with the
 #' \code{tidy_output = TRUE} setting.
 #'
-#' @return (tidied) tibble containing G for multiple BS runs. The output of the
-#'   G-values for the BS results is nearly identical to the output of the
-#'   G-values from the base runs. The only difference is that the BS results
-#'   have different values in the \dQuote{run_type} column. In this case this
-#'   column contains information of the type of bootstrap.
+#' @return \code{me2_BS_read_G} returns an object of class ``me2tools''.
+#'   The object includes three main components: \code{call}, the command used
+#'   to read the data; \code{data}, the G data for each BS run; \code{G_format},
+#'   the tidied G data for each BS run where the correlation between the BASE 
+#'   and BS factor is larger than the \dQuote{corr_threshold} and the 
+#'   \code{G_mapping}, the mapping data based on G correlations of each BS run. 
+#'   
+#'   The output of the G-values for the BS results is nearly identical to the 
+#'   output of the G-values from the base runs. The only difference is that the
+#'   BS results have different values in the \dQuote{run_type} column. In this 
+#'   case this column contains information of the type of bootstrap.
+#'   
+#'   The mapping data is constructed with the BASE factors in the columns and
+#'   the row factors being the BS factors. Hence, by reading the rows one can
+#'   observe swaps from BS factors into different BASE factors. Ideally, a
+#'   BS factor should only be mapped to the same BASE factor. When the maximum 
+#'   correlation for the BS factors is below the \dQuote{corr_threshold}, the 
+#'   factor is considered to be "unmapped".
+#'   
+#'   If retained, e.g., using \code{output <- me2_BSDISP_read_res(file)}, this 
+#'   output can be used to recover the data, reproduce, or undertake further 
+#'   analysis.
+#'
+#'   An me2tools output can be manipulated using a number of generic operations,
+#'   including \code{print}, \code{plot} and \code{summary}.
 #'
 #' @export
 #' 
@@ -96,10 +126,13 @@
 #' @import dplyr
 #'
 me2_BS_read_G <- function(me2_bs_txt_file,
+                          corr_threshold = 0.6,
                           tidy_output = FALSE,
                           block_boundaries = list(
                             "start" = "^\\s*Factor matrix AA*",
-                            "end" = "^\\s*Factor matrix BB"
+                            "end" = "^\\s*Factor matrix BB",
+                            "start_Gmap" = "^\\s*Correlations of G factors:*",
+                            "end_Gmap" = "^\\s*Regression matrix T1 of fitted G vs. reference G:*"
                           ),
                           dates = NA,
                           factor_mass = NA,
@@ -116,6 +149,9 @@ me2_BS_read_G <- function(me2_bs_txt_file,
 
   text <- readr::read_lines(me2_bs_txt_file)
   text_filter <- text[text != ""]
+  
+  # remove '****'
+  text_filter <- stringr::str_replace_all(text_filter, '\\*', '9')
 
   # factor profiles are located between "   Factor matrix AA" and
   # "   Factor matrix BB" (note the spaces)
@@ -135,6 +171,18 @@ me2_BS_read_G <- function(me2_bs_txt_file,
       "x" = "Did you provide the correct file?"
     ))
   }
+  
+  ## Get the locations of the individual correlations of F for each
+  ## BS run in order to determine the mapping of the factor.
+  
+  index_Gmap_start <- stringr::str_which(text_filter, block_boundaries$start_Gmap)
+  index_Gmap_end <- stringr::str_which(text_filter, block_boundaries$end_Gmap)
+  # the first block does not have the end string, so we need to add a dummy
+  index_Gmap_end <- c(index_Gmap_start[1]+1, index_Gmap_end)
+  Gmapping <- tibble()
+  
+  # add a progress bar
+  cli::cli_progress_bar("Reading data", total = length(index_start))
 
   # the length of the index_start will provide how many runs were performed.
   # we need to get all runs
@@ -238,6 +286,70 @@ me2_BS_read_G <- function(me2_bs_txt_file,
       g_matrix <- g_matrix.tmp
     }
     rm(g_matrix.tmp)
+    
+    ## Create the Gmap output, but always skip the first run
+    if (run.number > 1) {
+      # read data
+      g_corr_run <- extract_me2_matrix_between(
+        text,
+        index_Gmap_start[run.number],
+        index_Gmap_end[run.number],
+        headers = FALSE
+      )
+      # prepare data container
+      if (nrow(Gmapping) == 0) {
+        Gmapping <- replace(g_corr_run, g_corr_run > -999, 0)
+        Gmapping$unmappped <- 0 # add unmapping variable
+      }
+      for(row_num in seq(from=1, to=nrow(g_corr_run), by=1)){
+        Gmap_i <- which.max(g_corr_run[row_num,])
+        if (g_corr_run[row_num,Gmap_i] < corr_threshold) {
+          # this factor is considered to be unmapped, so update the last column
+          Gmapping[row_num, ncol(Gmapping)] <- Gmapping[row_num, ncol(Gmapping)] + 1  
+        } else {
+          # update a know factor count
+          Gmapping[row_num, Gmap_i] <- Gmapping[row_num, Gmap_i] + 1  
+        }
+      }
+    }
+    
+    # update progress bar
+    cli::cli_progress_update()
+    
   }
-  return(g_matrix)
+  
+  #filter output according to corr_threshold
+  factor.correlations <- me2_BS_read_correlations(me2_bs_txt_file = me2_bs_txt_file,
+                                                  tidy_output = TRUE)
+  
+  # Set id variables
+  id_variables <- c("model_type", "unit", "model_run", "run_type", "date")
+  
+  if (tidy_output) {
+    g_matrix_threshold <- g_matrix
+  } else {
+    # Make the table longer, so we can calculate the mid point
+    g_matrix_threshold <- g_matrix %>%
+      tidyr::pivot_longer(-dplyr::all_of(id_variables), 
+                          names_to = "factor",
+                          values_to = "value")
+  }
+  
+  g_matrix_threshold <- left_join(g_matrix_threshold, 
+                                  factor.correlations %>% 
+                                    select(model_run, factor, corr),
+                                  by = c("model_run", "factor")) %>% 
+    filter(corr >= corr_threshold)
+  
+  
+  output <- list("data" = g_matrix,
+                 "G_format" = g_matrix_threshold,
+                 "G_mapping" = Gmapping,
+                 call = match.call())
+  class(output) <- "me2tools"
+  
+  # close progress bar
+  cli::cli_progress_done()
+  
+  return(output)
 }
