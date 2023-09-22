@@ -302,6 +302,27 @@ me2_read_dat <- function (me2_dat_file,
             filter(factor_profile == "concentration_of_species",
                    model_run == run_number,
                    species == factor_mass)
+          # check if we have results
+          if (nrow(current.F) == 0) {
+            # no results, try again with a like statement in the filter
+            current.F <- F_matrix %>% 
+              filter(factor_profile == "concentration_of_species",
+                     model_run == run_number,
+                     stringr::str_detect(species, factor_mass))
+            if(nrow(current.F) == 0) {
+              # abort as we could not find the result
+              cli::cli_abort(c(
+                "The species provided in {.var factor_mass} cannot be found:",
+                "x" = "You've supplied {factor_mass} as the species."
+              ))
+            } else {
+              # we found something that looks like it
+              cli::cli_warn(c(
+                "The literal species provided in {.var factor_mass} cannot be found:",
+                "i" = "You've supplied {factor_mass} as the species, but we found and used {as.character(unique(current.F$species))} instead. Please check."
+              ))
+            }
+          }
           factor_mass <- current.F$value
         } else {
           cli::cli_abort(c(
