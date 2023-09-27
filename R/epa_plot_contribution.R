@@ -8,6 +8,12 @@
 #' @param unit Which units should be plotted? By default the units of the 
 #'   G_matrix are \dQuote{normalised} to 1. The other option, which is also the
 #'   default, is \dQuote{concentration}
+#' @param color The color of the dots representing the factor contribution.
+#'   Defaults to \dQuote{red}.
+#' @param size The size of the dots representing the factor contribution.
+#'   Defaults to 1.
+#' @param alpha The alpha of the dots representing the factor contribution.
+#'   Defaults to 1.
 #' @param xlabel.angle What angle should the x-axis labels be presented in? If
 #'   your labels are long, \code{45} degrees can be useful, which is also the
 #'   default.
@@ -38,17 +44,20 @@
 #'   
 
 epa_plot_contribution <- function(G_matrix,
-                                   unit = "concentration",
-                                   xlabel.angle = 45,
-                                   xlabel.order = NA,
-                                   ylab = "Concentration of species",
-                                   xlab = "Date",
-                                   auto.text = TRUE,
-                                   x.font.size = 10,
-                                   show.plot = TRUE,
-                                   rm.grid.x = FALSE,
-                                   facet.parse.label = FALSE,
-                                   ...) {
+                                  unit = "concentration",
+                                  color = "red",
+                                  size = 1,
+                                  alpha = 1,
+                                  xlabel.angle = 45,
+                                  xlabel.order = NA,
+                                  ylab = "Concentration of species",
+                                  xlab = "Date",
+                                  auto.text = TRUE,
+                                  x.font.size = 10,
+                                  show.plot = TRUE,
+                                  rm.grid.x = FALSE,
+                                  facet.parse.label = FALSE,
+                                  ...) {
   
   ##################################################################
   ##                            Checks                            ##
@@ -90,7 +99,9 @@ epa_plot_contribution <- function(G_matrix,
     data = G_matrix,
     ggplot2::aes(x = date, y = value)
   ) +
-    ggplot2::geom_point(colour = "red", size = 1, alpha = 1)
+    ggplot2::geom_point(colour = color, 
+                        size = size, 
+                        alpha = alpha)
   
   if (facet.parse.label) {
     plot.output <- plot.output +

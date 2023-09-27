@@ -7,6 +7,9 @@
 epa_plot_contribution(
   G_matrix,
   unit = "concentration",
+  color = "red",
+  size = 1,
+  alpha = 1,
   xlabel.angle = 45,
   xlabel.order = NA,
   ylab = "Concentration of species",
@@ -26,6 +29,15 @@ in normalised or concentration units.}
 \item{unit}{Which units should be plotted? By default the units of the
 G_matrix are \dQuote{normalised} to 1. The other option, which is also the
 default, is \dQuote{concentration}}
+
+\item{color}{The color of the dots representing the factor contribution.
+Defaults to \dQuote{red}.}
+
+\item{size}{The size of the dots representing the factor contribution.
+Defaults to 1.}
+
+\item{alpha}{The alpha of the dots representing the factor contribution.
+Defaults to 1.}
 
 \item{xlabel.angle}{What angle should the x-axis labels be presented in? If
 your labels are long, \code{45} degrees can be useful, which is also the
