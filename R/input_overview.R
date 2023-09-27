@@ -6,7 +6,12 @@
 #' @param me2_input The output of the function \code{me2_read_input}, which
 #'   reads an input file defined with a date-time column, followed by 
 #'   alternating concentrations and uncertainties for a number of unknown 
-#'   species
+#'   species. At the very least this variable is a list, containing a 
+#'   \code{conc} and an \code{unc} dataframe.
+#' @param concentration The name of the list variable containing the 
+#'   concentrations. Defaults to \dQuote{conc}.
+#' @param uncertainty The name of the list variable containing the 
+#'   uncertainties. Defaults to \dQuote{unc}.
 #' @param limit.species A character vector containing the names of species that
 #'   should be plotted. This is ideal to create bigger plots for examining the
 #'   species. Defaults to \code{NA} so no limit is applied.
@@ -47,6 +52,8 @@
 
 
 input_overview  <- function(me2_input,
+                            concentration = "conc",
+                            uncertainty = "unc",
                             limit.species = NA,
                             sn.colors = list("bad" = "firebrick3",
                                              "weak" = "goldenrod2",
@@ -65,6 +72,22 @@ input_overview  <- function(me2_input,
   
   # write checks
   
+  # check if concentration and uncertainty exists.
+  if (!concentration %in% names(me2_input)) {
+    cli::cli_abort(c(
+      "{.var me2_input} does not contain concentrations.",
+      "i" = "The {.var concentration} = '{concentration}' variable could not be found in {.var me2_input}.",
+      "x" = "Did you provide the correct {.var concentration} to be used?"
+    ))
+  }
+  
+  if (!uncertainty %in% names(me2_input)) {
+    cli::cli_abort(c(
+      "{.var me2_input} does not contain uncertainties",
+      "i" = "The {.var uncertainty} = '{uncertainty}' variable could not be found in {.var me2_input}.",
+      "x" = "Did you provide the correct {.var uncertainty} to be used?"
+    ))
+  }
   
   # set labels using quickText
   if (!identical(xlab, NA)) {
@@ -77,22 +100,21 @@ input_overview  <- function(me2_input,
       ylab <- openair::quickText(ylab)
     }
   }
+
+  species.order <- names(me2_input[[concentration]][2:length(me2_input[[concentration]])])
   
-  
-  species.order <- names(me2_input$conc[2:length(me2_input$conc)])
-  
-  conc.data <- me2_input$conc %>% 
+  conc.data <- me2_input[[concentration]] %>% 
     tidyr::pivot_longer(cols = -"date",
                         names_to = "species",
                         values_to = "value") %>% 
-    mutate(type = "concentration",
+    mutate(type = "pmf.concentration",
            species = factor(species, levels = species.order))
   
-  unc.data <- me2_input$unc %>% 
+  unc.data <- me2_input[[uncertainty]] %>% 
     tidyr::pivot_longer(cols = -"date",
                         names_to = "species",
                         values_to = "value") %>% 
-    mutate(type = "uncertainty",
+    mutate(type = "pmf.uncertainty",
            species = factor(species, levels = species.order))
   
   plot.data <- dplyr::bind_rows(conc.data,
@@ -103,12 +125,12 @@ input_overview  <- function(me2_input,
   
   epa.summary <- plot.data %>% 
     group_by(species) %>% 
-    summarize(sn = epa_sn(x=concentration, x_unc = uncertainty),
-              min = min(concentration, na.rm = TRUE),
-              P25 = epa_percentile(concentration, prob = 0.25),
-              P50 = epa_percentile(concentration, prob = 0.50),
-              P75 = epa_percentile(concentration, prob = 0.75),
-              max = max(concentration, na.rm = TRUE),
+    summarize(sn = epa_sn(x=pmf.concentration, x_unc = pmf.uncertainty),
+              min = min(pmf.concentration, na.rm = TRUE),
+              P25 = epa_percentile(pmf.concentration, prob = 0.25),
+              P50 = epa_percentile(pmf.concentration, prob = 0.50),
+              P75 = epa_percentile(pmf.concentration, prob = 0.75),
+              max = max(pmf.concentration, na.rm = TRUE),
     ) %>% 
     mutate(guidance = dplyr::if_else(sn > sn.limits$u_limit, 
                                      "strong", 
@@ -148,7 +170,7 @@ input_overview  <- function(me2_input,
     }
   }
 
-  plot.output <- ggplot(data = plot.data, aes(x=concentration, y=uncertainty)) +
+  plot.output <- ggplot(data = plot.data, aes(x=pmf.concentration, y=pmf.uncertainty)) +
     geom_point(aes(color = guidance), size = 1) +
     scale_color_manual(values=c("bad" = sn.colors[["bad"]], 
                                 "weak" = sn.colors[["weak"]], 

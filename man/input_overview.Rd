@@ -6,6 +6,8 @@
 \usage{
 input_overview(
   me2_input,
+  concentration = "conc",
+  uncertainty = "unc",
   limit.species = NA,
   sn.colors = list(bad = "firebrick3", weak = "goldenrod2", strong = "green4"),
   sn.limits = list(u_limit = 1, l_limit = 0.5),
@@ -24,7 +26,14 @@ input_overview(
 \item{me2_input}{The output of the function \code{me2_read_input}, which
 reads an input file defined with a date-time column, followed by
 alternating concentrations and uncertainties for a number of unknown
-species}
+species. At the very least this variable is a list, containing a
+\code{conc} and an \code{unc} dataframe.}
+
+\item{concentration}{The name of the list variable containing the
+concentrations. Defaults to \dQuote{conc}.}
+
+\item{uncertainty}{The name of the list variable containing the
+uncertainties. Defaults to \dQuote{unc}.}
 
 \item{limit.species}{A character vector containing the names of species that
 should be plotted. This is ideal to create bigger plots for examining the
