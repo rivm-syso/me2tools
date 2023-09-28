@@ -14,6 +14,13 @@
 #'   Defaults to 1.
 #' @param alpha The alpha of the dots representing the factor contribution.
 #'   Defaults to 1.
+#' @param date.breaks When this parameter is a string it is passed to the 
+#'   function \code{scales::breaks_width()} and deals with the number of x 
+#'   ticks. It contains the distance between each break. Either a number, or for 
+#'   date/times, a single string of the form "{n} {unit}", e.g. "1 month", 
+#'   "5 days". Unit can be of one "sec", "min", "hour", "day", "week", 
+#'   "month", "year". It can also be a single integer, in which case the
+#'   variable is passed to \code{scales::breaks_pretty()}.
 #' @param xlabel.angle What angle should the x-axis labels be presented in? If
 #'   your labels are long, \code{45} degrees can be useful, which is also the
 #'   default.
@@ -48,6 +55,7 @@ epa_plot_contribution <- function(G_matrix,
                                   color = "red",
                                   size = 1,
                                   alpha = 1,
+                                  date.breaks = NA,
                                   xlabel.angle = 45,
                                   xlabel.order = NA,
                                   ylab = "Concentration of species",
@@ -111,6 +119,17 @@ epa_plot_contribution <- function(G_matrix,
     plot.output <- plot.output +
       ggplot2::facet_grid(factor ~ ., scales = "free_y")  
   }
+  
+  if(!identical(date.breaks, NA)) {
+    if ("numeric" %in% class(date.breaks)) {
+      plot.output <- plot.output +
+        scale_x_datetime(breaks = scales::breaks_pretty(date.breaks))
+    } else {
+      plot.output <- plot.output +
+        scale_x_datetime(breaks = scales::breaks_width(date.breaks))
+    }
+  }
+
   
   plot.output <- plot.output +
     ggplot2::theme_bw() +
