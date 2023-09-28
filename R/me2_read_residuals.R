@@ -16,6 +16,8 @@
 #'
 #' @param me2_res_file ME2 output file (.rsd), containing the results for the
 #'   residuals.
+#' @param base_run The number of the run for which the residuals need to be 
+#'   read. Defaults to \code{NA}, meaning that all runs are read.
 #' @param tidy_output Should the output of both G and F be reshaped into tidy
 #'   data? Default: FALSE
 #' @param block_boundaries A list containing the \dQuote{start} string used to
@@ -43,6 +45,7 @@
 #' @import lubridate
 #'
 me2_read_residuals <- function(me2_res_file,
+                               base_run = NA,
                                tidy_output = FALSE,
                                block_boundaries = list("start" = "^\\s*Scaled Residuals"),
                                species = NA,
@@ -78,106 +81,119 @@ me2_read_residuals <- function(me2_res_file,
       index_end <- length(text_filter) + 1 # need to add one line
     }
     
+    # define a boolean for each runnumber that can be used to test if the 
+    # results should be read.
+    if(identical(base_run, NA)) {
+      # read all runs
+      read_run <- rep(TRUE,length(index_start))
+    } else {
+      read_run <- rep(FALSE,length(index_start))
+      read_run[base_run] <- TRUE
+    }
+
     res_matrix <- tibble()
     for (run.number in seq(1, length(index_start), 1)) {
-      matrix.text <- text_filter[seq(index_start[run.number] + 1, index_end[run.number] - 1, 1)]
-      matrix.tmp <- readr::with_edition(1, readr::read_delim(matrix.text,
-                                                             delim = " ",
-                                                             trim_ws = TRUE,
-                                                             col_names = FALSE
-      )) %>%
-        select(-dplyr::last(names(.))) %>%
-        tibble::add_column(residual_type = "residual_scaled", .before = "X1") %>%
-        tibble::add_column(model_run = run.number, .before = "X1")
-      
-      # we need to add the species names and datetime to the residuals.
-      # set the names of the columns to the correct species
-      if (length(species) > 1) {
-        if (length(species) == (ncol(matrix.tmp) - 2)) {
-          names(matrix.tmp)[3:ncol(matrix.tmp)] <- species
+      # only read the data we want to read.
+      if(read_run[run.number]) {
+        matrix.text <- text_filter[seq(index_start[run.number] + 1, index_end[run.number] - 1, 1)]
+        matrix.tmp <- readr::with_edition(1, readr::read_delim(matrix.text,
+                                                               delim = " ",
+                                                               trim_ws = TRUE,
+                                                               col_names = FALSE
+        )) %>%
+          select(-dplyr::last(names(.))) %>%
+          tibble::add_column(residual_type = "residual_scaled", .before = "X1") %>%
+          tibble::add_column(model_run = run.number, .before = "X1")
+        
+        # we need to add the species names and datetime to the residuals.
+        # set the names of the columns to the correct species
+        if (length(species) > 1) {
+          if (length(species) == (ncol(matrix.tmp) - 2)) {
+            names(matrix.tmp)[3:ncol(matrix.tmp)] <- species
+          } else {
+            cli::cli_abort(c(
+              "Different lengths:",
+              "i" = "{.var species} has a different length ({length(species)})
+             compared to the matrix with residuals ({ncol(matrix.tmp)-2})",
+              "x" = "{.var species} must have the same length as the number of
+            cols in the matrix containing residuals."
+            ))
+          }
         } else {
-          cli::cli_abort(c(
-            "Different lengths:",
-            "i" = "{.var species} has a different length ({length(species)})
-           compared to the matrix with residuals ({ncol(matrix.tmp)-2})",
-            "x" = "{.var species} must have the same length as the number of
-          cols in the matrix containing residuals."
-          ))
-        }
-      } else {
-        if (is.na(species)) {
-          # add default
-          species_default <- paste0(
-            "species_",
-            sprintf(
-              "%02d",
-              seq(1, (ncol(matrix.tmp) - 2), 1)
+          if (is.na(species)) {
+            # add default
+            species_default <- paste0(
+              "species_",
+              sprintf(
+                "%02d",
+                seq(1, (ncol(matrix.tmp) - 2), 1)
+              )
             )
-          )
-          names(matrix.tmp)[3:ncol(matrix.tmp)] <- species_default
-        } else {
-          cli::cli_abort(c(
-            "Different lengths:",
-            "i" = "{.var species} has a different length ({length(species)})
-           compared to the F-matrix ({ncol(matrix.tmp) - 2})",
-            "x" = "{.var species} must have the same length as the number of
-            colums in the residual matrix or should be set to 'NA'"
-          ))
+            names(matrix.tmp)[3:ncol(matrix.tmp)] <- species_default
+          } else {
+            cli::cli_abort(c(
+              "Different lengths:",
+              "i" = "{.var species} has a different length ({length(species)})
+             compared to the F-matrix ({ncol(matrix.tmp) - 2})",
+              "x" = "{.var species} must have the same length as the number of
+              colums in the residual matrix or should be set to 'NA'"
+            ))
+          }
         }
-      }
-      
-      if (length(dates) > 1) {
-        if (length(dates) == nrow(matrix.tmp)) {
-          matrix.tmp <- matrix.tmp %>%
-            tibble::add_column(
-              date = dates,
-              .after = "model_run"
+        
+        if (length(dates) > 1) {
+          if (length(dates) == nrow(matrix.tmp)) {
+            matrix.tmp <- matrix.tmp %>%
+              tibble::add_column(
+                date = dates,
+                .after = "model_run"
+              )
+          } else {
+            cli::cli_abort(c(
+              "Different lengths:",
+              "i" = "{.var dates} has a different length ({length(dates)})
+             compared to the matrix with residuals ({nrow(matrix.tmp)})",
+              "x" = "{.var dates} must have the same length as the number of
+            rows in the matrix containing the residuals"
+            ))
+          }
+        } else {
+          if (is.na(dates)) {
+            # calculate dates
+            date_start <- lubridate::ymd("1970-01-01")
+            date_end <- date_start + (nrow(matrix.tmp) - 1)
+            dates_default <- lubridate::ymd(seq(
+              from = date_start,
+              to = date_end,
+              by = 1
+            ),
+            tz = tz
             )
-        } else {
-          cli::cli_abort(c(
-            "Different lengths:",
-            "i" = "{.var dates} has a different length ({length(dates)})
-           compared to the matrix with residuals ({nrow(matrix.tmp)})",
-            "x" = "{.var dates} must have the same length as the number of
-          rows in the matrix containing the residuals"
-          ))
+            # add dates column as identifier
+            matrix.tmp <- matrix.tmp %>%
+              tibble::add_column(
+                date = dates_default,
+                .after = "model_run"
+              )
+          } else {
+            cli::cli_abort(c(
+              "Different lengths:",
+              "i" = "{.var dates} has a different length ({length(dates)})
+             compared to the matrix with residuals ({nrow(matrix.tmp)})",
+              "x" = "{.var dates} must have the same length as the number of
+            rows in the matrix containing the residuals or set as `NA`"
+            ))
+          }
         }
-      } else {
-        if (is.na(dates)) {
-          # calculate dates
-          date_start <- lubridate::ymd("1970-01-01")
-          date_end <- date_start + (nrow(matrix.tmp) - 1)
-          dates_default <- lubridate::ymd(seq(
-            from = date_start,
-            to = date_end,
-            by = 1
-          ),
-          tz = tz
-          )
-          # add dates column as identifier
-          matrix.tmp <- matrix.tmp %>%
-            tibble::add_column(
-              date = dates_default,
-              .after = "model_run"
-            )
+        
+        if (nrow(res_matrix) > 0) {
+          res_matrix <- dplyr::bind_rows(res_matrix, matrix.tmp)
         } else {
-          cli::cli_abort(c(
-            "Different lengths:",
-            "i" = "{.var dates} has a different length ({length(dates)})
-           compared to the matrix with residuals ({nrow(matrix.tmp)})",
-            "x" = "{.var dates} must have the same length as the number of
-          rows in the matrix containing the residuals or set as `NA`"
-          ))
+          res_matrix <- matrix.tmp
         }
+        rm(matrix.tmp)
       }
-      
-      if (nrow(res_matrix) > 0) {
-        res_matrix <- dplyr::bind_rows(res_matrix, matrix.tmp)
-      } else {
-        res_matrix <- matrix.tmp
-      }
-      rm(matrix.tmp)
-    }
+    } # end read
   } else {
     # Technically the header block has not been detected so this might be
     # the second format with multiple blocks separated by empty lines.
@@ -206,223 +222,236 @@ me2_read_residuals <- function(me2_res_file,
     )
     res_matrix <- tibble()
     
+    # define a boolean for each runnumber that can be used to test if the 
+    # results should be read.
+    if(identical(base_run, NA)) {
+      # read all runs
+      read_run <- rep(TRUE,length(start_blocks)/2)
+    } else {
+      read_run <- rep(FALSE,length(start_blocks)/2)
+      read_run[base_run] <- TRUE
+    }
+    
     # read the data
     for (run.number in seq(1, length(start_blocks)/2, 1)) {
-      
-      # get residual
-      line_start <- start_blocks[[res_indices[[run.number]]]]
-      line_end <- end_blocks[[res_indices[[run.number]]]]
-      
-      matrix.text <- text[seq(line_start, line_end, 1)]
-      
-      # transform to tibble
-      matrix.tmp <- readr::with_edition(1, readr::read_delim(matrix.text,
-                                                             delim = " ",
-                                                             trim_ws = TRUE,
-                                                             col_names = FALSE
-      ))  %>%
-        select(-dplyr::first(names(.))) %>%
-        tibble::add_column(residual_type = "residual", .before = "X2") %>%
-        tibble::add_column(model_run = run.number, .before = "X2")
-      
-      
-      # we need to add the species names and datetime to the residuals.
-      # set the names of the columns to the correct species
-      
-      if (length(species) > 1) {
-        if (length(species) == (ncol(matrix.tmp) - 2)) {
-          names(matrix.tmp)[3:ncol(matrix.tmp)] <- species
+      # only read the data we want to read.
+      if(read_run[run.number]) {
+
+        # get residual
+        line_start <- start_blocks[[res_indices[[run.number]]]]
+        line_end <- end_blocks[[res_indices[[run.number]]]]
+        
+        matrix.text <- text[seq(line_start, line_end, 1)]
+        
+        # transform to tibble
+        matrix.tmp <- readr::with_edition(1, readr::read_delim(matrix.text,
+                                                               delim = " ",
+                                                               trim_ws = TRUE,
+                                                               col_names = FALSE
+        ))  %>%
+          select(-dplyr::first(names(.))) %>%
+          tibble::add_column(residual_type = "residual", .before = "X2") %>%
+          tibble::add_column(model_run = run.number, .before = "X2")
+        
+        
+        # we need to add the species names and datetime to the residuals.
+        # set the names of the columns to the correct species
+        
+        if (length(species) > 1) {
+          if (length(species) == (ncol(matrix.tmp) - 2)) {
+            names(matrix.tmp)[3:ncol(matrix.tmp)] <- species
+          } else {
+            cli::cli_abort(c(
+              "Different lengths:",
+              "i" = "{.var species} has a different length ({length(species)})
+             compared to the matrix with residuals ({ncol(matrix.tmp)-2})",
+              "x" = "{.var species} must have the same length as the number of
+            cols in the matrix containing residuals."
+            ))
+          }
         } else {
-          cli::cli_abort(c(
-            "Different lengths:",
-            "i" = "{.var species} has a different length ({length(species)})
-           compared to the matrix with residuals ({ncol(matrix.tmp)-2})",
-            "x" = "{.var species} must have the same length as the number of
-          cols in the matrix containing residuals."
-          ))
-        }
-      } else {
-        if (is.na(species)) {
-          # add default
-          species_default <- paste0(
-            "species_",
-            sprintf(
-              "%02d",
-              seq(1, (ncol(matrix.tmp) - 2), 1)
+          if (is.na(species)) {
+            # add default
+            species_default <- paste0(
+              "species_",
+              sprintf(
+                "%02d",
+                seq(1, (ncol(matrix.tmp) - 2), 1)
+              )
             )
-          )
-          names(matrix.tmp)[3:ncol(matrix.tmp)] <- species_default
-        } else {
-          cli::cli_abort(c(
-            "Different lengths:",
-            "i" = "{.var species} has a different length ({length(species)})
-           compared to the F-matrix ({ncol(matrix.tmp) - 2})",
-            "x" = "{.var species} must have the same length as the number of
-            colums in the residual matrix or should be set to 'NA'"
-          ))
+            names(matrix.tmp)[3:ncol(matrix.tmp)] <- species_default
+          } else {
+            cli::cli_abort(c(
+              "Different lengths:",
+              "i" = "{.var species} has a different length ({length(species)})
+             compared to the F-matrix ({ncol(matrix.tmp) - 2})",
+              "x" = "{.var species} must have the same length as the number of
+              colums in the residual matrix or should be set to 'NA'"
+            ))
+          }
         }
-      }
-      
-      if (length(dates) > 1) {
-        if (length(dates) == nrow(matrix.tmp)) {
-          matrix.tmp <- matrix.tmp %>%
-            tibble::add_column(
-              date = dates,
-              .after = "model_run"
+        
+        if (length(dates) > 1) {
+          if (length(dates) == nrow(matrix.tmp)) {
+            matrix.tmp <- matrix.tmp %>%
+              tibble::add_column(
+                date = dates,
+                .after = "model_run"
+              )
+          } else {
+            cli::cli_abort(c(
+              "Different lengths:",
+              "i" = "{.var dates} has a different length ({length(dates)})
+             compared to the matrix with residuals ({nrow(matrix.tmp)})",
+              "x" = "{.var dates} must have the same length as the number of
+            rows in the matrix containing the residuals"
+            ))
+          }
+        } else {
+          if (is.na(dates)) {
+            # calculate dates
+            date_start <- lubridate::ymd("1970-01-01")
+            date_end <- date_start + (nrow(matrix.tmp) - 1)
+            dates_default <- lubridate::ymd(seq(
+              from = date_start,
+              to = date_end,
+              by = 1
+            ),
+            tz = tz
             )
-        } else {
-          cli::cli_abort(c(
-            "Different lengths:",
-            "i" = "{.var dates} has a different length ({length(dates)})
-           compared to the matrix with residuals ({nrow(matrix.tmp)})",
-            "x" = "{.var dates} must have the same length as the number of
-          rows in the matrix containing the residuals"
-          ))
+            # add dates column as identifier
+            matrix.tmp <- matrix.tmp %>%
+              tibble::add_column(
+                date = dates_default,
+                .after = "model_run"
+              )
+          } else {
+            cli::cli_abort(c(
+              "Different lengths:",
+              "i" = "{.var dates} has a different length ({length(dates)})
+             compared to the matrix with residuals ({nrow(matrix.tmp)})",
+              "x" = "{.var dates} must have the same length as the number of
+            rows in the matrix containing the residuals or set as `NA`"
+            ))
+          }
         }
-      } else {
-        if (is.na(dates)) {
-          # calculate dates
-          date_start <- lubridate::ymd("1970-01-01")
-          date_end <- date_start + (nrow(matrix.tmp) - 1)
-          dates_default <- lubridate::ymd(seq(
-            from = date_start,
-            to = date_end,
-            by = 1
-          ),
-          tz = tz
-          )
-          # add dates column as identifier
-          matrix.tmp <- matrix.tmp %>%
-            tibble::add_column(
-              date = dates_default,
-              .after = "model_run"
+        
+        # add data to output
+        if (nrow(res_matrix) > 0) {
+          res_matrix <- dplyr::bind_rows(res_matrix, matrix.tmp)
+        } else {
+          res_matrix <- matrix.tmp
+        }
+        rm(matrix.tmp)
+        
+        ########################################################
+        # scaled residuals  
+        ########################################################
+        line_start <- start_blocks[[scaledres_indices[[run.number]]]]
+        line_end <- end_blocks[[scaledres_indices[[run.number]]]]
+        
+        matrix.text <- text[seq(line_start, line_end, 1)]
+        
+        # transform to tibble
+        matrix.tmp <- readr::with_edition(1, readr::read_delim(matrix.text,
+                                                               delim = " ",
+                                                               trim_ws = TRUE,
+                                                               col_names = FALSE
+        ))  %>%
+          select(-dplyr::first(names(.))) %>%
+          tibble::add_column(residual_type = "residual_scaled", .before = "X2") %>%
+          tibble::add_column(model_run = run.number, .before = "X2")
+        
+        
+        # we need to add the species names and datetime to the residuals.
+        # set the names of the columns to the correct species
+        if (length(species) > 1) {
+          if (length(species) == (ncol(matrix.tmp) - 2)) {
+            names(matrix.tmp)[3:ncol(matrix.tmp)] <- species
+          } else {
+            cli::cli_abort(c(
+              "Different lengths:",
+              "i" = "{.var species} has a different length ({length(species)})
+             compared to the matrix with residuals ({ncol(matrix.tmp)-2})",
+              "x" = "{.var species} must have the same length as the number of
+            cols in the matrix containing residuals."
+            ))
+          }
+        } else {
+          if (is.na(species)) {
+            # add default
+            species_default <- paste0(
+              "species_",
+              sprintf(
+                "%02d",
+                seq(1, (ncol(matrix.tmp) - 2), 1)
+              )
             )
-        } else {
-          cli::cli_abort(c(
-            "Different lengths:",
-            "i" = "{.var dates} has a different length ({length(dates)})
-           compared to the matrix with residuals ({nrow(matrix.tmp)})",
-            "x" = "{.var dates} must have the same length as the number of
-          rows in the matrix containing the residuals or set as `NA`"
-          ))
+            names(matrix.tmp)[3:ncol(matrix.tmp)] <- species_default
+          } else {
+            cli::cli_abort(c(
+              "Different lengths:",
+              "i" = "{.var species} has a different length ({length(species)})
+             compared to the F-matrix ({ncol(matrix.tmp) - 2})",
+              "x" = "{.var species} must have the same length as the number of
+              colums in the residual matrix or should be set to 'NA'"
+            ))
+          }
         }
-      }
-      
-      # add data to output
-      if (nrow(res_matrix) > 0) {
-        res_matrix <- dplyr::bind_rows(res_matrix, matrix.tmp)
-      } else {
-        res_matrix <- matrix.tmp
-      }
-      rm(matrix.tmp)
-      
-      ########################################################
-      # scaled residuals  
-      ########################################################
-      line_start <- start_blocks[[scaledres_indices[[run.number]]]]
-      line_end <- end_blocks[[scaledres_indices[[run.number]]]]
-      
-      matrix.text <- text[seq(line_start, line_end, 1)]
-      
-      # transform to tibble
-      matrix.tmp <- readr::with_edition(1, readr::read_delim(matrix.text,
-                                                             delim = " ",
-                                                             trim_ws = TRUE,
-                                                             col_names = FALSE
-      ))  %>%
-        select(-dplyr::first(names(.))) %>%
-        tibble::add_column(residual_type = "residual_scaled", .before = "X2") %>%
-        tibble::add_column(model_run = run.number, .before = "X2")
-      
-      
-      # we need to add the species names and datetime to the residuals.
-      # set the names of the columns to the correct species
-      if (length(species) > 1) {
-        if (length(species) == (ncol(matrix.tmp) - 2)) {
-          names(matrix.tmp)[3:ncol(matrix.tmp)] <- species
+        
+        if (length(dates) > 1) {
+          if (length(dates) == nrow(matrix.tmp)) {
+            matrix.tmp <- matrix.tmp %>%
+              tibble::add_column(
+                date = dates,
+                .after = "model_run"
+              )
+          } else {
+            cli::cli_abort(c(
+              "Different lengths:",
+              "i" = "{.var dates} has a different length ({length(dates)})
+             compared to the matrix with residuals ({nrow(matrix.tmp)})",
+              "x" = "{.var dates} must have the same length as the number of
+            rows in the matrix containing the residuals"
+            ))
+          }
         } else {
-          cli::cli_abort(c(
-            "Different lengths:",
-            "i" = "{.var species} has a different length ({length(species)})
-           compared to the matrix with residuals ({ncol(matrix.tmp)-2})",
-            "x" = "{.var species} must have the same length as the number of
-          cols in the matrix containing residuals."
-          ))
-        }
-      } else {
-        if (is.na(species)) {
-          # add default
-          species_default <- paste0(
-            "species_",
-            sprintf(
-              "%02d",
-              seq(1, (ncol(matrix.tmp) - 2), 1)
+          if (is.na(dates)) {
+            # calculate dates
+            date_start <- lubridate::ymd("1970-01-01")
+            date_end <- date_start + (nrow(matrix.tmp) - 1)
+            dates_default <- lubridate::ymd(seq(
+              from = date_start,
+              to = date_end,
+              by = 1
+            ),
+            tz = tz
             )
-          )
-          names(matrix.tmp)[3:ncol(matrix.tmp)] <- species_default
-        } else {
-          cli::cli_abort(c(
-            "Different lengths:",
-            "i" = "{.var species} has a different length ({length(species)})
-           compared to the F-matrix ({ncol(matrix.tmp) - 2})",
-            "x" = "{.var species} must have the same length as the number of
-            colums in the residual matrix or should be set to 'NA'"
-          ))
+            # add dates column as identifier
+            matrix.tmp <- matrix.tmp %>%
+              tibble::add_column(
+                date = dates_default,
+                .after = "model_run"
+              )
+          } else {
+            cli::cli_abort(c(
+              "Different lengths:",
+              "i" = "{.var dates} has a different length ({length(dates)})
+             compared to the matrix with residuals ({nrow(matrix.tmp)})",
+              "x" = "{.var dates} must have the same length as the number of
+            rows in the matrix containing the residuals or set as `NA`"
+            ))
+          }
         }
-      }
-      
-      if (length(dates) > 1) {
-        if (length(dates) == nrow(matrix.tmp)) {
-          matrix.tmp <- matrix.tmp %>%
-            tibble::add_column(
-              date = dates,
-              .after = "model_run"
-            )
+        # add data to output
+        if (nrow(res_matrix) > 0) {
+          res_matrix <- dplyr::bind_rows(res_matrix, matrix.tmp)
         } else {
-          cli::cli_abort(c(
-            "Different lengths:",
-            "i" = "{.var dates} has a different length ({length(dates)})
-           compared to the matrix with residuals ({nrow(matrix.tmp)})",
-            "x" = "{.var dates} must have the same length as the number of
-          rows in the matrix containing the residuals"
-          ))
+          res_matrix <- matrix.tmp
         }
-      } else {
-        if (is.na(dates)) {
-          # calculate dates
-          date_start <- lubridate::ymd("1970-01-01")
-          date_end <- date_start + (nrow(matrix.tmp) - 1)
-          dates_default <- lubridate::ymd(seq(
-            from = date_start,
-            to = date_end,
-            by = 1
-          ),
-          tz = tz
-          )
-          # add dates column as identifier
-          matrix.tmp <- matrix.tmp %>%
-            tibble::add_column(
-              date = dates_default,
-              .after = "model_run"
-            )
-        } else {
-          cli::cli_abort(c(
-            "Different lengths:",
-            "i" = "{.var dates} has a different length ({length(dates)})
-           compared to the matrix with residuals ({nrow(matrix.tmp)})",
-            "x" = "{.var dates} must have the same length as the number of
-          rows in the matrix containing the residuals or set as `NA`"
-          ))
-        }
+        rm(matrix.tmp)
       }
-      # add data to output
-      if (nrow(res_matrix) > 0) {
-        res_matrix <- dplyr::bind_rows(res_matrix, matrix.tmp)
-      } else {
-        res_matrix <- matrix.tmp
-      }
-      rm(matrix.tmp)
-    }
+    } # end read
   }
   
   if (tidy_output) {
