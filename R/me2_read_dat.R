@@ -49,12 +49,14 @@
 #'   not used. Default: 'Etc/GMT-1'
 #'
 #' @return \code{me2_read_dat} returns an object of class ``me2tools''.
-#'   The object includes three main components: \code{call}, the command used
-#'   to generate the plot; \code{F_matrix}, the F matrices for each run;
-#'   and \code{G_matrix}, the G matrices for each run. If retained, e.g., using
-#'   \code{output <- me2_read_dat(file)}, this output can be used to recover
-#'   the data, reproduce, or rework the original plot or undertake further
-#'   analysis.
+#'   The object includes five main components: \code{call}, the command used
+#'   to read the data; \code{F_matrix}, the F matrices for each run;
+#'   \code{G_matrix}, the G matrices for each run; \code{total_mass}, the input
+#'   of the \code{factor_mass} variable and \code{overview_tm}, containing the
+#'   used \code{factor_mass} for each run (when applicable). If retained, e.g., 
+#'   using \code{output <- me2_read_dat(file)}, this output can be used to 
+#'   recover the data, reproduce, or rework the original plot or undertake 
+#'   further analysis.
 #'
 #'   An me2tools output can be manipulated using a number of generic operations,
 #'   including \code{print}, \code{plot} and \code{summary}.
@@ -236,7 +238,11 @@ me2_read_dat <- function (me2_dat_file,
 
 
   G_matrix <- tibble()
+  all_factor_mass <- tibble()
   run_number <- 1
+  overview.fm <- read_csv("\n", 
+                          col_names = c("model_run", factor.names), 
+                          col_types = strrep("d", length(factor.names)+1))
 
   for(g_index in g_indices) {
     # get the g values
@@ -244,13 +250,14 @@ me2_read_dat <- function (me2_dat_file,
     # num_factors
     num_factors <- ncol(tmp_g_tibble)
     # add columnnames
-    names(tmp_g_tibble) <- paste0(
+    factor.names <- paste0(
       "factor_",
       sprintf(
         "%02d",
         seq(1, num_factors, 1)
       )
     )
+    names(tmp_g_tibble) <- factor.names
 
     ## if date is provided, do a cbind with the tmp_g_tibble and call this
     ## column "identifier", so it works well with the cleanup.
@@ -291,11 +298,11 @@ me2_read_dat <- function (me2_dat_file,
         ))
       }
     }
-
+    
     if (length(factor_mass)==1) {
       if (!is.na(factor_mass)) {
         if (is.integer(factor_mass)) {
-          factor_mass <- listoutput[[f_indices[run_number]]][factor_mass,]  
+          use_factor_mass <- listoutput[[f_indices[run_number]]][factor_mass,]  
         } else if (is.character(factor_mass)) {
           # get the F_matrix for the current run_number
           current.F <- F_matrix %>% 
@@ -323,7 +330,7 @@ me2_read_dat <- function (me2_dat_file,
               ))
             }
           }
-          factor_mass <- current.F$value
+          use_factor_mass <- current.F$value
         } else {
           cli::cli_abort(c(
             "Variable should be integer or character:",
@@ -332,11 +339,11 @@ me2_read_dat <- function (me2_dat_file,
           ))
         }
       } else {
-        factor_mass <- NA
+        use_factor_mass <- NA
       }
     } else {
       if (length(factor_mass)==num_factors) {
-        factor_mass <- factor_mass
+        use_factor_mass <- factor_mass
       } else {
         cli::cli_abort(c(
           "Length should be 1 or number of factors:",
@@ -346,16 +353,29 @@ me2_read_dat <- function (me2_dat_file,
       }
     }
 
+    # store factor mass into variable
+    if(!identical(use_factor_mass, NA)) {
+      overview.fm <- rbind(overview.fm,
+                           c(run_number, use_factor_mass))
+      names(overview.fm) <- c("model_run", factor.names)
+    } else {
+      overview.fm <- rbind(overview.fm,
+                           c(run_number, rep(NA, length(factor.names))))
+      names(overview.fm) <- c("model_run", factor.names)
+    }
+
     # cleanup
     tmp_g_tibble <- tidy_me2_contributions(G_matrix = tmp_g_tibble,
                                            run_number = run_number,
-                                           factor_mass = factor_mass,
+                                           factor_mass = use_factor_mass,
                                            rescale_unity = rescale_unity,
                                            threshold_unity = threshold_unity,
                                            tidy_output = tidy_output,
                                            tz = tz) %>%
       tibble::add_column(run_type = "base_runs", .after = "model_run")
 
+    #
+    
     if (nrow(G_matrix) == 0) {
       G_matrix <- tmp_g_tibble
     } else {
@@ -369,6 +389,7 @@ me2_read_dat <- function (me2_dat_file,
   output <- list("F_matrix" = F_matrix,
                  "G_matrix" = G_matrix,
                  "total_mass" = factor_mass,
+                 "overview_tm" = overview.fm,
                  call = match.call())
   class(output) <- "me2tools"
   

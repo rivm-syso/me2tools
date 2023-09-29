@@ -53,12 +53,14 @@ not used. Default: 'Etc/GMT-1'}
 }
 \value{
 \code{me2_read_dat} returns an object of class ``me2tools''.
-The object includes three main components: \code{call}, the command used
-to generate the plot; \code{F_matrix}, the F matrices for each run;
-and \code{G_matrix}, the G matrices for each run. If retained, e.g., using
-\code{output <- me2_read_dat(file)}, this output can be used to recover
-the data, reproduce, or rework the original plot or undertake further
-analysis.
+The object includes five main components: \code{call}, the command used
+to read the data; \code{F_matrix}, the F matrices for each run;
+\code{G_matrix}, the G matrices for each run; \code{total_mass}, the input
+of the \code{factor_mass} variable and \code{overview_tm}, containing the
+used \code{factor_mass} for each run (when applicable). If retained, e.g.,
+using \code{output <- me2_read_dat(file)}, this output can be used to
+recover the data, reproduce, or rework the original plot or undertake
+further analysis.
 
 An me2tools output can be manipulated using a number of generic operations,
 including \code{print}, \code{plot} and \code{summary}.
