@@ -11,7 +11,7 @@
 #' produced as output, corresponding to dQmax = [4, 8, 16, 32] and are 
 #' *_DISPres1.txt, *_DISPres2.txt, *_DISPres3.txt and *_DISPres4.txt. These 
 #' files contain the minimum and the maximum DISP results for a specific dQmax 
-#' and any of these files can be read using the \code{ me2_DISP_read_res} 
+#' and any of these files can be read using the \code{me2_DISP_read_res} 
 #' function.
 #'
 #' @param me2_disp_txt_file ME2 output file (.txt), containing the results and
