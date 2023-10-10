@@ -66,8 +66,8 @@ if (getRversion() >= "2.15.1") {
     "PANEL", "metcor.ne.graticules", "pred", "predict","conf_lwr","conf_upr",
     "CI.linetype", "pred_lwr", "pred_upr", "PI.linetype",  "plot_type", 
     "group_type", ".x", "dummy","run_number_final", "corr", "fit", "eq.label",
-    "adj.rr.label", "residual_type", "concentration", "uncertainty", "sn",
-    "guidance"
+    "adj.rr.label", "residual_type", "pmf.concentration", "pmf.uncertainty", 
+    "sn", "guidance", "Q.Qexp"
   )
   
   # Squash the notes

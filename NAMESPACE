@@ -3,6 +3,7 @@
 export(closest_val_to_Pprob)
 export(epa_percentile)
 export(epa_plot_BSboxplot)
+export(epa_plot_QQexp)
 export(epa_plot_errorsummary)
 export(epa_plot_profile)
 export(epa_sn)

@@ -1,10 +1,17 @@
 Package: me2tools
 Type: Package
 Title: Tools for Processing the Input and Output of the Multilineair Engine Version 2 (ME-2) and MetCor
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(
-    person("Dennis", "Mooibroek", email = "dennis.mooibroek@rivm.nl", role = c("aut", "cre")),
-    person("Uwayemi", "Sofowote", email = "uwayemi.sofowote@ontario.ca", role = c("aut")))
+    person(given = "Dennis", 
+           family = "Mooibroek", 
+           email = "dennis.mooibroek@rivm.nl", 
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-6033-1213")),
+    person(given = "Uwayemi", 
+           family = "Sofowote", 
+           email = "uwayemi.sofowote@ontario.ca", 
+           role = c("aut")))
 Description: Read the outcome of the Multilineair Engine version 2 (ME-2) into R. Also export, import and plot the MetCor results.
 Depends:
     R (>= 3.5.0)
@@ -41,6 +48,7 @@ LazyData: true
 RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)
 Suggests: 
+    geomtextpath,
     knitr,
     rmarkdown
 VignetteBuilder: knitr
