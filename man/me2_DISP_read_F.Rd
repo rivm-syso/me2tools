@@ -57,7 +57,7 @@ The residuals, stored in the *_DISP.rsd file, can be read using
 produced as output, corresponding to dQmax = [4, 8, 16, 32] and are 
 *_DISPres1.txt, *_DISPres2.txt, *_DISPres3.txt and *_DISPres4.txt. These 
 files contain the minimum and the maximum DISP results for a specific dQmax 
-and any of these files can be read using the \code{ me2_DISP_read_res} 
+and any of these files can be read using the \code{me2_DISP_read_res} 
 function.
 }
 \section{Defining the block with data}{
