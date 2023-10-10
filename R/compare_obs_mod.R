@@ -323,25 +323,7 @@ compare_obs_mod <- function(data,
 
   if (mod.line) {
     # check if package geomtextpath is installed
-    if (system.file(package='geomtextpath')=="") {
-      # not installed, so use default
-      scatter <- scatter +
-        ggplot2::geom_abline(intercept = 0,
-                             slope = 1,
-                             color = "black",
-                             linetype = "solid",
-                             linewidth = 0.25) +
-        ggplot2::geom_abline(intercept = 0,
-                             slope = 0.5,
-                             color = "black",
-                             linetype = "dashed",
-                             linewidth = 0.25) +
-        ggplot2::geom_abline(intercept = 0,
-                             slope = 2,
-                             color = "black",
-                             linetype = "dashed",
-                             linewidth = 0.25)
-    } else {
+    if (requireNamespace("geomtextpath", quietly = TRUE)) {
       scatter <- scatter +
         geomtextpath::geom_labelabline(label = geomtextpath$labels[["0.5"]], 
                                        slope = 0.5, 
@@ -372,7 +354,25 @@ compare_obs_mod <- function(data,
                                        fill = NA,
                                        gap = TRUE,
                                        linetype = "dashed",
-                                       linewidth = 0.25)
+                                       linewidth = 0.25)      
+    } else {
+      # not installed, so use default
+      scatter <- scatter +
+        ggplot2::geom_abline(intercept = 0,
+                             slope = 1,
+                             color = "black",
+                             linetype = "solid",
+                             linewidth = 0.25) +
+        ggplot2::geom_abline(intercept = 0,
+                             slope = 0.5,
+                             color = "black",
+                             linetype = "dashed",
+                             linewidth = 0.25) +
+        ggplot2::geom_abline(intercept = 0,
+                             slope = 2,
+                             color = "black",
+                             linetype = "dashed",
+                             linewidth = 0.25)
     }
   }
 
