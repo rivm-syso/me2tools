@@ -281,7 +281,7 @@ compare_obs_mod_mlr <- function(measurements,
  
   ##############################################################################
   # see if we can create a model using variables
-  fm_mlr <- as.formula(paste(obs, "~ 0 +", paste(mod, collapse = " + ")))
+  fm_mlr <- stats::as.formula(paste(obs, "~ 0 +", paste(mod, collapse = " + ")))
   
   if (robust) {
     modelMLR <- MASS::rlm(fm_mlr, data = mlr_data, maxit = 200)
