@@ -30,10 +30,13 @@ being an unique number starting at 1.}
 }
 \value{
 \code{me2_DISP_read_res} returns an object of class ``me2tools''.
-  The object includes three main components: \code{call}, the command used
+  The object includes five main components: \code{call}, the command used
   to read the data; \code{data}, the DISP data for each BS run;
-  and \code{F_format}, the aggregated DISP data in the same format as the
-  F_matrix. If retained, e.g., using 
+  \code{F_format}, the aggregated DISP data in the same format as the
+  F_matrix; \code{diag} the diagnostic line from the file, containing the error code (0
+  is no error, 6 or 9 indicates that the run was aborted) and the largest
+  drop of Q; and \code{swaps}, the swap counts for each dQmax level (4, 8, 
+  15, 25). If retained, e.g., using 
   \code{output <- me2_BSDISP_read_res(file)}, this output can be used to
   recover the data, reproduce, or undertake further analysis.
 

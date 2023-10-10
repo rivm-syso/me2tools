@@ -96,10 +96,14 @@
 #' account for double counting.
 #'
 #' @return \code{me2_BSDISP_read_res} returns an object of class ``me2tools''.
-#'   The object includes three main components: \code{call}, the command used
+#'   The object includes five main components: \code{call}, the command used
 #'   to read the data; \code{data}, the BSDISP data for each BS run;
-#'   and \code{F_format}, the aggregated BSDISP data in the same format as the
-#'   F_matrix. If retained, e.g., using 
+#'   \code{F_format}, the aggregated BSDISP data in the same format as the
+#'   F_matrix; \code{diag} the diagnostic line from the file, containing the 
+#'   number of cases used in the BS-DISP (the base run + number of accepted
+#'   resamples), the largest decrease of Q, the number of cases with a drop of
+#'   Q / swap in best fit / swap in DISP phase; \code{swaps}, the swap counts 
+#'   for each dQmax level (0.5, 1, 2, 4). If retained, e.g., using 
 #'   \code{output <- me2_BSDISP_read_res(file)}, this output can be used to
 #'   recover the data, reproduce, or undertake further analysis.
 #'
@@ -583,10 +587,38 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
         values_to = "value"
       )
   }
-
+  
+  # Read diagnostics and swaps
+  diag.line <- readr::read_table(file = BSDISPres_file, 
+                                 col_names = FALSE, 
+                                 n_max = 1,
+                                 show_col_types = FALSE)
+  names(diag.line) <- c("num_cases_used",
+                        "max_decrease_Q",
+                        "num_drop_Q",
+                        "num_swap_best_fit",
+                        "num_swap_DISP_phase")
+  
+  swaps <- readr::read_table(file = BSDISPres_file, 
+                             col_names = FALSE, 
+                             skip = 1, 
+                             n_max = 4,
+                             show_col_types = FALSE)
+  
+  names(swaps) <- paste0(
+    "factor_",
+    sprintf(
+      "%02d",
+      seq(1, ncol(tmp_tibble) - 2, 1)
+    )
+  )
+  
+  
   output <- list(
     "data" = bs_disp_data,
     "F_format" = bs_disp_data_stats,
+    "diag" = diag.line,
+    "swaps" = swaps,
     call = match.call()
   )
   class(output) <- "me2tools"
