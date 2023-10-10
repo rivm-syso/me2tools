@@ -37,7 +37,9 @@ compare_obs_mod(
   ylab = "Modelled",
   xlab = "Observed",
   auto.text = TRUE,
-  asp.ratio.1 = FALSE
+  asp.ratio.1 = FALSE,
+  geomtextpath = tibble(labels = list(`0.5` = "0.5", `1.0` = "1.0", `2.0` = "2.0"), hjust
+    = list(`0.5` = 0.95, `1.0` = 0.95, `2.0` = 0.95))
 )
 }
 \arguments{
@@ -66,10 +68,10 @@ Default is FALSE, forcing the regression through the origin.}
 evaluations. These three lines are the 1:1 line (solid) and the 1:0.5 and
 1:2 lines (dashed). Adding these lines will help to evaluate how close the
 points are to the 1:1 relation. Points within the dashed lines will be
-within a factor of two.}
+within a factor of two of the regression line.}
 
 \item{regress.details}{Show the equation and R2 (non-robust only) on the
-plot. Default usage is \code{TRUE} or \code{FALSE}.}
+LR plot. Default usage is \code{TRUE} or \code{FALSE}.}
 
 \item{CI}{Should the confidence levels (CI) be shown? Default of this
 parameter is set to \dQuote{FALSE}.}
@@ -142,41 +144,33 @@ the \sQuote{2} in NO2.}
 
 \item{asp.ratio.1}{Output the plot with an aspect ratio of 1. For this to
 work the minimum and maximum of x and y axis are used.}
+
+\item{geomtextpath}{This variable contains specific settings for the optional
+package geomtextpath. When plotting the mod.lines, the geomtextpath
+package will add labels to the lines for clarification, but only if this
+package is installed. If it is not installed, the function will only plot
+the lines. The variable contains the labels and the hjust for positioning
+the labels. The hjust shifts the label up and down the line, and is
+entered as a value between 0-1. The labels are character labels that are
+plotted as is.}
 }
 \value{
 me2tools list containing the ggplot2 for the regression of the
 observations and the sum of the factors in concentration units (LR). The
-results of both the MLR and the LR models are also given, as well as the
-data used to calculate these models. Additional information is provided
-regarding the use of the concentration units in G and if robust regression
-has been applied.
-
-@section Using factor_mass for the sum of factors regression:
-To perform the regression against the sum of factors, the factors in the
-G-matrix also have to be available in the concentration units. By default,
-only the "normalised" data is available, and a \code{factor_mass} is used to
-transform this data into concentration units.
-
-If the provided G-matrix only contains normalised data, a vector of the same
-length of the number of factors can be provided in this function to
-calculate the concentration units.
-
-If this vector, called \code{factor_mass}, is not provided and no
-concentration units are present in G, then the coefficients of the MLR are
-used as the \code{factor_mass}.
-
-If concentration units are present in G, then this will take precedence,
-unless the \code{factor_mass} is defined. In the latter case, the existing
-concentration data is overwritten with the new concentrations based on the
-provided \code{factor_mass}.
-
-In the output of the function, a variable is used to denote the application
-of \code{factor_mass} and the possible concentrations in G matrix in the
-regression.
+results of the LR models are also given, as well as the data used to
+calculate these models. Additional information is provided regarding the
+use of robust regression.
 }
 \description{
 Based on the observed total mass and the modelled contributions in the
-G-matrix this function performs a multilinear regression on the observations
-and the individual normalised factor contributions. The function also
-performs a regression against the observations and the sum of the factors
+G-matrix this function performs a simpe linear regression on the observations
+and the sum of the factors. The function can perform an ordinary least
+squares regression (OLS) and a robust regression. In the latter regression
+outliers have less influence on the determination of the regression line.
+Also the regression can be based on a model with and without intercept. For
+usage of multilinear regression (MLR) see function
+\code{\link{compare_obs_mod_mlr}}
+}
+\seealso{
+\code{\link{compare_obs_mod_mlr}}
 }
