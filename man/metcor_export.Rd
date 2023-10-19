@@ -4,17 +4,23 @@
 \alias{metcor_export}
 \title{Export G-matrix to MetCor}
 \usage{
-metcor_export(G_matrix, file, time_res = "auto", factor_names = "auto")
+metcor_export(
+  G_matrix,
+  file,
+  time_res = "auto",
+  factor_names = "auto",
+  force_utc = FALSE
+)
 }
 \arguments{
 \item{G_matrix}{G-matrix that should be exported to a MetCor input file. This
-is typically the G_matrix provided by FUNCTION with the tidy_output
-parameter set to \code{FALSE}. This output should be expanded with the
-latitude (column: lat) and longitude (column: lon) coordinates of the
-receptor site(s). These coordinates should be exactly the same as the
-coordinates used in the \strong{HYSPLIT} model for the receptor sites.Based on
-the unique lat and lon coordinates the number of receptor sites is
-automatically derived.}
+is typically the G_matrix provided by \code{\link{me2_read_G}} with the
+\code{tidy_output} parameter set to \code{FALSE}. This output should be
+expanded with the latitude (column: \code{lat}) and longitude (column:
+\code{lon}) coordinates of the receptor site(s). These coordinates should
+be exactly the same as the coordinates used in the \strong{HYSPLIT} model for
+the receptor sites. Based on the unique lat and lon coordinates the
+number of receptor sites is automatically derived.}
 
 \item{file}{File name and location to save the MetCor input file}
 
@@ -32,6 +38,14 @@ data/threshold values to output file. If \code{factor_names} is set to
 "auto" the function tries to find the factors based on the known columns
 in the G-matrix. Note, this feature will not work if non-default columns
 are present in the G-matrix.}
+
+\item{force_utc}{With this parameter the date time output for Metcor can be
+forced into UTC (the same timezone as Hysplit results). When set to
+\code{TRUE} there has to be no correction for the "Correlated Data Time
+Zone" within Metcor. If this parameter is \code{FALSE}, there has to be
+a manual correction when the time zone of the data is not UTC. Default
+setting of this parameter is \code{FALSE}, so no correction is applied when
+creating the output.}
 }
 \value{
 tab-delimited plain text file containing date ranges, variable
