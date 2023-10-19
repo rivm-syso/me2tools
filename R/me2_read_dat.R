@@ -240,10 +240,7 @@ me2_read_dat <- function (me2_dat_file,
   G_matrix <- tibble()
   all_factor_mass <- tibble()
   run_number <- 1
-  overview.fm <- read_csv("\n", 
-                          col_names = c("model_run", factor.names), 
-                          col_types = strrep("d", length(factor.names)+1))
-
+  
   for(g_index in g_indices) {
     # get the g values
     tmp_g_tibble <- listoutput[[g_index]]
@@ -258,6 +255,13 @@ me2_read_dat <- function (me2_dat_file,
       )
     )
     names(tmp_g_tibble) <- factor.names
+    
+    if (run_number == 1) {
+      # first run, create the overview variable for factor mass
+      overview.fm <- read_csv("\n", 
+                              col_names = c("model_run", factor.names), 
+                              col_types = strrep("d", length(factor.names)+1))
+    }
 
     ## if date is provided, do a cbind with the tmp_g_tibble and call this
     ## column "identifier", so it works well with the cleanup.
