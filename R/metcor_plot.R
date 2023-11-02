@@ -90,6 +90,25 @@ metcor_plot <- function(metcor.raster,
       "x" = "Only 'gradient' or 'discrete' is supported."
     ))
   }
+  
+  if (!metcor.plot.options$plot$world.scale %in% c("small", "medium", "large")){
+    cli::cli_abort(c(
+      "Invalid option for {.var plot$world.scale} in the plot options:",
+      "x" = "Only 'small', 'medium' or 'large' is supported."
+    ))
+  }
+  
+  if(metcor.plot.options$plot$world.scale == "large") {
+    # check for package
+    nehires <- system.file(package = "rnaturalearthhires")
+    if (!nzchar(nehires)) {
+      cli::cli_abort(c(
+        "Package 'rnaturalearthhighres' not installed:",
+        "x" = "Necessary data for using {.var plot$worldscale} = 'large' not available.
+        This package can be installed using {.function check_rnaturalearthhires()}"
+      ))
+    } 
+  }
   ###########################################################################
   ###########################################################################
   ###                                                                     ###
@@ -103,24 +122,50 @@ metcor_plot <- function(metcor.raster,
   ##################################################################
   ##                        Raster options                        ##
   ##################################################################
+  
+  # set an offset for the raster minimum to include it in the latest bin.
+  raster.min.offset <- 0 
+  applied.offset.minimum.grid.value = FALSE
+  
   if (metcor.plot.options$raster$type == "discrete") {
     raster.minmax <- terra::minmax(metcor.raster)
     if (length(metcor.plot.options$raster$discrete.breaks) == 1) {
       if (metcor.plot.options$raster$discrete.breaks == "automatic") {
         # calculate based on the max of the raster
         metcor.plot.options$raster$discrete.breaks <- c(
-          raster.minmax[1, 1],
+          raster.minmax[1, 1] - raster.min.offset,
           raster.minmax[2, 1] / 16,
           raster.minmax[2, 1] / 8,
           raster.minmax[2, 1] / 4,
           raster.minmax[2, 1] / 2,
           raster.minmax[2, 1]
         )
-      } else {
+        applied.offset.minimum.grid.value = TRUE
+      } else if(!all.equal(metcor.plot.options$raster$discrete.breaks, as.integer(metcor.plot.options$raster$discrete.breaks))) {
         cli::cli_abort(c(
           "Invalid option for {.var discrete.breaks}:",
-          "x" = "Only 'automatic' or a vector with breaks are supported."
+          "x" = "Only 'automatic', an integer representing the number of breaks 
+                 or a vector with breaks are supported."
         ))
+      }
+    } else {
+      ## Make sure that the max value in the disc breaks matches the max in the
+      ## raster
+      if (max(metcor.plot.options$raster$discrete.breaks) < raster.minmax[2, 1]) {
+          cli::cli_warn(c(
+            "Maximum in data exceeds maximum `discrete.breaks` value:",
+            "i" = "The highest value in the data ({raster.minmax[2, 1]}) is larger
+              than the maximum value in the legend
+              ({max(metcor.plot.options$raster$discrete.breaks)})."
+          ))
+      }
+      if (min(metcor.plot.options$raster$discrete.breaks) > raster.minmax[1, 1]) {
+          cli::cli_warn(c(
+            "Minimum in data exceeds minimum `discrete.breaks` value:",
+            "i" = "The lowest value in the data ({raster.minmax[1, 1]}) is smaller
+              than the minimum value in the legend
+              ({min(metcor.plot.options$raster$discrete.breaks)})."
+          ))
       }
     }
     if (length(metcor.plot.options$raster$discrete.colors) == 1) {
@@ -139,24 +184,7 @@ metcor_plot <- function(metcor.raster,
         ))
       }
     }
-    ## Make sure that the max value in the disc breaks matches the max in the
-    ## raster
-    if (max(metcor.plot.options$raster$discrete.breaks) < raster.minmax[2, 1]) {
-      cli::cli_warn(c(
-        "Maximum in data exceeds maximum `discrete.breaks` value:",
-        "i" = "The highest value in the data ({raster.minmax[2, 1]}) is larger
-          than the maximum value in the legend
-          ({max(metcor.plot.options$raster$discrete.breaks)})."
-      ))
-    }
-    if (min(metcor.plot.options$raster$discrete.breaks) > raster.minmax[1, 1]) {
-      cli::cli_warn(c(
-        "Minimum in data exceeds minimum `discrete.breaks` value:",
-        "i" = "The lowest value in the data ({raster.minmax[1, 1]}) is smaller
-          than the minimum value in the legend
-          ({min(metcor.plot.options$raster$discrete.breaks)})."
-      ))
-    }
+    
   }
   ## Calculate stats
   stats <- c(
@@ -289,7 +317,8 @@ metcor_plot <- function(metcor.raster,
   if (verbose) {
     message("- preparing world map")
   }
-  world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+  world <- rnaturalearth::ne_countries(scale = metcor.plot.options$plot$world.scale, 
+                                       returnclass = "sf")
 
   # try to make a grid raster
   # e <- as(raster::extent(-180, 180, -90, 90), "SpatialPolygons") %>%
@@ -443,7 +472,11 @@ metcor_plot <- function(metcor.raster,
       if (verbose) {
         message("- applying default coloring from ArcMap")
       }
-      legend.colors <- c("#2892c7", "#a0c79b", "#fafa64", "#fa8d34", "#e81014")
+      legend.colors <- c("#2892c7", 
+                         "#a0c79b", 
+                         "#fafa64", 
+                         "#fa8d34", 
+                         "#e81014")
     }
 
   # calculate the breaks using classInt
@@ -452,15 +485,18 @@ metcor_plot <- function(metcor.raster,
         message(paste0(
           "- calculating '",
           metcor.plot.options$raster$discrete.breaks,
-          "' breaks using non-smoothed raster"
+          "' equal breaks using non-smoothed raster"
         ))
       }
       metcor.plot.options$raster$discrete.breaks <- classInt::classIntervals(
         var = stats::na.omit(as.vector(values(metcor.raster))),
-        n = 5,
-        style = metcor.plot.options$raster$discrete.breaks
+        n = metcor.plot.options$raster$discrete.breaks,
+        style = "equal"
       )
       metcor.plot.options$raster$discrete.breaks <- metcor.plot.options$raster$discrete.breaks$brks
+      # location where we need to apply the offset
+      metcor.plot.options$raster$discrete.breaks[[1]] <- metcor.plot.options$raster$discrete.breaks[[1]] - raster.min.offset 
+      applied.offset.minimum.grid.value = TRUE
     }
 
     # check if breaks match the colors
@@ -484,9 +520,13 @@ metcor_plot <- function(metcor.raster,
       }
       for (i in seq_along(metcor.plot.options$raster$discrete.colors)) {
         if (i == 1) {
+          # adjust for possible offset when using automatic discrete breaks
+          if (applied.offset.minimum.grid.value) {
+            first.label.value <- metcor.plot.options$raster$discrete.breaks[[i]] + raster.min.offset
+          }
           metcor.plot.options$legend$labels <- c(
             paste(format(round(
-              metcor.plot.options$raster$discrete.breaks[[i]],
+              first.label.value,
               metcor.plot.options$legend$label.digits
             ),
             nsmall = metcor.plot.options$legend$label.digits

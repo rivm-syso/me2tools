@@ -25,6 +25,11 @@ List containing various options that are applicable for the total plot.
 With countries this color is mostly applied to the sea. As such the
 default value for this color is \dQuote{#97dbf2}, but can be any HEX
 formatted code.
+\item \code{world.scale} is the scale of the map that should be used.
+valid options are 'small', 'medium' and 'large', with 'medium' being
+the default option. Note that the package \dQuote{rnaturalearthhires} is
+required when using the option 'large'. Other data is present in package
+\dQuote{rnaturalearthdata}.
 \item \code{world.background} is the fill color of the natural earth
 world country polygons. The default value for this color
 is \dQuote{white} or \dQuote{#ffffff}, but can be any HEX formatted
@@ -106,7 +111,7 @@ every color palette can be used (e.g.
 \item \code{discrete.breaks} legend breaks. Default setting is
 \code{automatic}, allowing the automatic calculation of equal bins based
 on the maximum of the raster. Can also be a vector containing hard coded
-breaks.
+breaks or an integer for the desired number of equal breaks.
 \item \code{discrete.colors} vector containing color codes. Defaults to
 \code{automatic} which uses the following colors: \code{c("#2892c7",
     "#a0c79b", "#fafa64", "#fa8d34", "#e81014")}
