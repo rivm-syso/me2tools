@@ -202,9 +202,9 @@ compare_obs_mod <- function(data,
   }
  
   # create plot
-  n_data <- seq(min(regr_data$x), 
-                max(regr_data$x), 
-                length = ceiling(max(regr_data$x)-min(regr_data$x)) * 4)
+  n_data <- seq(min(regr_data$x, na.rm = TRUE), 
+                max(regr_data$x, na.rm = TRUE), 
+                length = ceiling(max(regr_data$x, na.rm = TRUE)-min(regr_data$x, na.rm = TRUE)) * 4)
   
   conf_int <- predict(modelLM, 
                       newdata = tibble::tibble(x = n_data),
