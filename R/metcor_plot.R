@@ -73,6 +73,7 @@
 #' @importFrom pals kovesi.rainbow
 #' @importFrom raster extent
 #' @importFrom ggtext element_markdown
+#' @importFrom ggtext geom_richtext
 #' @importFrom ggnewscale new_scale_color
 #' @import rnaturalearth
 #' @import rnaturalearthdata
@@ -792,16 +793,39 @@ metcor_plot <- function(metcor.raster,
     annotate.y <- max(metcor.plot.options$plot$ylim) - ((max(metcor.plot.options$plot$ylim) - min(metcor.plot.options$plot$ylim)) * 0.02)
 
     # add annotation
+    # Note, we first create the box and then the text as the box and text both have
+    # alpha transparency applied, so the text gets transparent as well
     metcor.plot <- metcor.plot +
-      ggplot2::annotate("text",
-        x = annotate.x,
+      ggtext::geom_richtext(
+        aes(x = annotate.x,
         y = annotate.y,
+        vjust = metcor.plot.options$annotation$vjust,
+        hjust = metcor.plot.options$annotation$hjust),
         label = metcor.plot.options$annotation$text,
-        vjust = 1,
-        hjust = 1,
+        color = metcor.plot.options$annotation$background.color,
+        label.size = 0,
+        fill = metcor.plot.options$annotation$background.color,
+        alpha = metcor.plot.options$annotation$background.alpha,
         size = metcor.plot.options$annotation$fontsize,
-        fontface = metcor.plot.options$annotation$fontface
+        fontface = metcor.plot.options$annotation$fontface,
+        label.padding = unit(c(0.30,0.30,0,0.30), "lines"),
+        label.r = unit(0.25, "lines")
+      ) +
+      ggtext::geom_richtext(
+        aes(x = annotate.x,
+        y = annotate.y,
+        vjust = metcor.plot.options$annotation$vjust,
+        hjust = metcor.plot.options$annotation$hjust),
+        label = metcor.plot.options$annotation$text,
+        color = metcor.plot.options$annotation$fontcolor,
+        label.size = NA,
+        fill = NA,
+        alpha = 1,
+        size = metcor.plot.options$annotation$fontsize,
+        fontface = metcor.plot.options$annotation$fontface,
+        label.padding = unit(c(0.30,0.30,0,0.30), "lines"),
       )
+
   }
 
   if (verbose) {

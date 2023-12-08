@@ -159,8 +159,21 @@ annotation option.
 
 \itemize{
 \item \code{text} annotation text for the upper right corner.
-\item \code{fontsize} font size of the annotation. Defaults to \code{8}.
-\item \code{fontface} font face of the annotation. Defaults to \code{bold}.
+\item \code{background.color} color of the background of the annotation.
+This helps when the annotation has a poor visibility on the maps
+background. Defaults to \code{NA} (no background color).
+\item \code{background.alpha} the alpha transparency of the background
+color. Defaults to \code{0.5}.
+\item \code{fontsize} font size of the annotation.Defaults to \code{8}.
+\item \code{fontface} font face of the annotation.Defaults to \code{bold}.
+\item \code{fontcolor} font color of the annotation.
+Defaults to \code{black}.
+\item \code{vjust} the vjust of the annotation ("bottom", "middle", "top",
+"inward", "outward" or a numerical value between 0 and 1]). Defaults
+to \code{"inward"}.
+\item \code{hjust} the hjust of the annotation ("left", "center", "right",
+"inward", "outward" or a numerical value between 0 and 1]). Defaults
+to \code{"inward"}.
 }
 }
 
