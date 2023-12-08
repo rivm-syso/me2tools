@@ -21,8 +21,17 @@
 #' @importFrom terra values
 #' @importFrom terra trim
 #' @importFrom utils read.table
+#' @importFrom cli cli_abort
 #'
 metcor_import <- function(file, na.rm = TRUE) {
+  
+  # check if file exists
+  if (!file.exists(file)) {
+    cli::cli_abort(c(
+      "{.var file} must be a valid file:",
+      "x" = "File '{file}' does not exists."
+    ))
+  }
 
   # read grid data from file
   metcor.data <- utils::read.table(file,
