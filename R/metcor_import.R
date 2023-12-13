@@ -12,8 +12,8 @@
 #'
 #' @export
 #'
-#' @seealso \code{\link{metcor_project_raster}}, \code{\link{metcor_plot}}, 
-#' \code{\link{metcor_plot_options}}, \code{\link{metcor_export}}, 
+#' @seealso \code{\link{metcor_project_raster}}, \code{\link{metcor_plot}},
+#' \code{\link{metcor_plot_options}}, \code{\link{metcor_export}},
 #' \code{\link{metcor_fix_hysplit}}
 #'
 #' @importFrom readr read_lines
@@ -24,7 +24,7 @@
 #' @importFrom cli cli_abort
 #'
 metcor_import <- function(file, na.rm = TRUE) {
-  
+
   # check if file exists
   if (!file.exists(file)) {
     cli::cli_abort(c(
@@ -40,8 +40,10 @@ metcor_import <- function(file, na.rm = TRUE) {
     skip = 6
   )
 
-  # drop last empty column
-  metcor.data <- metcor.data[-ncol(metcor.data)]
+  if (sum(is.na(metcor.data[ncol(metcor.data)])) == nrow(metcor.data)) {
+    # drop last empty column WHEN it only contains NA (weird writing by MetCor)
+    metcor.data <- metcor.data[-ncol(metcor.data)]
+  }
 
   # read the nodata value
   nodata.value <- as.integer(gsub(
