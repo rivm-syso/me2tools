@@ -124,8 +124,8 @@ metcor_plot <- function(metcor.raster,
   ##                        Raster options                        ##
   ##################################################################
   
-  # set an offset for the raster minimum to include it in the latest bin.
-  raster.min.offset <- 0 
+  # set an offset for the raster minimum to include it in the lowest bin.
+  raster.min.offset <- 0.1 
   applied.offset.minimum.grid.value = FALSE
   
   if (metcor.plot.options$raster$type == "discrete") {
@@ -340,8 +340,7 @@ metcor_plot <- function(metcor.raster,
   ###########################################################################
   if (metcor.plot.options$plot$center.from == "raster") {
     if (verbose) {
-      message("- raster is used for mid point calculation, based on coordinate
-              distribution peaks")
+      message("- raster is used for mid point calculation, based on coordinate distribution peaks")
     }
 
     # turn raster into tibble
@@ -597,8 +596,40 @@ metcor_plot <- function(metcor.raster,
   if (verbose) {
     message("- creating the plot")
   }
-
-  metcor.plot <- ggplot2::ggplot() +
+  metcor.plot <- ggplot2::ggplot()
+  
+  # check to see if we need to add base layers
+  if (length(metcor.plot.options$plot$layers.base) > 0) {
+    # add layers
+    if (verbose) {
+      message("- adding additional provided base layers")
+    }
+    num.layer <- 0
+    for (layer in metcor.plot.options$plot$layers.base) {
+      num.layer <- num.layer + 1
+      if (verbose) {
+        message(paste("    + layer", num.layer))
+      } 
+      # check that the layer is a sf object
+      if ("sf" %in% class(layer$data)) {
+        metcor.plot <- metcor.plot +
+          ggplot2::geom_sf(
+            data = layer$data,
+            color = layer$color,
+            linewidth = layer$linewidth,
+            fill = layer$fill
+          )
+      } else {
+        cli::cli_abort(c(
+          "{.var layers.base} must contain Simple Feature (SF) or SpatRaster objects:",
+          "x" = "The layers defined in {.var layers.base} can only contain
+            objects with class {.cls sf} or {.cls SpatRaster}."
+        ))
+      }
+    }
+  }
+  
+  metcor.plot <- metcor.plot +
     ggplot2::geom_sf(
       data = graticules,
       color = metcor.plot.options$plot$graticules.outline,
@@ -611,7 +642,6 @@ metcor_plot <- function(metcor.raster,
       linewidth = metcor.plot.options$plot$world.linewidth,
       fill = metcor.plot.options$plot$world.background
     )
-
 
   #################################################################
   ##            Check if we need to plot other layers            ##

@@ -14,6 +14,11 @@
 #' List containing various options that are applicable for the total plot.
 #'
 #'  \itemize{
+#'    \item \code{layers.base} can contain a list with several simple feature
+#'     (SF) layers that are plotted below the countries. An example of such a
+#'     layer might be the oceans present in \dQuote{RNaturalEarth} package or 
+#'     from shapes from OpenStreetMap. Each item in the list should contain a 
+#'     list with \dQuote{data}: dataframe with SF;
 #'    \item \code{panel.background} is the color of the background of the plot.
 #'      With countries this color is mostly applied to the sea. As such the
 #'      default value for this color is \dQuote{#97dbf2}, but can be any HEX
@@ -167,6 +172,21 @@
 #'       "inward", "outward" or a numerical value between 0 and 1]). Defaults
 #'       to \code{"inward"}.
 #'  }
+#'  
+#'  # Adding extra layers
+#'  
+#'  The options \code{layers.base}, \code{layers.before} and \code{layers.after}
+#'  provide an oppertunity to inject layers at certain points. For example, the
+#'  \code{layers.base} can be used to add a layer containing all the oceans, 
+#'  which are plotted below the country data. Another example is 
+#'  \code{layers.before} which are plotted before the raster data from MetCor.
+#'  In this case a layer containing the lakes can be added or a country can be
+#'  highlighted.
+#'  
+#'  Each list item in one of the \code{layers.xxx} parameters should contain
+#'  four items: \code{data} containing the SF or raster data, \code{color} for
+#'  the outline color (use NA for no color), \code{linewidth} for the width of
+#'  the outline and \code{fill} for the fill color.
 #'
 #' @seealso \code{\link{metcor_import}}, \code{\link{metcor_project_raster}}, 
 #' \code{\link{metcor_plot}}, \code{\link{metcor_export}}, 
@@ -182,6 +202,7 @@ metcor_plot_options <- function() {
   ## Metcor.plot.options
   metcor.plot.options <- list(
     "plot" = list(
+      "layers.base" = list(),
       "panel.background" = "#97dbf2",
       "show.scale" = TRUE,
       "show.compass" = TRUE,
