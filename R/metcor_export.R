@@ -25,6 +25,8 @@
 #'   "auto" the function tries to find the factors based on the known columns
 #'   in the G-matrix. Note, this feature will not work if non-default columns
 #'   are present in the G-matrix.
+#' @param na.rm remove rows with NA values for the factor contributions? 
+#'   Default is \code{TRUE}
 #' @param force_utc With this parameter the date time output for Metcor can be
 #'   forced into UTC (the same timezone as Hysplit results). When set to 
 #'   \code{TRUE} there has to be no correction for the "Correlated Data Time 
@@ -63,6 +65,7 @@ metcor_export <- function(G_matrix,
                           file,
                           time_res = "auto",
                           factor_names = "auto",
+                          na.rm = TRUE,
                           force_utc = FALSE) {
 
   # IDATE, ITIME, FDATE FTIME, LATR, LONR, FACTORS
@@ -175,14 +178,25 @@ metcor_export <- function(G_matrix,
       LATR = lat,
       LONR = lon
     ) %>%
-    select(IDATE, ITIME, FDATE, FTIME, LATR, LONR, all_of(factor_names)) %>%
-    replace(is.na(.), 0)
+    select(IDATE, ITIME, FDATE, FTIME, LATR, LONR, all_of(factor_names))
+  
+  # check if we need to remove the rows with NA values
+  if (na.rm) {
+    metcor.set <- metcor.set %>% 
+    filter(complete.cases(.))
+  }
+  
+  # note: when removing dates using EPA-PMF options there might be NA values
+  # for the factor, we only use complete.cases to make sure. When dates are
+  # removed from the input prior to the analysis, this situation will not
+  # occur.
 
   utils::write.table(metcor.set,
     file = file,
     sep = "\t",
     row.names = FALSE,
-    quote = FALSE
+    quote = FALSE,
+    na = ""
   )
 
   # unique combinations of lat/lon point to number of receptors:

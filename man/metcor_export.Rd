@@ -9,6 +9,7 @@ metcor_export(
   file,
   time_res = "auto",
   factor_names = "auto",
+  na.rm = TRUE,
   force_utc = FALSE
 )
 }
@@ -38,6 +39,9 @@ data/threshold values to output file. If \code{factor_names} is set to
 "auto" the function tries to find the factors based on the known columns
 in the G-matrix. Note, this feature will not work if non-default columns
 are present in the G-matrix.}
+
+\item{na.rm}{remove rows with NA values for the factor contributions?
+Default is \code{TRUE}}
 
 \item{force_utc}{With this parameter the date time output for Metcor can be
 forced into UTC (the same timezone as Hysplit results). When set to
