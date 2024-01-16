@@ -7,7 +7,11 @@
 epa_plot_errorsummary(
   F_matrix,
   xlabel.angle = 45,
+  xlabel.parse = FALSE,
+  xlabel.vjust = NA,
+  xlabel.hjust = NA,
   xlabel.order = NA,
+  xlabel.top.bottom = FALSE,
   y_min = -5,
   ylab = "Concentration of species",
   xlab = "Species",
@@ -33,10 +37,32 @@ runs and at least one of the error estimates BS, DISP or BSDISP.}
 your labels are long, \code{45} degrees can be useful, which is also the
 default.}
 
+\item{xlabel.parse}{should the xlabels be parsed as an expression? If set to
+\code{FALSE}, the labels are plotted as characters.}
+
+\item{xlabel.vjust}{vertical justification of the xlabel, between [0,1].
+The default is NA, so that ggplot uses some heuristics to pick the best
+value for this parameter. Any other value is processed by changing theme
+settings. Note that for this to work the \code(xlabel.hjust) also needs to
+have a value.}
+
+\item{xlabel.hjust}{horizontal justification of the xlabel, between [0,1].
+The default is \code{NA}, so that ggplot uses some heuristics to pick the
+best value for this parameter. Any other value is processed by changing
+theme settings. Note that for this to work the \code(xlabel.vjust) also
+needs to have a value.}
+
 \item{xlabel.order}{The labels containing the species on the x-axis are
 plotted based on the factor levels. This parameter can contain the levels
 and the species are transformed to factors using these levels. N.B. these
 levels can contain code for expressions.}
+
+\item{xlabel.top.bottom}{Boolean used for splitting the xlabels into a top
+and bottom section. The odd indices of the labels will presented at the top
+using a secondary axis, whereas the even indices of the labels are
+presented at the bottom. This works especially well with plots containing
+a lot of species. Instead of using a small font size, the labels are
+distributed to the top and bottom. Default setting is \code{FALSE}}
 
 \item{y_min}{The minimum value for the y-axis, which is used to cut-off the
 logarithmic scale. The default setting is \code{-5}, which corresponds to

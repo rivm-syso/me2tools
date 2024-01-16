@@ -13,10 +13,28 @@
 #' @param xlabel.angle What angle should the x-axis labels be presented in? If
 #'   your labels are long, \code{45} degrees can be useful, which is also the
 #'   default.
+#' @param xlabel.parse should the xlabels be parsed as an expression? If set to
+#'   \code{FALSE}, the labels are plotted as characters.
+#' @param xlabel.vjust vertical justification of the xlabel, between \[0,1\].
+#'   The default is NA, so that ggplot uses some heuristics to pick the best
+#'   value for this parameter. Any other value is processed by changing theme
+#'   settings. Note that for this to work the \code(xlabel.hjust) also needs to
+#'   have a value.
+#' @param xlabel.hjust horizontal justification of the xlabel, between \[0,1\].
+#'   The default is \code{NA}, so that ggplot uses some heuristics to pick the
+#'   best value for this parameter. Any other value is processed by changing
+#'   theme settings. Note that for this to work the \code(xlabel.vjust) also 
+#'   needs to have a value.
 #' @param xlabel.order The labels containing the species on the x-axis are
 #'   plotted based on the factor levels. This parameter can contain the levels
 #'   and the species are transformed to factors using these levels. N.B. these
 #'   levels can contain code for expressions.
+#' @param xlabel.top.bottom Boolean used for splitting the xlabels into a top
+#'   and bottom section. The odd indices of the labels will presented at the top
+#'   using a secondary axis, whereas the even indices of the labels are
+#'   presented at the bottom. This works especially well with plots containing
+#'   a lot of species. Instead of using a small font size, the labels are
+#'   distributed to the top and bottom. Default setting is \code{FALSE}
 #' @param y_min The minimum value for the y-axis, which is used to cut-off the
 #'   logarithmic scale. The default setting is \code{-5}, which corresponds to
 #'   1xE-5.
@@ -68,7 +86,11 @@
 
 epa_plot_errorsummary <- function(F_matrix,
                              xlabel.angle = 45,
+                             xlabel.parse = FALSE,
+                             xlabel.vjust = NA,
+                             xlabel.hjust = NA,
                              xlabel.order = NA,
+                             xlabel.top.bottom = FALSE,
                              y_min = -5,
                              ylab = "Concentration of species",
                              xlab = "Species",
@@ -264,11 +286,9 @@ epa_plot_errorsummary <- function(F_matrix,
   base.line <- df %>%
     filter(group_type == "base") %>% 
     mutate(mean = ifelse(mean <= 10^y_min, 10^y_min, mean),
-           group_type = factor(group_type, levels = c("BS", "BSDISP", "DISP"))) %>% 
+           group_type = factor(group_type, 
+                               levels = c("BS", "BSDISP", "DISP"))) %>% 
     droplevels(.) # drop unused levels
-  
-  # get the labels
-  x_labels <- levels(df$species)
   
   
   plot.output <- plot.output +
@@ -294,6 +314,26 @@ epa_plot_errorsummary <- function(F_matrix,
       ggplot2::facet_grid(factor ~ .)  
   }
   
+  # get the labels
+  x_labels <- levels(df$species)
+  
+  if (xlabel.parse) {
+    x_labels <- parse(text = x_labels)
+  }
+  
+  # split into even and odd
+  x_labels_top <- x_labels
+  x_labels_bottom <- x_labels
+  # define quick functions
+  odd <- function(x)
+    x %% 2 != 0
+  even <- function(x)
+    x %% 2 == 0
+  # split the labels
+  x_labels_top[odd(seq(1, length(x_labels_top)))] <- NA
+  x_labels_bottom[even(seq(1, length(x_labels_bottom)))] <- NA
+  
+  
   plot.output <- plot.output +
     scale_y_log10(
       breaks = scales::trans_breaks("log10", function(x) 10^x),
@@ -305,15 +345,86 @@ epa_plot_errorsummary <- function(F_matrix,
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = xlabel.angle, 
                                                        hjust = 1,
                                                        size = x.font.size),
-          panel.grid.minor = element_blank()) +
-    ggplot2::scale_x_continuous(
-      name = xlab,
-      labels = parse(text = x_labels),
-      breaks = sort(unique(base.line$numeric_x)),
-      expand = expansion(mult = expand.mult),
-      guide = ggplot2::guide_axis(angle = xlabel.angle, 
-                                  n.dodge = x.n.dodge)
-    ) +
+          panel.grid.minor = element_blank())
+  
+  if ((identical(xlabel.vjust, NA)) &
+      (identical(xlabel.hjust, NA))) {
+    if (xlabel.top.bottom) {
+      plot.output <- plot.output +
+        ggplot2::scale_x_continuous(
+          name = xlab,
+          #labels = parse(text = x_labels_top),
+          labels = x_labels_top,
+          breaks = sort(unique(base.line$numeric_x)),
+          expand = expansion(mult = expand.mult),
+          guide = guide_axis(angle = xlabel.angle, 
+                             n.dodge = x.n.dodge),
+          sec.axis = ggplot2::sec_axis(
+            trans = ~ .,
+            breaks = sort(unique(base.line$numeric_x)),,
+            #labels =  parse(text = x_labels_bottom),
+            labels =  x_labels_bottom,
+            guide = ggplot2::guide_axis(angle = xlabel.angle, 
+                                        n.dodge = x.n.dodge)
+          )
+        ) +
+        theme(axis.text.x.top = ggplot2::element_text(hjust = 0,
+                                                      vjust = 0.5))
+    } else {
+      plot.output <- plot.output +
+        ggplot2::scale_x_continuous(
+          name = xlab,
+          #labels = parse(text = x_labels),
+          labels = x_labels,
+          breaks = sort(unique(base.line$numeric_x)),
+          expand = expansion(mult = expand.mult),
+          guide = ggplot2::guide_axis(angle = xlabel.angle, 
+                                      n.dodge = x.n.dodge)
+        )
+    }
+  } else {
+    if (xlabel.top.bottom) {
+      plot.output <- plot.output +
+        ggplot2::scale_x_continuous(
+          name = xlab,
+          #labels = parse(text = x_labels_top),
+          labels = x_labels_top,
+          breaks = sort(unique(base.line$numeric_x)),
+          expand = expansion(mult = expand.mult),
+          guide = guide_axis(angle = xlabel.angle, 
+                             n.dodge = x.n.dodge),
+          sec.axis = ggplot2::sec_axis(
+            trans = ~ .,
+            breaks = sort(unique(base.line$numeric_x)),,
+            #labels =  parse(text = x_labels_bottom),
+            labels =  x_labels_bottom,
+            guide = ggplot2::guide_axis(n.dodge = x.n.dodge)
+          )
+        ) +
+        theme(axis.text.x.top = ggplot2::element_text(hjust = xlabel.hjust,
+                                                      vjust = xlabel.vjust))
+    } else {
+      plot.output <- plot.output +
+        ggplot2::scale_x_continuous(
+          name = xlab,
+          #labels = parse(text = x_labels),
+          labels = x_labels,
+          breaks = sort(unique(base.line$numeric_x)),
+          expand = expansion(mult = expand.mult),
+          guide = ggplot2::guide_axis(n.dodge = x.n.dodge)
+        )
+    }
+    plot.output <- plot.output +
+      ggplot2::theme(
+        axis.text.x = ggplot2::element_text(
+          angle = xlabel.angle,
+          size = x.font.size,
+          hjust = xlabel.hjust,
+          vjust = xlabel.vjust
+        ))
+  }
+
+  plot.output <- plot.output +
     ylab(ylab)  +
     scale_fill_manual(
       labels = c("BS" = "BS",
