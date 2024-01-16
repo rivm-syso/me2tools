@@ -183,6 +183,7 @@ For more detailed usage examples see:
 - Anastasopolos, A.T., Hopke, P.K., Sofowote, U.M., Zhang, J.J.Y, Johnson, M, (2022) [Local and regional sources of urban ambient PM<sub>2.5</sub> exposures in Calgary, Canada](https://doi.org/10.1016/j.atmosenv.2022.119383). *Atmospheric Environment*, Volume 290.
 - Sofowote, U.M., Mooibroek, D., Healy, R.M., Debosz, J., Munoz, A., Hopke, P.K. (2023) [Source apportionment of ambient PM<sub>2.5</sub> in an industrialized city using dispersion-normalized, multi-time resolution factor analyses](https://doi.org/10.1016/j.envpol.2023.121281). *Environmental Pollution*, Volume 323.
 - Anastasopolos, A.T., Hopke, P.K., Sofowote, U.M., Mooibroek, D., Zhang, J.J.Y, Rouleau, M., Peng, H., Sundar, N. (2023) [Evaluating the effectiveness of low-sulphur marine fuel regulations at improving urban ambient PM<sub>2.5</sub> air quality: Source apportionment of PM<sub>2.5</sub> at Canadian Atlantic and Pacific coast cities with implementation of the North American Emissions Control Area](https://doi.org/10.1016/j.scitotenv.2023.166965). *Science of The Total Environment*, Volume 904.
+- Yassine, M.M., Dabek-Zlotorzynska, E., Celo, V., Sofowote, U.M., Mooibroek, D., Hopke, P.K. (2024) [Effect of industrialization on the differences in sources and composition of ambient PM<sub>2.5</sub> in two Southern Ontario locations](https://doi.org/10.1016/j.envpol.2023.123007). *Environmental Pollution*, Volume 341
 
 ## See also
 
@@ -194,7 +195,7 @@ For more detailed usage examples see:
 
 ## License
 
-This projects is licensed using the Open Source GPL-3 license, please see the [license](LICENSE.md) for details
+This project is licensed using the Open Source GPL-3 license, please see the [license](LICENSE.md) for details
 
 ## Contributing and Code of Conduct
 
