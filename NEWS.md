@@ -1,3 +1,11 @@
+# me2tools 0.2.1
+
+This release features a breaking change for the function `metcor_import`.
+
+- **BREAKING CHANGE**: The function `metcor_import` has undergone an overhaul to support grid sizes for the Northern hemisphere, Southern hemisphere and the world through the new `extent` parameter in the function call. Additionally, MetCor originally classifies the longitudes in the range [0,360], which might cause issues when plotting the raster. A new option has been implemented to output the SpatRaster using the default longitudes in the range of [-180, 180]. This format is now also the default output format. The old format, featuring columns from [0,360], can be obtained by setting `type = "metcor"` within the function call. This change has no influence of the plotting of the raster using `metcor_plot()`, which continues to work with both formats.
+
+For a complete overview of the changes, please go through the [list of commits](https://github.com/rivm-syso/me2tools/commits/main)
+
 # me2tools 0.2.0
 
 This release comes with a few breaking changes and major updates to some of the functions. One of the major additions to this version is the reading and plotting of the results from the error estimate analysis (BS, DISP, BSDISP). Also, for some functions the documentation has been updated. A short overview of the changes are listed below
