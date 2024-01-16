@@ -4,10 +4,20 @@
 \alias{metcor_import}
 \title{Import MetCor results file into R}
 \usage{
-metcor_import(file, na.rm = TRUE)
+metcor_import(file, extent = "north", type = "wgs84", na.rm = TRUE)
 }
 \arguments{
 \item{file}{MetCor results file}
+
+\item{extent}{The extent of the grid. Valid values are \dQuote{north} for
+the Northern hemisphere, \dQuote{south} for the Southern hemisphere and
+\dQuote{worl} for the world.}
+
+\item{type}{The type of grid, can be \dQuote{metcor} or \dQuote{WGS84}.
+With the latter option the grid is transformed to a regular lat/lon grid
+within the boundaries of \link{-180,180} for longitude and \link{-90,90} for
+latitude. The \dQuote{metcor} option uses the MetCor transformed grid with
+longitude set as \link{0,360}.}
 
 \item{na.rm}{remove columns and rows with only NA values? Default is
 \code{TRUE}}
