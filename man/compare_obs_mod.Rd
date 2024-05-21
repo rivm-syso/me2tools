@@ -8,6 +8,7 @@ compare_obs_mod(
   data,
   x = "pm10",
   y = "sum_factors",
+  group = NA,
   robust = FALSE,
   maxit = 200,
   intercept = FALSE,
@@ -53,6 +54,10 @@ observations for the regression.}
 
 \item{y}{The name of the column in the "data" tibble containing the
 sum of all factors for the regression.}
+
+\item{group}{Grouping variable, used to split data in subsets and create
+facetted plots. Works well with regression per season or per year. Only
+one grouping variable can be used.}
 
 \item{robust}{Boolean used to switch between normal (OLS) or robust (RLS)
 regression.}

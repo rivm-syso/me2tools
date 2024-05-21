@@ -17,6 +17,9 @@
 #'   observations for the regression.
 #' @param y The name of the column in the "data" tibble containing the
 #'   sum of all factors for the regression.
+#' @param group Grouping variable, used to split data in subsets and create
+#'   facetted plots. Works well with regression per season or per year. Only
+#'   one grouping variable can be used.
 #' @param robust Boolean used to switch between normal (OLS) or robust (RLS)
 #'   regression.
 #' @param maxit The limit on the number of IWLS iterations used when robust
@@ -103,10 +106,12 @@
 #' @importFrom openair quickText
 #' @importFrom stats predict
 #' @importFrom ggpmisc stat_poly_eq
+#' @importFrom tidyr nest
 #'
 compare_obs_mod <- function(data,
                             x = "pm10",
                             y = "sum_factors",
+                            group = NA,
                             robust = FALSE,
                             maxit = 200,
                             intercept = FALSE,
@@ -180,6 +185,23 @@ compare_obs_mod <- function(data,
       ylab <- openair::quickText(ylab)
     }
   }
+  
+  if (!identical(group, NA)) {
+    if (length(group) > 1) {
+      cli::cli_abort(c(
+        "{.var group} contains to many items:",
+        "i" = "The {.var group} can only contain one item.",
+        "x" = "Did you provide multiple items to {.var group}?"
+      ))
+    }
+    if (!group %in% names(data)) {
+      cli::cli_abort(c(
+        "{.var group} column not detected:",
+        "i" = "The {.var data} should contain a {group} column.",
+        "x" = "Did you provide the correct {.var group} to be used?"
+      ))
+    }
+  }
 
   # create the data for regression
   regr_data <- data %>% 
@@ -196,34 +218,90 @@ compare_obs_mod <- function(data,
 
   # calculate model
   if (robust) {
-    modelLM <- MASS::rlm(fm, data = regr_data, maxit = maxit)
+    if (identical(group, NA)) {
+      modelLM <- MASS::rlm(fm, data = regr_data, maxit = maxit)
+    } else {
+      # models per group
+      modelLM <- regr_data %>% 
+        tidyr::nest(data = -sym(group)) %>% 
+        mutate(fit = map(data, ~MASS::rlm(fm, data = ., maxit = maxit)))
+    }
   } else {
-    modelLM <- stats::lm(fm, data = regr_data)
+    if (identical(group, NA)) {
+      modelLM <- stats::lm(fm, data = regr_data)
+    } else {
+      # models per group
+      modelLM <- regr_data %>% 
+        tidyr::nest(data = -sym(group)) %>% 
+        mutate(fit = map(data, ~stats::lm(fm, data = .)))
+    }
   }
- 
-  # create plot
-  n_data <- seq(min(regr_data$x, na.rm = TRUE), 
-                max(regr_data$x, na.rm = TRUE), 
-                length = ceiling(max(regr_data$x, na.rm = TRUE)-min(regr_data$x, na.rm = TRUE)) * 4)
   
-  conf_int <- predict(modelLM, 
-                      newdata = tibble::tibble(x = n_data),
-                      interval='confidence', 
-                      level=CI.level)
-  pred_int <- predict(modelLM, 
-                      newdata = tibble::tibble(x = n_data),
-                      interval='prediction', 
-                      level=PI.level)
-  
-  regression.out <- tibble(x = n_data,
-                           fit = conf_int[,1],
-                           conf_lwr = conf_int[,2],
-                           conf_upr = conf_int[,3],
-                           pred_lwr = pred_int[,2],
-                           pred_upr = pred_int[,3])
-  
-  scatter <- ggplot2::ggplot(regr_data,
-                             ggplot2::aes(x = x, y = y))
+  if ("lm" %in% class(modelLM)) {
+    # create plot
+    n_data <- seq(min(regr_data$x, na.rm = TRUE), 
+                  max(regr_data$x, na.rm = TRUE), 
+                  length = ceiling(max(regr_data$x, na.rm = TRUE)-min(regr_data$x, na.rm = TRUE)) * 4)
+    
+    conf_int <- suppressWarnings(predict(modelLM, 
+                        newdata = tibble::tibble(x = n_data),
+                        interval='confidence', 
+                        level=CI.level))
+    pred_int <- suppressWarnings(predict(modelLM, 
+                        newdata = tibble::tibble(x = n_data),
+                        interval='prediction', 
+                        level=PI.level))
+    
+    regression.out <- tibble(x = n_data,
+                             fit = conf_int[,1],
+                             conf_lwr = conf_int[,2],
+                             conf_upr = conf_int[,3],
+                             pred_lwr = pred_int[,2],
+                             pred_upr = pred_int[,3])
+    
+    scatter <- ggplot2::ggplot(regr_data,
+                               ggplot2::aes(x = x, y = y))
+  } else {
+    # models per group, so calculate all the other vars by group as well
+    regression.out <- tibble()
+    
+    for (lm.index in seq(1,nrow(modelLM),1)) {
+
+      n_data <- seq(min(modelLM[lm.index,]$data[[1]]$x, na.rm = TRUE), 
+                    max(modelLM[lm.index,]$data[[1]]$x, na.rm = TRUE), 
+                    length = ceiling(max(modelLM[lm.index,]$data[[1]]$x, na.rm = TRUE)-min(modelLM[lm.index,]$data[[1]]$x, na.rm = TRUE)) * 4)
+      
+      conf_int <- suppressWarnings(predict(modelLM[lm.index,]$fit[[1]], 
+                          newdata = tibble::tibble(x = n_data),
+                          interval='confidence', 
+                          level=CI.level))
+      pred_int <- suppressWarnings(predict(modelLM[lm.index,]$fit[[1]], 
+                          newdata = tibble::tibble(x = n_data),
+                          interval='prediction', 
+                          level=PI.level))
+      
+      regression.out.tmp <- tibble(group = modelLM[lm.index,][[group]],
+                                   x = n_data,
+                                   fit = conf_int[,1],
+                                   conf_lwr = conf_int[,2],
+                                   conf_upr = conf_int[,3],
+                                   pred_lwr = pred_int[,2],
+                                   pred_upr = pred_int[,3])
+      
+      if(nrow(regression.out) > 0) {
+        regression.out <- dplyr::bind_rows(regression.out,
+                                           regression.out.tmp)
+      } else {
+        regression.out <- regression.out.tmp
+      }
+    }
+    # rename the group variable so it works with the rest of the plot
+    regression.out <- regression.out %>% 
+      rename(!!sym(group) := group)
+    
+    scatter <- ggplot2::ggplot(regr_data,
+                               ggplot2::aes(x = x, y = y, group = !!sym(group)))
+  }
 
   # prediction intervals (PI)
   if (PI) {
@@ -382,12 +460,16 @@ compare_obs_mod <- function(data,
         ggpmisc::stat_poly_eq(mapping = ggpmisc::use_label("eq"), 
                               formula = fm,
                               method = MASS::rlm,
-                              method.args = list("maxit" = maxit))
+                              method.args = list("maxit" = maxit),
+                              label.x = 0.05, 
+                              label.y = 0.90)
     } else {
       scatter <- scatter +
         ggpmisc::stat_poly_eq(ggplot2::aes(label = paste("atop(", ggplot2::after_stat(eq.label), ",", ggplot2::after_stat(adj.rr.label), ")", sep = "")),
                               formula = fm,
-                              method = "lm")
+                              method = "lm",
+                              label.x = 0.05, 
+                              label.y = 0.90)
     }
   }
   
@@ -403,10 +485,23 @@ compare_obs_mod <- function(data,
                            ylim = c(min_axis, max_axis),
                            expand = FALSE,
                            clip = "on")
-      
+    
+    if (!identical(group, NA)) {
+      scatter <- scatter +
+        facet_wrap(vars(!!sym(group)))
+    }
+  } else {
+    if (!identical(group, NA)) {
+      scatter <- scatter +
+        facet_wrap(vars(!!sym(group)), scales = "free")  
+    }
   }
-
   
+  # issue a warning if we used robust and PI or CI
+  
+  if(robust & (PI | CI)) {
+    warning("Assuming constant prediction variance even though model fit is weighted. See ?predict.lm")
+  }
 
   #################
   # output
