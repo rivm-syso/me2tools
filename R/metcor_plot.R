@@ -366,7 +366,7 @@ metcor_plot <- function(metcor.raster,
       message("- receptor is used for mid point calculation")
     }
     if (!identical(receptor, NA)) {
-      zoom_to <- c("lon" = receptor$lon[[1]], "lat" = receptor$lat[[1]])
+      zoom_to <- t(as.matrix(c("X" = receptor$lon[[1]], "Y" = receptor$lat[[1]])))
     } else {
       cli::cli_abort(c(
         "{.var receptor} must be provided:",
@@ -378,10 +378,10 @@ metcor_plot <- function(metcor.raster,
     if (verbose) {
       message("- manually supplied coordinates are used for mid point")
     }
-    zoom_to <- c(
-      "lon" = metcor.plot.options$plot$center.point[["lon"]],
-      "lat" = metcor.plot.options$plot$center.point[["lat"]]
-    )
+    zoom_to <- t(as.matrix(c(
+      "X" = metcor.plot.options$plot$center.point[["lon"]],
+      "Y" = metcor.plot.options$plot$center.point[["lat"]]
+    )))
   }
 
   ###########################################################################
