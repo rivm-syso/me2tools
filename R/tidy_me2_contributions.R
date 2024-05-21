@@ -79,7 +79,6 @@ tidy_me2_contributions <- function(G_matrix,
     tibble::add_column(unit = "normalised", .before = "date") %>%
     tibble::add_column(model_run = run_number, .before = "date")
 
-
   # rescale G to unity again before applying total mass and use that as normalised
   if (identical(rescale_unity, TRUE)) {
     # get the current normalised values
@@ -108,7 +107,11 @@ tidy_me2_contributions <- function(G_matrix,
       select(contains("factor")) %>%
       colMeans()
     all.eqNum <- function(...) as.numeric(sub(".*:", "", all.equal(...)))
-    diff <- all.eqNum(mean(scaling.factors), 1)
+    if (all.equal(mean(scaling.factors), 1)==TRUE) {
+      diff = 0
+    } else {
+      diff <- all.eqNum(mean(scaling.factors), 1)
+    }
     if (diff > threshold_unity) {
       cli::cli_warn(c(
         "The normalised {.var G_matrix} is not equal to unity:",
