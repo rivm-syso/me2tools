@@ -20,6 +20,7 @@ epa_plot_errorsummary(
   x.n.dodge = 1,
   bar.colors = list(BS = "goldenrod2", BSDISP = "green4", DISP = "royalblue2", base =
     "black"),
+  bar.labels = list(BS = "BS", BSDISP = "BSDISP", DISP = "DISP", base = "BASE"),
   bar.width = 0.9,
   show.plot = TRUE,
   show.legend = FALSE,
@@ -86,6 +87,9 @@ with a large number of species. Also allows for a larger
 
 \item{bar.colors}{The bar colors for each error estimate (BS, DISP, BSDISP)
 and the color for the average of the base run.}
+
+\item{bar.labels}{The bar labels for each error estimate (BS, DISP, BSDISP)
+and the label for the average of the base run (BASE).}
 
 \item{bar.width}{The width of the bar, expressed as a value between [0,1].}
 
