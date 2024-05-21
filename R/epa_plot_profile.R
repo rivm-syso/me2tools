@@ -1,23 +1,31 @@
 #' Plot profiles using the EPA-PMF style
 #'
 #' Function to plot PMF factor profiles using data from PMFR (using
-#' [pmfr::read_pmf_factor_profiles()] and [pmfr::tidy_pmf_profiles()] or from 
+#' [pmfr::read_pmf_factor_profiles()] and [pmfr::tidy_pmf_profiles()] or from
 #' the metools package using [me2_read_F()] in the same way as in EPA-PMF.
 #'
 #' @param F_matrix Tibble from [me2_read_F()] containing
 #'   the results for the F_matrix. In order to use this function only the
 #'   results from a single run should be provided.
+#' @param by Grouping variable that can be used to plot multiple analysis into a
+#'   single plot. Useful for exploring the difference in profiles between
+#'   regular analysis and a dispersion normalised analysis. Works best if
+#'   factor names are the same for the analysis.
 #' @param xlabel.angle What angle should the x-axis labels be presented in? If
 #'   your labels are long, \code{45} degrees can be useful, which is also the
 #'   default.
+#' @param xlabel.parse should the xlabels be parsed as an expression? If set to
+#'   \code{FALSE}, the labels are plotted as characters.
 #' @param xlabel.vjust vertical justification of the xlabel, between \[0,1\].
 #'   The default is NA, so that ggplot uses some heuristics to pick the best
 #'   value for this parameter. Any other value is processed by changing theme
-#'   settings,
+#'   settings. Note that for this to work the \code{xlabel.hjust} also needs to
+#'   have a value.
 #' @param xlabel.hjust horizontal justification of the xlabel, between \[0,1\].
-#'   The default is NA, so that ggplot uses some heuristics to pick the best
-#'   value for this parameter. Any other value is processed by changing theme
-#'   settings,
+#'   The default is \code{NA}, so that ggplot uses some heuristics to pick the
+#'   best value for this parameter. Any other value is processed by changing
+#'   theme settings. Note that for this to work the \code{xlabel.vjust} also 
+#'   needs to have a value.
 #' @param xlabel.order The labels containing the species on the x-axis are
 #'   plotted based on the factor levels. This parameter can contain the levels
 #'   and the species are transformed to factors using these levels. N.B. these
@@ -39,40 +47,42 @@
 #'   axis labels, pollutant names and units properly, e.g., by subscripting
 #'   the \sQuote{2} in NO2.
 #' @param x.font.size The size of the xtick labels. Defaults to 10.
-#' @param x.n.dodge The number of rows on the x-axis that should be used to 
+#' @param x.n.dodge The number of rows on the x-axis that should be used to
 #'   render the labels. Useful for labels that otherwise overlap, for example
-#'   with a large number of species. Also allows for a larger 
+#'   with a large number of species. Also allows for a larger
 #'   \sQuote{x.font.size}.
 #' @param bar.color Provide the fill color for the concentration based bars on
-#'   the logarithmic scale. Is set to \sQuote{cadetblue3}, as an approximation 
-#'   of the color used in EPA-PMF program.
+#'   the logarithmic scale. Is set to \sQuote{cadetblue3}, as an approximation
+#'   of the color used in EPA-PMF program. In case of using the \code{by}
+#'   parameter, the length of the \code{bar.color} should ideally match the length of
+#'   the unique items in the \code{by} column.
 #' @param bar.width The width of the bar, expressed as a value between \[0,1\].
-#' @param bar.alpha The alpha transparency of the fill color of the bar, 
+#' @param bar.alpha The alpha transparency of the fill color of the bar,
 #'   expressed as a value between \[0,1\].
 #' @param point.color The fill color for the explained variation, with the
 #'   default being \sQuote{firebrick2}, similar to the color used in the EPA-PMF
 #'   program.
-#' @param point.size The size of the point of the explained variation, 
+#' @param point.size The size of the point of the explained variation,
 #'   defaults to 3.
-#' @param point.shape The shape of the point of the explained variation. The 
+#' @param point.shape The shape of the point of the explained variation. The
 #'   default is 19 (circle). Using 15 will produce a square.
 #' @param lollipops Should the dot representing the EV be extended with a line,
 #'   representing so it looks more like a lollipop? Defaults to \code{TRUE}.
 #' @param errorbar If the F_matrix contains the results of the error estimates,
-#'   the error bars for one of those estimates can be plotted in this plot. 
+#'   the error bars for one of those estimates can be plotted in this plot.
 #'   Valid options are \sQuote{none} (default), \sQuote{DISP}, \sQuote{BS} or
 #'   \sQuote{BSDISP}.
 #' @param errorbar.color The color used for plotting the error bars for
 #'   DISP. Default is a list with default colors for the BS, DISP and BSDISP
 #'   error bars, based on the colors used in \code{epa_plot_errorsummary}. It
-#'   can also be a single color (i.e., \code{errorbar.color = "darkorange3"}. 
-#'   If the function cannot match the colors, a default color of 
+#'   can also be a single color (i.e., \code{errorbar.color = "darkorange3"}.
+#'   If the function cannot match the colors, a default color of
 #'   \sQuote{darkorange3} is applied.
 #' @param errorbar.width The width of the upper and lower bars for displaying
 #'   the error estimate. Defaults to 0.45 (i.e., the bar.width / 2)
 #' @param errorbar.linewidth The line size of the error bars. Defaults to 1.
-#' @param errorbar.point.size The size of the point used to display the 
-#'   average/median error estimates when \code{cp.run.type} is set as 
+#' @param errorbar.point.size The size of the point used to display the
+#'   average/median error estimates when \code{cp.run.type} is set as
 #'   \sQuote{base_run}.
 #' @param show.plot A logical argument evaluating to TRUE or FALSE indicating
 #'   whether the plot should be shown by default.
@@ -93,77 +103,80 @@
 #'   \dQuote{c(0, 25, 50, 75, 100)}.
 #' @param cp.run.type The concentration and percentage of species are typically
 #'   plotted using the \sQuote{base_run} values (default). However, by changing
-#'   this variable to \sQuote{DISP_avg}, \sQuote{BS_median} or 
+#'   this variable to \sQuote{DISP_avg}, \sQuote{BS_median} or
 #'   \sQuote{BSDISP_avg}, these values (if available) are plotted.
-#' @param facet.parse.label Should the labels be parsed using the 
+#' @param facet.parse.label Should the labels be parsed using the
 #'   \code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
 #'   will use subscript on the labels shown in the facet.
+#' @param rm.facets Should the facets labels be removed? When each factor has
+#'   its own color, they will show up in the legend. This will make the facets
+#'   labels redundant. Default is \code{FALSE}.
 #' @param ... Other parameters, for example renamed parameters.
 #'
 #' @return me2tools list containing the ggplot2 with segment and point
 #'   geometries and the call.
 #'
 #' @section Input format of the F-matrix:
-#' 
-#' The format of the F-matrix as a tibble consists of seven columns. These 
+#'
+#' The format of the F-matrix as a tibble consists of seven columns. These
 #' seven columns are
 #' \itemize{
-#'   \item \code{model_type}: a descriptive column with the name of the model 
+#'   \item \code{model_type}: a descriptive column with the name of the model
 #'     used to calculate the results (e.g., \dQuote{ME-2} or \dQuote{EPA-PMF})
-#'   \item \code{factor_profile}: consists of at least two different 
-#'     profiles: \dQuote{concentration_of_species} and 
-#'     \dQuote{percentage_of_species_sum}. The concentration profile is in 
+#'   \item \code{factor_profile}: consists of at least two different
+#'     profiles: \dQuote{concentration_of_species} and
+#'     \dQuote{percentage_of_species_sum}. The concentration profile is in
 #'     concentration units, whereas the percentage is in percentages \[0,100\].
-#'   \item \code{model_run}: integer to denote the model run, for example used 
-#'     when reading the results of multiple run. When processing only the 
+#'   \item \code{model_run}: integer to denote the model run, for example used
+#'     when reading the results of multiple run. When processing only the
 #'     \dQuote{base_run} from EPA-PMF this column can be set to 1.
 #'   \item \code{species}: the name of the species
-#'   \item \code{run_type}: consists of different types of runs. There should 
-#'     be at least one set of data with different \code{factor_profiles} for 
-#'     \code{run_type = "base_run"}. Other options for run_type are 
-#'     \dQuote{DISP_min}, \dQuote{DISP_avg} and \dQuote{DISP_max} for DISP 
-#'     results. For BS results the options are \dQuote{BS_P05}, 
-#'     \dQuote{BS_median} and \dQuote{BS_P95}, and for BSDISP results options 
-#'     \dQuote{"BSDISP_P05}, \dQuote{BSDISP_avg} and \dQuote{BSDISP_P95} can 
-#'     be used. 
+#'   \item \code{run_type}: consists of different types of runs. There should
+#'     be at least one set of data with different \code{factor_profiles} for
+#'     \code{run_type = "base_run"}. Other options for run_type are
+#'     \dQuote{DISP_min}, \dQuote{DISP_avg} and \dQuote{DISP_max} for DISP
+#'     results. For BS results the options are \dQuote{BS_P05},
+#'     \dQuote{BS_median} and \dQuote{BS_P95}, and for BSDISP results options
+#'     \dQuote{"BSDISP_P05}, \dQuote{BSDISP_avg} and \dQuote{BSDISP_P95} can
+#'     be used.
 #'   \item \code{factor}: the names of the resolved factors.
-#'   \item \code{value} : the values, either in concentration units or 
+#'   \item \code{value} : the values, either in concentration units or
 #'     percentages.
 #' }
-#' 
-#' A typical plot of the F-matrix shows the concentration of each species on a 
-#' log scale (bars), and the percentage of species sum in a percentage scale 
-#' (points). By default, the values associated with both \code{factor_profiles} 
-#' \dQuote{concentration_of_species} and \dQuote{percentage_of_species_sum} for 
+#'
+#' A typical plot of the F-matrix shows the concentration of each species on a
+#' log scale (bars), and the percentage of species sum in a percentage scale
+#' (points). By default, the values associated with both \code{factor_profiles}
+#' \dQuote{concentration_of_species} and \dQuote{percentage_of_species_sum} for
 #' the \code{run_type} \dQuote{base_run} is used.
-#' 
+#'
 #' @section Plotting of errorbars:
-#' 
-#' The function is capable of plotting errorbars for the results of either DISP, 
-#' BS or BSDISP. Only one set of results is supported at this point. To use 
-#' this feature, \code{errorbar} should be set to one of the options 
-#' \dQuote{DISP}, \dQuote{BS} or \dQuote{BSDISP} (default is \dQuote{none}). 
-#' Based on the selection the function automatically checks for and uses the 
+#'
+#' The function is capable of plotting errorbars for the results of either DISP,
+#' BS or BSDISP. Only one set of results is supported at this point. To use
+#' this feature, \code{errorbar} should be set to one of the options
+#' \dQuote{DISP}, \dQuote{BS} or \dQuote{BSDISP} (default is \dQuote{none}).
+#' Based on the selection the function automatically checks for and uses the
 #' provided data.
-#' 
-#' When using \code{cp.run.type = "base_run"}, meaning that the concentration 
-#' bars and the percentage dots are plotted using the values associated with 
-#' the base_run, plotting the error bars only require the run_type of 
-#' \dQuote{DISP_min} and \dQuote{DISP_max} for DISP; the \dQuote{BS_P05} and 
-#' \dQuote{BS_P95} for BS and \dQuote{BSDISP_P05} and \dQuote{BSDISP_P95} for 
-#' BSDISP, respectively. The average/median of the error estimates is plotted 
-#' using \dQuote{DISP_avg}, \dQuote{BS_median}, or \dQuote{BSDISP_avg} and 
-#' displayed as a point within the error bars when 
+#'
+#' When using \code{cp.run.type = "base_run"}, meaning that the concentration
+#' bars and the percentage dots are plotted using the values associated with
+#' the base_run, plotting the error bars only require the run_type of
+#' \dQuote{DISP_min} and \dQuote{DISP_max} for DISP; the \dQuote{BS_P05} and
+#' \dQuote{BS_P95} for BS and \dQuote{BSDISP_P05} and \dQuote{BSDISP_P95} for
+#' BSDISP, respectively. The average/median of the error estimates is plotted
+#' using \dQuote{DISP_avg}, \dQuote{BS_median}, or \dQuote{BSDISP_avg} and
+#' displayed as a point within the error bars when
 #' \code{cp.run.type = "base_run"}. The selected \code{run_type} should at least
-#' be available in concentration units (i.e., 
+#' be available in concentration units (i.e.,
 #' \code{factor_profile = "concentration_of_species"}).
-#' 
-#' The concentration bars and percentage dots can also be plotted based on the 
-#' average/median of the error estimates. In that case it is important that for 
-#' each average/median of the error estimates also the percentages of the sum 
-#' of the species (i.e., \code{factor_profile = "percentage_of_species_sum"}) 
+#'
+#' The concentration bars and percentage dots can also be plotted based on the
+#' average/median of the error estimates. In that case it is important that for
+#' each average/median of the error estimates also the percentages of the sum
+#' of the species (i.e., \code{factor_profile = "percentage_of_species_sum"})
 #' is present in the F-matrix.
-#' 
+#'
 #' @export
 #'
 #' @import cli
@@ -171,9 +184,13 @@
 #' @import dplyr
 #' @import tidyr
 #' @import ggplot2
+#' @import stringr
+#' @import ggnewscale
 #'
 epa_plot_profile <- function(F_matrix,
+                             by = NA,
                              xlabel.angle = 45,
+                             xlabel.parse = FALSE,
                              xlabel.vjust = NA,
                              xlabel.hjust = NA,
                              xlabel.order = NA,
@@ -193,9 +210,11 @@ epa_plot_profile <- function(F_matrix,
                              point.shape = 19,
                              lollipops = TRUE,
                              errorbar = "none",
-                             errorbar.color = list("BS" = "goldenrod2",
-                                                   "BSDISP" = "green4",
-                                                   "DISP" = "royalblue2"),
+                             errorbar.color = list(
+                               "BS" = "goldenrod2",
+                               "BSDISP" = "green4",
+                               "DISP" = "royalblue2"
+                             ),
                              errorbar.width = 0.45,
                              errorbar.linewidth = 1,
                              errorbar.point.size = 3,
@@ -206,8 +225,9 @@ epa_plot_profile <- function(F_matrix,
                              perc.x.interval = 20,
                              cp.run.type = "base_run",
                              facet.parse.label = FALSE,
+                             rm.facets = FALSE,
+                             facet.wrap = NA,
                              ...) {
-
   # The EPA factor profile plot consists of a dual-axis plot containing the
   # log10 concentrations and the percentage of each species in a plot. At first
   # sight the concentrations look like a bar plot, but this is not the case.
@@ -215,52 +235,127 @@ epa_plot_profile <- function(F_matrix,
   # any arbitrary number).
   # Instead in this plotting routine we use geometries to plot the bars with a
   # lower limit of 0.00001 (-5)
-
-
+  
+  
   ##################################################################
   ##                            Checks                            ##
   ##################################################################
-
+  
   # check if tidied
   if (!"factor" %in% names(F_matrix)) {
-    cli::cli_abort(c(
-      "{.var factor} column not detected:",
-      "i" = "The F-matrix should contain a {.var factor} column.",
-      "x" = "Did you forget to enable {.var tidy_output} when reading the F-matrix?"
-    ))
+    cli::cli_abort(
+      c(
+        "{.var factor} column not detected:",
+        "i" = "The F-matrix should contain a {.var factor} column.",
+        "x" = "Did you forget to enable {.var tidy_output} when reading the F-matrix?"
+      )
+    )
   } else {
     num.factors <- length(unique(F_matrix$factor))
   }
-
+  
+  # check if by column exists
+  if (!identical(by, NA)) {
+    if (length(by) > 1) {
+      cli::cli_abort(
+        c(
+          "{.var by} column contains multiple columns:",
+          "i" = "The {.var by} should contain only one column.",
+          "x" = "Did you try to select multiple values for {.var by}?"
+        )
+      )
+    }
+    if (!by %in% names(F_matrix)) {
+      cli::cli_abort(
+        c(
+          "{.var by} column specified but not detected:",
+          "i" = "The F-matrix should contain a {.var by} column.",
+          "x" = "Did you forget to add a grouping variable in your dataframe?"
+        )
+      )
+    } else {
+      num.by <- length(unique(F_matrix[[by]]))
+    }
+  }
+  
+  
   # check if only one model_run
   if ("model_run" %in% names(F_matrix)) {
     if (length(unique(F_matrix$model_run)) > 1) {
-      cli::cli_abort(c(
-        "More than 1 run detected:",
-        "i" = "The F-matrix contains more than 1 {.var model_run}.",
-        "x" = "Did you select a base case run using a filter on {.var model_run}?"
-      ))
+      cli::cli_abort(
+        c(
+          "More than 1 run detected:",
+          "i" = "The F-matrix contains more than 1 {.var model_run}.",
+          "x" = "Did you select a base case run using a filter on {.var model_run}?"
+        )
+      )
     }
   }
-
+  
   # check if errorbar has a valid value
   if (!errorbar %in% c("none", "DISP", "BS", "BSDISP")) {
-    cli::cli_abort(c(
-      "Unknown value for {.var errorbar}:",
-      "i" = "'{errorbar}' is not a valid value for {.var errorbar}.",
-      "x" = "Valid values are 'none' (default), 'DISP', 'BS' or 'BSDISP'"
-    ))
+    cli::cli_abort(
+      c(
+        "Unknown value for {.var errorbar}:",
+        "i" = "'{errorbar}' is not a valid value for {.var errorbar}.",
+        "x" = "Valid values are 'none' (default), 'DISP', 'BS' or 'BSDISP'"
+      )
+    )
   }
-
+  
+  if ((errorbar != "none") & (!identical(by, NA))) {
+    cli::cli_abort(
+      c(
+        "Error bars cannot be plotted in combination with {.var by}:",
+        "i" = "'{errorbar}' is not a valid value in combination with {.var by}.",
+        "x" = "Valid value for {.var errorbar} with {.var by} is 'none' (default)"
+      )
+    )
+  }
+  
   # check if cp.run.type has valid value
   if (!cp.run.type %in% c("base_run", "DISP_avg", "BS_median", "BSDISP_avg")) {
-    cli::cli_abort(c(
-      "Unknown value for {.var cp.run.type}:",
-      "i" = "'{cp.run.type}' is not a valid value for {.var cp.run.type}.",
-      "x" = "Valid values are 'base_run' (default), 'DISP_avg', 'BS_median' or 'BSDISP_avg'"
-    ))
+    cli::cli_abort(
+      c(
+        "Unknown value for {.var cp.run.type}:",
+        "i" = "'{cp.run.type}' is not a valid value for {.var cp.run.type}.",
+        "x" = "Valid values are 'base_run' (default), 'DISP_avg', 'BS_median' or 'BSDISP_avg'"
+      )
+    )
   }
-
+  
+  # check if contains duplicates
+  if (identical(by, NA)) {
+    test_dups <- F_matrix %>%
+      group_by(factor, factor_profile, run_type, species) %>%
+      mutate(dupe = n() > 1) %>%
+      filter(dupe == TRUE)
+  } else {
+    test_dups <- F_matrix %>%
+      group_by(factor, factor_profile, run_type, species,!!sym(by)) %>%
+      mutate(dupe = n() > 1) %>%
+      filter(dupe == TRUE)
+  }
+  if (nrow(test_dups) > 0) {
+    if (identical(by, NA)) {
+      cli::cli_abort(
+        c(
+          "Duplicate rows detected:",
+          "i" = "The F-matrix contains multiple rows for the combination of {.var factor}, {.var factor_profile}, {.var run_type} and {.var species}",
+          "x" = "Using duplicate rows can lead to unwanted presentational errors"
+        )
+      )
+    } else {
+      cli::cli_abort(
+        c(
+          "Duplicate rows detected:",
+          "i" = "The F-matrix contains multiple rows for the combination of {.var by}, {.var factor}, {.var factor_profile}, {.var run_type} and {.var species}",
+          "x" = "Using duplicate rows can lead to unwanted presentational errors."
+        )
+      )
+    }
+  }
+  
   # Check and adjust labels
   if (!identical(xlab, NA)) {
     if (auto.text) {
@@ -277,48 +372,89 @@ epa_plot_profile <- function(F_matrix,
       ylab2 <- openair::quickText(ylab2)
     }
   }
-
+  
+  if (!identical(facet.wrap, NA) &
+      (!class(facet.wrap) %in% c("numeric"))) {
+    cli::cli_abort(
+      c(
+        "Invalid value for {.var facet.wrap} :",
+        "i" = "'{facet.wrap}' is not a valid value.",
+        "x" = "Valid value for {.var facet.wrap} is 'NA' (default) or an integer."
+      )
+    )
+  }
+  
+  
   # check if it contains "concentration_of_species" and
   # "percentage_of_species_sum"
-
+  
   # check if species is factor
   if (!"factor" %in% class(F_matrix$species)) {
     F_matrix <- F_matrix %>%
       mutate(species = factor(paste0("`", species, "`")))
   }
-
+  
   # create the plot.data
   df <- F_matrix %>%
-    dplyr::mutate(value = dplyr::if_else(factor_profile == "concentration_of_species",
-      log10(dplyr::if_else(value < 10^y_min, 10^y_min, value)),
-      as.double(value)
-    )) %>%
-    dplyr::mutate_if(is.numeric, list(~ na_if(., Inf))) %>%
-    dplyr::mutate_if(is.numeric, list(~ na_if(., -Inf))) %>%
+    dplyr::mutate(
+      value = dplyr::if_else(
+        factor_profile == "concentration_of_species",
+        log10(dplyr::if_else(value < 10 ^ y_min, 10 ^ y_min, value)),
+        as.double(value)
+      )
+    ) %>%
+    dplyr::mutate_if(is.numeric, list( ~ na_if(., Inf))) %>%
+    dplyr::mutate_if(is.numeric, list( ~ na_if(.,-Inf))) %>%
     dplyr::mutate(value = tidyr::replace_na(value, y_min))
-
+  
   if (nrow(df) == 0) {
-    cli::cli_abort(c(
-      "No data selected to plot:",
-      "i" = "The F-matrix seems to be empty.",
-      "x" = "Did you select the correct data for {.var F_matrix}?"
-    ))
+    cli::cli_abort(
+      c("No data selected to plot:",
+        "i" = "The F-matrix seems to be empty.",
+        "x" = "Did you select the correct data for {.var F_matrix}?")
+    )
   }
   
   # check colors
   if (length(bar.color) > 1) {
-    if (length(bar.color) != num.factors) {
-      cli::cli_abort(c(
-        "Not enough bar colors:",
-        "i" = "The number of bar colors needs to be equal to 1 or the number of factors.",
-        "x" = "Did you provide the correct amount of colors in {.var bar.color}?"
-      ))
+    if (identical(by, NA)) {
+      if (length(bar.color) != num.factors) {
+        cli::cli_abort(
+          c(
+            "Too few or too many bar colors:",
+            "i" = "The number of bar colors needs to be equal to 1 or the number of factors.",
+            "x" = "Did you provide the correct amount of colors in {.var bar.color}?"
+          )
+        )
+      }
+    } else {
+      if (length(bar.color) != num.by) {
+        cli::cli_warn(
+          c(
+            "Too few or too many bar colors:",
+            "i" = "The number of bar colors needs to be equal to the unique values in the {.var by} column.",
+            "x" = "Did you provide the correct amount of colors in {.var bar.color}?"
+          )
+        )
+      }
+    }
+  } else {
+    if (!identical(by, NA)) {
+      if (length(bar.color) != num.by) {
+        cli::cli_warn(
+          c(
+            "Too few or too many bar colors:",
+            "i" = "The number of bar colors needs to be equal to the unique values in the {.var by} column.",
+            "x" = "Did you provide the correct amount of colors in {.var bar.color}?"
+          )
+        )
+      }
     }
   }
   
   # errorbar colors
   if (is.list(errorbar.color)) {
-    if (exists(errorbar, where=errorbar.color)) {
+    if (exists(errorbar, where = errorbar.color)) {
       errorbar.color <- errorbar.color[[errorbar]]
     } else {
       errorbar.color <- "darkorange3"
@@ -328,11 +464,11 @@ epa_plot_profile <- function(F_matrix,
       errorbar.color <- "darkorange3"
     }
   }
-
+  
   #################################################################
   ##                    Checks for error data                    ##
   #################################################################
-
+  
   # prepare DISP data if needed
   # check if we need to do something with the DISP profiles so we prepare the
   # data here
@@ -340,40 +476,42 @@ epa_plot_profile <- function(F_matrix,
     check_vars <- c("DISP_avg", "DISP_min", "DISP_max")
     for (check_var in check_vars) {
       if (!(check_var %in% unique(df$run_type))) {
-        cli::cli_abort(c(
-          "DISP results not found:",
-          "i" = "The F-matrix does not contain a {.var run_type} column containing {check_var}.",
-          "x" = "Did you provide the DISP results with the {.var F_matrix}?"
-        ))
+        cli::cli_abort(
+          c(
+            "DISP results not found:",
+            "i" = "The F-matrix does not contain a {.var run_type} column containing {check_var}.",
+            "x" = "Did you provide the DISP results with the {.var F_matrix}?"
+          )
+        )
       } else {
         # check for "concentration_of_species" in combination with run_type
         test.df <- df %>%
-          filter(
-            run_type == check_var,
-            factor_profile == "concentration_of_species"
-          )
+          filter(run_type == check_var,
+                 factor_profile == "concentration_of_species")
         if (nrow(test.df) == 0) {
-          cli::cli_abort(c(
-            "No concentrations for specific run_type:",
-            "i" = "{.var factor_profile} = 'concentration_of_species' does not exists for {.var run_type}={check_var}.",
-            "x" = "Did you forget to add the concentration values for DISP?"
-          ))
+          cli::cli_abort(
+            c(
+              "No concentrations for specific run_type:",
+              "i" = "{.var factor_profile} = 'concentration_of_species' does not exists for {.var run_type}={check_var}.",
+              "x" = "Did you forget to add the concentration values for DISP?"
+            )
+          )
         }
       }
     }
     # check for percentage of species if we need to plot those
     if (cp.run.type == "DISP_avg") {
       test.df <- df %>%
-        filter(
-          run_type == "DISP_avg",
-          factor_profile == "percentage_of_species_sum"
-        )
+        filter(run_type == "DISP_avg",
+               factor_profile == "percentage_of_species_sum")
       if (nrow(test.df) == 0) {
-        cli::cli_abort(c(
-          "No percentages for specific run_type:",
-          "i" = "{.var factor_profile} = 'percentage_of_species_sum' does not exists for {.var run_type}='DISP_avg'.",
-          "x" = "Did you forget to add the percentage of species sum for DISP?"
-        ))
+        cli::cli_abort(
+          c(
+            "No percentages for specific run_type:",
+            "i" = "{.var factor_profile} = 'percentage_of_species_sum' does not exists for {.var run_type}='DISP_avg'.",
+            "x" = "Did you forget to add the percentage of species sum for DISP?"
+          )
+        )
       }
     }
     # set the correct profile for concentrations
@@ -382,7 +520,7 @@ epa_plot_profile <- function(F_matrix,
     error_ymax <- "DISP_max"
     error_yavg <- "DISP_avg"
   }
-
+  
   # prepare BS data if needed
   # check if we need to do something with the DISP profiles so we prepare the
   # data here
@@ -390,40 +528,40 @@ epa_plot_profile <- function(F_matrix,
     check_vars <- c("BS_median", "BS_P05", "BS_P95")
     for (check_var in check_vars) {
       if (!(check_var %in% unique(df$run_type))) {
-        cli::cli_abort(c(
-          "BS results not found:",
-          "i" = "The F-matrix does not contain a {.var run_type} column containing {check_var}.",
-          "x" = "Did you provide the BS results with the {.var F_matrix}?"
-        ))
+        cli::cli_abort(
+          c("BS results not found:",
+            "i" = "The F-matrix does not contain a {.var run_type} column containing {check_var}.",
+            "x" = "Did you provide the BS results with the {.var F_matrix}?")
+        )
       } else {
         # check for "concentration_of_species" in combination with run_type
         test.df <- df %>%
-          filter(
-            run_type == check_var,
-            factor_profile == "concentration_of_species"
-          )
+          filter(run_type == check_var,
+                 factor_profile == "concentration_of_species")
         if (nrow(test.df) == 0) {
-          cli::cli_abort(c(
-            "No concentrations for specific run_type:",
-            "i" = "{.var factor_profile} = 'concentration_of_species' does not exists for {.var run_type}={check_var}.",
-            "x" = "Did you forget to add the concentration values for BS?"
-          ))
+          cli::cli_abort(
+            c(
+              "No concentrations for specific run_type:",
+              "i" = "{.var factor_profile} = 'concentration_of_species' does not exists for {.var run_type}={check_var}.",
+              "x" = "Did you forget to add the concentration values for BS?"
+            )
+          )
         }
       }
     }
     # check for percentage of species if we need to plot those
     if (cp.run.type == "BS_median") {
       test.df <- df %>%
-        filter(
-          run_type == "BS_median",
-          factor_profile == "percentage_of_species_sum"
-        )
+        filter(run_type == "BS_median",
+               factor_profile == "percentage_of_species_sum")
       if (nrow(test.df) == 0) {
-        cli::cli_abort(c(
-          "No percentages for specific run_type:",
-          "i" = "{.var factor_profile} = 'percentage_of_species_sum' does not exists for {.var run_type}='BS_median'.",
-          "x" = "Did you forget to add the percentage of species sum for DISP?"
-        ))
+        cli::cli_abort(
+          c(
+            "No percentages for specific run_type:",
+            "i" = "{.var factor_profile} = 'percentage_of_species_sum' does not exists for {.var run_type}='BS_median'.",
+            "x" = "Did you forget to add the percentage of species sum for DISP?"
+          )
+        )
       }
     }
     # set the correct profile for concentrations
@@ -432,7 +570,7 @@ epa_plot_profile <- function(F_matrix,
     error_ymax <- "BS_P95"
     error_yavg <- "BS_median"
   }
-
+  
   # prepare BSDISP data if needed
   # check if we need to do something with the DISP profiles so we prepare the
   # data here
@@ -440,40 +578,42 @@ epa_plot_profile <- function(F_matrix,
     check_vars <- c("BSDISP_avg", "BSDISP_P05", "BSDISP_P95")
     for (check_var in check_vars) {
       if (!(check_var %in% unique(df$run_type))) {
-        cli::cli_abort(c(
-          "BSDISP results not found:",
-          "i" = "The F-matrix does not contain a {.var run_type} column containing {check_var}.",
-          "x" = "Did you provide the BSDISP results with the {.var F_matrix}?"
-        ))
+        cli::cli_abort(
+          c(
+            "BSDISP results not found:",
+            "i" = "The F-matrix does not contain a {.var run_type} column containing {check_var}.",
+            "x" = "Did you provide the BSDISP results with the {.var F_matrix}?"
+          )
+        )
       } else {
         # check for "concentration_of_species" in combination with run_type
         test.df <- df %>%
-          filter(
-            run_type == check_var,
-            factor_profile == "concentration_of_species"
-          )
+          filter(run_type == check_var,
+                 factor_profile == "concentration_of_species")
         if (nrow(test.df) == 0) {
-          cli::cli_abort(c(
-            "No concentrations for specific run_type:",
-            "i" = "{.var factor_profile} = 'concentration_of_species' does not exists for {.var run_type}={check_var}.",
-            "x" = "Did you forget to add the concentration values for BSDISP?"
-          ))
+          cli::cli_abort(
+            c(
+              "No concentrations for specific run_type:",
+              "i" = "{.var factor_profile} = 'concentration_of_species' does not exists for {.var run_type}={check_var}.",
+              "x" = "Did you forget to add the concentration values for BSDISP?"
+            )
+          )
         }
       }
     }
     # check for percentage of species if we need to plot those
     if (cp.run.type == "BSDISP_avg") {
       test.df <- df %>%
-        filter(
-          run_type == "BSDISP_avg",
-          factor_profile == "percentage_of_species_sum"
-        )
+        filter(run_type == "BSDISP_avg",
+               factor_profile == "percentage_of_species_sum")
       if (nrow(test.df) == 0) {
-        cli::cli_abort(c(
-          "No percentages for specific run_type:",
-          "i" = "{.var factor_profile} = 'percentage_of_species_sum' does not exists for {.var run_type}='BSDISP_avg'.",
-          "x" = "Did you forget to add the percentage of species sum for DISP?"
-        ))
+        cli::cli_abort(
+          c(
+            "No percentages for specific run_type:",
+            "i" = "{.var factor_profile} = 'percentage_of_species_sum' does not exists for {.var run_type}='BSDISP_avg'.",
+            "x" = "Did you forget to add the percentage of species sum for DISP?"
+          )
+        )
       }
     }
     # set the correct profile for concentrations
@@ -482,19 +622,20 @@ epa_plot_profile <- function(F_matrix,
     error_ymax <- "BSDISP_P95"
     error_yavg <- "BSDISP_avg"
   }
-
+  
   #################################################################
   ##             Plot preparations (axis breaks etc)             ##
   #################################################################
-
+  
   # order the x_labels
   if (!identical(xlabel.order, NA)) {
-    df$species <- factor(as.character(df$species), levels = xlabel.order)
+    df$species <-
+      factor(as.character(df$species), levels = xlabel.order)
   }
-
+  
   # create numeric column based on species. We use this to plot the data.
   df$numeric_x <- as.numeric(df$species)
-
+  
   # Calculate the upper axis value
   max_conc_log <- df %>%
     filter(
@@ -503,59 +644,172 @@ epa_plot_profile <- function(F_matrix,
     ) %>%
     select(value) %>%
     max()
-
+  
   ## calculate the optimum axis
   breaks_log <- seq(y_min, ceiling(max_conc_log), 2)
-
+  
   # if the breaks are to small, then increase them to the minimum
   # special situation
   if ((length(breaks_log) == 4) && (max(breaks_log = 1))) {
     breaks_log <- c(breaks_log, max(breaks_log) + 2)
   }
-
+  
   # bare minimum is 4
   if ((length(breaks_log) < 4)) {
     breaks_log <- c(breaks_log, max(breaks_log) + 2)
   }
-
+  
   labels_log <- paste0("10^", breaks_log)
-
-  breaks_percentage <- seq(y_min, max(breaks_log), 1) * (length(seq(y_min, max(breaks_log), 1)) - 1) + y_min
-
+  
+  breaks_percentage <-
+    seq(y_min, max(breaks_log), 1) * (length(seq(y_min, max(breaks_log), 1)) - 1) + y_min
+  
   # calculate the gap
-  gap_percentage <- (max(breaks_percentage) - min(breaks_percentage)) / (100 / perc.x.interval)
-  sec.breaks <- c(min(breaks_percentage), round((rep(1, (100 / perc.x.interval)) * min(breaks_percentage)) + (seq(1, (100 / perc.x.interval), 1) * gap_percentage), 0))
-
+  gap_percentage <-
+    (max(breaks_percentage) - min(breaks_percentage)) / (100 / perc.x.interval)
+  sec.breaks <-
+    c(min(breaks_percentage), round((rep(
+      1, (100 / perc.x.interval)
+    ) * min(
+      breaks_percentage
+    )) + (seq(
+      1, (100 / perc.x.interval), 1
+    ) * gap_percentage), 0))
+  
   # scale_items <- ceiling(length(breaks_percentage) / 2)
   # sec.breaks <- c(seq(min(breaks_percentage), max(breaks_percentage), round(length(seq(min(breaks_percentage), max(breaks_percentage), 1)) / scale_items, 0)), max(breaks_percentage))
-  sec.labels <- round(seq(0, 100, (100 / (length(sec.breaks) - 1))), 1)
-
+  sec.labels <-
+    round(seq(0, 100, (100 / (
+      length(sec.breaks) - 1
+    ))), 1)
+  
   # scale the percentages to the secondary axis
   df <- df %>%
-    dplyr::mutate(value = if_else(factor_profile == "percentage_of_species_sum", (value / 100) * (length(seq(y_min, max(breaks_log), 1)) - 1) + y_min, as.double(value)))
-
+    dplyr::mutate(value = if_else(
+      factor_profile == "percentage_of_species_sum",
+      (value / 100) * (length(seq(
+        y_min, max(breaks_log), 1
+      )) - 1) + y_min,
+      as.double(value)
+    ))
+  
   
   ##################################################################
   ##                          Set colors                          ##
   ##################################################################
-
-  if ("factor" %in% class(F_matrix$factor)) {
-    myColors <- tibble("factor" = levels(F_matrix$factor),
-                       "color" = openair::openColours(bar.color, num.factors))
+  if (identical(by, NA)) {
+    ############################################################################
+    ## Default coloring, no grouping
+    ############################################################################
+    df$p_by <- "EV"
+    df$eb_by <- errorbar
+    
+    # create a separate factor group when there is only one bar color
+    if (length(bar.color) == 1) {
+      df$f_by <- "Concentration"
+    } else {
+      df$f_by <- df$factor
+    }
+    
+    if ("factor" %in% class(df$f_by)) {
+      myColors <- tibble(
+        "f_by" = levels(df$f_by),
+        "bar.color" = openair::openColours(bar.color, num.factors),
+        "bar.alpha" = bar.alpha,
+        "p_by" = unique(df$p_by),
+        "point.color" = openair::openColours(point.color, num.by),
+        "point.shape" = point.shape,
+        "point.size" = point.size,
+        "eb_by" = unique(df$eb_by),
+        "errorbar.color" = errorbar.color,
+        "errorbar.point.size" = errorbar.point.size
+      )
+    } else {
+      myColors <- tibble(
+        "f_by" = unique(df$f_by),
+        "bar.color" = openair::openColours(bar.color, num.factors),
+        "bar.alpha" = bar.alpha,
+        "p_by" = unique(df$p_by),
+        "point.color" = openair::openColours(point.color, num.factors),
+        "point.shape" = point.shape,
+        "point.size" = point.size,
+        "eb_by" = unique(df$eb_by),
+        "errorbar.color" = errorbar.color,
+        "errorbar.point.size" = errorbar.point.size
+      )
+    }
   } else {
-    myColors <- tibble("factor" = unique(F_matrix$factor),
-                       "color" = openair::openColours(bar.color, num.factors))
+    ############################################################################
+    ## Apply group coloring
+    ############################################################################
+    df$f_by <- df[[by]]
+    
+    # add a grouping variable for the points to be able to separate the colors
+    if (length(point.color) == 1) {
+      df$p_by <- "EV"
+    } else {
+      df$p_by <- paste("EV", df[[by]])
+    }
+    
+    if (length(errorbar.color) == 1) {
+      df$eb_by <- errorbar
+    } else {
+      df$eb_by <- paste(errorbar, df[[by]])
+    }
+    
+    # TURN INTO FACTOR WITH THE RIGHT LEVELS IF WE WANT TO HAVE DIFFERENT COLORS
+    
+    if ("factor" %in% class(df[[by]])) {
+      myColors <- tibble(
+        "f_by" = levels(df[[by]]),
+        "bar.color" = openair::openColours(bar.color, num.by),
+        "bar.alpha" = bar.alpha,
+        "p_by" = unique(df$p_by),
+        "point.color" = openair::openColours(point.color, num.by),
+        "point.shape" = point.shape,
+        "point.size" = point.size,
+        "eb_by" = unique(df$eb_by),
+        "errorbar.color" = errorbar.color,
+        "errorbar.point.size" = errorbar.point.size
+      )
+    } else {
+      myColors <- tibble(
+        "f_by" = unique(df[[by]]),
+        "bar.color" = openair::openColours(bar.color, num.by),
+        "bar.alpha" = bar.alpha,
+        "p_by" = unique(df$p_by),
+        "point.color" = openair::openColours(point.color, num.by),
+        "point.shape" = point.shape,
+        "point.size" = point.size,
+        "eb_by" = unique(df$eb_by),
+        "errorbar.color" = errorbar.color,
+        "errorbar.point.size" = errorbar.point.size
+      )
+    }
   }
+
+  myColors.vector <- myColors %>%
+    pull(bar.color, f_by) # first = values, second = names
   
-  myColors <- left_join(df %>%
-                          filter(
-                            factor_profile == "concentration_of_species",
-                            stringr::str_detect(run_type, cp.run.type)
-                          ) %>% 
-                          select(factor),
-            myColors,
-            by = "factor")
-  myColors <- myColors[["color"]]
+  myAlpha.vector <- myColors %>%
+    pull(bar.alpha, f_by) # first = values, second = names
+  
+  myPColor.vector <- myColors %>%
+    pull(point.color, p_by) # first = values, second = names
+  
+  myPShape.vector <- myColors %>%
+    pull(point.shape, p_by) # first = values, second = names
+  
+  myPSize.vector <- myColors %>%
+    pull(point.size, p_by) # first = values, second = names
+  
+  myEBColor.vector <- myColors %>%
+    pull(errorbar.color, eb_by) # first = values, second = names
+  
+  myEPSize.vector <- myColors %>%
+    pull(errorbar.point.size, eb_by) # first = values, second = names
+  
+  
   ##################################################################
   ##                    Create error bars data                    ##
   ##################################################################
@@ -567,9 +821,11 @@ epa_plot_profile <- function(F_matrix,
         stringr::str_detect(run_type, error_run_type)
       ) %>%
       select(factor_profile, numeric_x, factor, run_type, value) %>%
-      pivot_wider(id_cols = c(factor_profile, numeric_x, factor),
-                  names_from = run_type, 
-                  values_from = value)
+      pivot_wider(
+        id_cols = c(factor_profile, numeric_x, factor),
+        names_from = run_type,
+        values_from = value
+      )
     # join with original data
     df = left_join(df,
                    disp.df,
@@ -581,42 +837,53 @@ epa_plot_profile <- function(F_matrix,
   #################################################################
   ##                         Create plot                         ##
   #################################################################
-
-  plot <- ggplot2::ggplot(df) +
-    ggplot2::geom_rect(
-      data = df %>%
-        filter(
-          factor_profile == "concentration_of_species",
-          stringr::str_detect(run_type, cp.run.type)
+  if (identical(by, NA)) {
+    ############################################################################
+    ## Default plot, no grouping
+    ############################################################################
+    plot <- ggplot2::ggplot(df) +
+      ggplot2::scale_y_continuous(
+        limits = c(y_min, max(breaks_log)),
+        breaks = breaks_log,
+        labels = parse(text = labels_log),
+        sec.axis = ggplot2::sec_axis(
+          trans = ~ . * (length(seq(
+            y_min, max(breaks_log), 1
+          )) - 1) + y_min,
+          name = ylab2,
+          breaks = sec.breaks,
+          labels = sec.labels
         ),
-      ggplot2::aes(
-        xmin = numeric_x - (bar.width / 2),
-        xmax = numeric_x + (bar.width / 2),
-        ymin = y_min, ymax = value,
-        alpha = "concentration.bars",
-      ),
-      col = myColors,
-      fill = myColors
-    ) +
-    ggplot2::geom_point(
-      data = df %>%
-        filter(
-          factor_profile == "percentage_of_species_sum",
-          stringr::str_detect(run_type, cp.run.type)
+        expand = expansion(mult = c(0, 0.05))
+      ) +
+      ggplot2::geom_rect(
+        data = df %>%
+          filter(
+            factor_profile == "concentration_of_species",
+            stringr::str_detect(run_type, cp.run.type)
+          ),
+        ggplot2::aes(
+          xmin = numeric_x - (bar.width / 2),
+          xmax = numeric_x + (bar.width / 2),
+          ymin = y_min,
+          ymax = value,
+          alpha = f_by,
+          col = f_by,
+          fill = f_by,
         ),
-      ggplot2::aes(
-        x = numeric_x, 
-        y = value,
-        size = "percentage_of_species_sum",
-        shape = "percentage_of_species_sum",
-        col = "percentage_of_species_sum"
-      )
-    )
-
-  # plot lollipop lines
-  if (lollipops) {
-    plot <- plot +
-      ggplot2::geom_segment(
+      ) +
+      ggplot2::scale_fill_manual(values = myColors.vector,
+                                 name = NULL,
+                                 guide = guide_legend(order = 1)) +
+      ggplot2::scale_alpha_manual(values = myAlpha.vector,
+                                  name = NULL,
+                                  guide = guide_legend(order = 1)) +
+      ggplot2::scale_color_manual(values = myColors.vector,
+                                  name = NULL,
+                                  guide = guide_legend(order = 1)) +
+      ggnewscale::new_scale("color") +
+      ggnewscale::new_scale("fill") +
+      ggplot2::geom_point(
         data = df %>%
           filter(
             factor_profile == "percentage_of_species_sum",
@@ -624,35 +891,164 @@ epa_plot_profile <- function(F_matrix,
           ),
         ggplot2::aes(
           x = numeric_x,
-          xend = numeric_x,
-          y = y_min,
-          yend = value
+          y = value,
+          size = p_by,
+          shape = p_by,
+          color = p_by,
+        )
+      ) +
+      ggplot2::scale_color_manual(values = myPColor.vector,
+                                  name = NULL,
+                                  guide = guide_legend(order = 2)) +
+      ggplot2::scale_shape_manual(values = myPShape.vector,
+                                  name = NULL,
+                                  guide = guide_legend(order = 2)) +
+      ggplot2::scale_size_manual(values = myPSize.vector,
+                                 name = NULL,
+                                 guide = guide_legend(order = 2))
+    
+    # plot lollipop lines
+    if (lollipops) {
+      plot <- plot +
+        ggplot2::geom_linerange(
+          data = df %>%
+            filter(
+              factor_profile == "percentage_of_species_sum",
+              stringr::str_detect(run_type, cp.run.type)
+            ),
+          ggplot2::aes(
+            x = numeric_x,
+            ymin = y_min,
+            ymax = value
+          ),
+          color = point.color,
+          alpha = 0.5
+        )
+    }
+    
+  } else {
+    ############################################################################
+    ## Apply grouping using by variable
+    ############################################################################
+    
+    plot <- ggplot2::ggplot(df)  +
+      ggplot2::scale_y_continuous(
+        limits = c(y_min, max(breaks_log)),
+        breaks = breaks_log,
+        labels = parse(text = labels_log),
+        sec.axis = ggplot2::sec_axis(
+          trans = ~ . * (length(seq(
+            y_min, max(breaks_log), 1
+          )) - 1) + y_min,
+          name = ylab2,
+          breaks = sec.breaks,
+          labels = sec.labels
         ),
-        color = point.color,
-        alpha = 0.5
-      )
+        expand = expansion(mult = c(0, 0.05))
+      ) +
+      ggplot2::geom_rect(
+        data = df %>%
+          filter(
+            factor_profile == "concentration_of_species",
+            stringr::str_detect(run_type, cp.run.type)
+          ),
+        ggplot2::aes(
+          xmin = numeric_x - (bar.width / 2.2),
+          xmax = numeric_x + (bar.width / 2.2),
+          ymin = y_min,
+          ymax = value,
+          alpha = f_by,
+          col = f_by,
+          fill = f_by,
+        ),
+        position = position_dodge(width = 0.9, preserve = "total"),
+      ) +
+      ggplot2::scale_fill_manual(values = myColors.vector,
+                                 name = NULL,
+                                 guide = guide_legend(order = 1)) +
+      ggplot2::scale_alpha_manual(values = myAlpha.vector,
+                                  name = NULL,
+                                  guide = guide_legend(order = 1)) +
+      ggplot2::scale_color_manual(values = myColors.vector,
+                                  name = NULL,
+                                  guide = guide_legend(order = 1)) +
+      ggnewscale::new_scale("color") +
+      ggnewscale::new_scale("fill") +
+      ggplot2::geom_point(
+        data = df %>%
+          filter(
+            factor_profile == "percentage_of_species_sum",
+            stringr::str_detect(run_type, cp.run.type)
+          ),
+        ggplot2::aes(
+          x = numeric_x,
+          y = value,
+          size = p_by,
+          shape = p_by,
+          color = p_by,
+          group = f_by
+        ),
+        position = position_dodge(width = 0.9)
+      ) +
+      ggplot2::scale_color_manual(values = myPColor.vector,
+                                  name = NULL,
+                                  guide = guide_legend(order = 2)) +
+      ggplot2::scale_shape_manual(values = myPShape.vector,
+                                  name = NULL,
+                                  guide = guide_legend(order = 2)) +
+      ggplot2::scale_size_manual(values = myPSize.vector,
+                                 name = NULL,
+                                 guide = guide_legend(order = 2))
+    
+    # plot lollipop lines
+    if (lollipops) {
+      plot <- plot +
+        ggplot2::geom_linerange(
+          data = df %>%
+            filter(
+              factor_profile == "percentage_of_species_sum",
+              stringr::str_detect(run_type, cp.run.type)
+            ),
+          ggplot2::aes(
+            x = numeric_x,
+            ymin = y_min,
+            ymax = value,
+            group = f_by
+          ),
+          color = point.color,
+          alpha = 0.5,
+          position = position_dodge(width = 0.9)
+        )
+    }
+    
   }
-
+  
   # plot error bars
   if (errorbar != "none") {
     plot <- plot +
+      ggnewscale::new_scale("color") +
+      ggnewscale::new_scale("fill") +
+      ggnewscale::new_scale("shape") +
+      ggnewscale::new_scale("size") +
       geom_errorbar(
         data = df %>%
           filter(
             factor_profile == "concentration_of_species",
             stringr::str_detect(run_type, error_run_type)
-          ), 
+          ),
         aes(
           x = numeric_x,
           ymin = !!sym(error_ymin),
           ymax = !!sym(error_ymax),
-          color = "errorbar.point",
+          color = eb_by,
         ),
         width = errorbar.width,
         linewidth = errorbar.linewidth,
-        position = position_dodge(.9)
-      )
-
+      ) +
+      ggplot2::scale_color_manual(values = myEBColor.vector,
+                                  name = NULL,
+                                  guide = guide_legend(order = 3))
+    
     if (cp.run.type == "base_run") {
       # add point for the average/median
       plot <- plot +
@@ -663,165 +1059,109 @@ epa_plot_profile <- function(F_matrix,
               stringr::str_detect(run_type, error_run_type)
             ),
           ggplot2::aes(
-            x = numeric_x, 
+            x = numeric_x,
             y = !!sym(error_yavg),
-            size = "errorbar.point",  
-            col = "errorbar.point",
-            shape = "errorbar.point"
-            ),
-          position = position_dodge(.9)
-        )
+            size = eb_by,
+            col = eb_by,
+          ),
+          shape = 18,
+        ) +
+        ggplot2::scale_size_manual(values = myEPSize.vector,
+                                   name = NULL,
+                                   guide = guide_legend(order = 3))
     }
   }
   
+  # use label_wrap_gen to wrap long names?
   if (facet.parse.label) {
-    plot <- plot +
-      ggplot2::facet_grid(factor ~ ., labeller = label_parsed)  
-    
+    if (identical(facet.wrap, NA)) {
+      plot <- plot +
+        ggplot2::facet_grid(factor ~ .,
+                            labeller = label_parsed)
+    } else {
+      plot <- plot +
+        ggplot2::facet_grid(rows = vars(
+          stringr::str_wrap(
+            string = factor,
+            width = facet.wrap,
+            whitespace_only = FALSE
+          )
+        ),
+        labeller = label_parsed)
+    }
   } else {
-    plot <- plot +
-      ggplot2::facet_grid(factor ~ .)  
+    if (identical(facet.wrap, NA)) {
+      plot <- plot +
+        ggplot2::facet_grid(factor ~ .)
+    } else {
+      plot <- plot +
+        ggplot2::facet_grid(rows = vars(
+          stringr::str_wrap(
+            string = factor,
+            width = facet.wrap,
+            whitespace_only = FALSE
+          )
+        ))
+    }
   }
   
-  # Define some legend items
-  label_percentage_species <- "EV"
-  if(length(bar.color) > 1) {
-    label_concentration_species <- "Concentration (multiple colors)"
-    color_concentration_species <- bar.color[1]
-  } else {
-    label_concentration_species <- "Concentration"
-    color_concentration_species <- bar.color[1]
-  }
-  if (errorbar == "none") {
-    overide.linetype = c(0)
-  } else {
-    overide.linetype = c(0,1)
-  }
-
   plot <- plot +
     ggplot2::ylab(ylab) +
-    ggplot2::scale_y_continuous(
-      limits = c(y_min, max(breaks_log)),
-      breaks = breaks_log,
-      labels = parse(text = labels_log),
-      sec.axis = ggplot2::sec_axis(
-        trans = ~ . * (length(seq(y_min, max(breaks_log), 1)) - 1) + y_min,
-        name = ylab2,
-        breaks = sec.breaks,
-        labels = sec.labels
-      ),
-      expand = expansion(mult = c(0, 0.05))
-    ) +
     ggplot2::annotation_logticks(sides = "l") +
     ggplot2::theme_bw() +
-    scale_fill_manual(
-      labels = c("percentage_of_species_sum" = label_percentage_species,
-                 "errorbar.point" = errorbar,
-                 "concentration.bars" = "test"),
-      values = c("percentage_of_species_sum" = point.color, 
-                 "errorbar.point" = errorbar.color,
-                 "concentration.bars" = myColors),
-      breaks = c("percentage_of_species_sum", 
-                 "errorbar.point",
-                 "concentration.bars")) +
-    scale_color_manual(
-      labels = c("percentage_of_species_sum" = label_percentage_species, 
-                 "errorbar.point" = errorbar),
-      values = c("percentage_of_species_sum" = point.color,
-                 "errorbar.point" = errorbar.color),
-      breaks = c("percentage_of_species_sum", 
-                 "errorbar.point")) +
-    scale_shape_manual(
-      labels = c("percentage_of_species_sum" = label_percentage_species, 
-                 "errorbar.point" = errorbar),
-      values = c("percentage_of_species_sum" = point.shape, 
-                 "errorbar.point" = 18),
-      breaks = c("percentage_of_species_sum", 
-                 "errorbar.point")) +
-    scale_size_manual(
-      labels = c("percentage_of_species_sum" = label_percentage_species, 
-                 "errorbar.point" = errorbar),
-      values = c("percentage_of_species_sum" = point.size, 
-                 "errorbar.point" = errorbar.point.size),
-      breaks = c("percentage_of_species_sum", 
-                 "errorbar.point")) +
-    scale_alpha_manual(values = c("concentration.bars" = bar.alpha),
-                       labels = c("concentration.bars" = label_concentration_species),
-                       breaks = c("concentration.bars"))
-  
-  # when different colors for factors are used, showing only one color in the
-  # legend might be confusing. So we remove the guide
-  if(length(bar.color) > 1) {
-    plot <- plot +
-      guides(alpha = "none",
-             color = guide_legend(order = 2,
-                                  title = NULL,
-                                  override.aes = list(linetype = overide.linetype)),
-             shape = guide_legend(order = 2,
-                                  title = NULL),
-             size = guide_legend(order = 2,
-                                 title = NULL))
-  } else {
-    plot <- plot +
-      guides(alpha = guide_legend(order = 1,
-                                  title = NULL,
-                                  override.aes = list(color = color_concentration_species,
-                                                      fill = color_concentration_species)),
-             color = guide_legend(order = 2,
-                                  title = NULL,
-                                  override.aes = list(linetype = overide.linetype)),
-             shape = guide_legend(order = 2,
-                                  title = NULL),
-             size = guide_legend(order = 2,
-                                 title = NULL))
-  }
-  
-  # continue plot
-  
-  plot <- plot +
-    theme(legend.position = "top",
-          legend.justification = "right",
-          legend.margin=margin(b=-10)) 
+    theme(
+      legend.position = "top",
+      legend.justification = "right",
+      legend.margin = margin(b = -10)
+    )
   
   # get the labels
   x_labels <- levels(df$species)
+  
+  if (xlabel.parse) {
+    x_labels <- parse(text = x_labels)
+  }
   
   # split into even and odd
   x_labels_top <- x_labels
   x_labels_bottom <- x_labels
   # define quick functions
-  odd <- function(x) x%%2 != 0
-  even <- function(x) x%%2 == 0
+  odd <- function(x)
+    x %% 2 != 0
+  even <- function(x)
+    x %% 2 == 0
   # split the labels
   x_labels_top[odd(seq(1, length(x_labels_top)))] <- NA
   x_labels_bottom[even(seq(1, length(x_labels_bottom)))] <- NA
   
-  if ((identical(xlabel.vjust, NA)) & (identical(xlabel.hjust, NA))) {
+  if ((identical(xlabel.vjust, NA)) &
+      (identical(xlabel.hjust, NA))) {
     # set parameters using guide_axis
     if (xlabel.top.bottom) {
       plot <- plot +
         ggplot2::scale_x_continuous(
           name = xlab,
-          labels = parse(text = x_labels_top),
+          #labels = parse(text = x_labels_top),
+          labels = x_labels_top,
           breaks = sort(unique(df$numeric_x)),
           expand = expansion(mult = expand.mult),
           guide = guide_axis(angle = xlabel.angle, n.dodge = x.n.dodge),
           sec.axis = ggplot2::sec_axis(
             trans = ~ .,
             breaks = sort(unique(df$numeric_x)),
-            labels =  parse(text = x_labels_bottom),
+            #labels =  parse(text = x_labels_bottom),
+            labels =  x_labels_bottom,
             guide = ggplot2::guide_axis(angle = xlabel.angle, n.dodge = x.n.dodge)
           )
-        ) + 
-        theme(axis.text.x.top = ggplot2::element_text(
-          hjust = 0,
-          vjust = 0.5
-        ))
+        ) +
+        theme(axis.text.x.top = ggplot2::element_text(hjust = 0,
+                                                      vjust = 0.5))
     } else {
       plot <- plot +
         ggplot2::scale_x_continuous(
           name = xlab,
-          labels = parse(text = x_labels),
+          #labels = parse(text = x_labels),
+          labels = x_labels,
           breaks = sort(unique(df$numeric_x)),
           expand = expansion(mult = expand.mult),
           guide = ggplot2::guide_axis(angle = xlabel.angle, n.dodge = x.n.dodge)
@@ -829,41 +1169,40 @@ epa_plot_profile <- function(F_matrix,
     }
     plot <- plot +
       ggplot2::theme(
-        axis.text.x = ggplot2::element_text(
-          size = x.font.size
-        ),
+        axis.text.x = ggplot2::element_text(size = x.font.size),
         axis.ticks.y.right = ggplot2::element_line(color = point.color),
         axis.line.y.right = ggplot2::element_line(color = point.color),
         axis.text.y.right = ggplot2::element_text(color = point.color),
         axis.title.y.right = ggplot2::element_text(color = point.color),
         panel.grid.major.x = element_blank()
-      )  
+      )
   } else {
     # set parameters using theme
     if (xlabel.top.bottom) {
       plot <- plot +
         ggplot2::scale_x_continuous(
           name = xlab,
-          labels = parse(text = x_labels_top),
+          #labels = parse(text = x_labels_top),
+          labels = x_labels_top,
           breaks = sort(unique(df$numeric_x)),
           expand = expansion(mult = expand.mult),
           guide = guide_axis(n.dodge = x.n.dodge),
           sec.axis = ggplot2::sec_axis(
             trans = ~ .,
             breaks = sort(unique(df$numeric_x)),
-            labels =  parse(text = x_labels_bottom),
+            #labels =  parse(text = x_labels_bottom),
+            labels =  x_labels_bottom,
             guide = ggplot2::guide_axis(n.dodge = x.n.dodge)
           )
-        ) + 
-        theme(axis.text.x.top = ggplot2::element_text(
-          hjust = 0,
-          vjust = 0.5
-        ))
+        ) +
+        theme(axis.text.x.top = ggplot2::element_text(hjust = 0,
+                                                      vjust = 0.5))
     } else {
       plot <- plot +
         ggplot2::scale_x_continuous(
           name = xlab,
-          labels = parse(text = x_labels),
+          #labels = parse(text = x_labels),
+          labels = x_labels,
           breaks = sort(unique(df$numeric_x)),
           expand = expansion(mult = expand.mult),
           guide = ggplot2::guide_axis(n.dodge = x.n.dodge)
@@ -886,7 +1225,7 @@ epa_plot_profile <- function(F_matrix,
   }
   
   # remove legend?
-  if(!show.legend) {
+  if (!show.legend) {
     plot <- plot +
       ggplot2::theme(legend.position = "none")
   }
@@ -894,27 +1233,30 @@ epa_plot_profile <- function(F_matrix,
   # remove vertical grid lines?
   if (rm.grid.x) {
     plot <- plot +
-      ggplot2::theme(
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()
-      )
+      ggplot2::theme(panel.grid.major.x = element_blank(),
+                     panel.grid.minor.x = element_blank())
   }
-
+  
+  # remove facets?
+  if (rm.facets) {
+    plot <- plot +
+      ggplot2::theme(strip.background = element_blank(),
+                     strip.text = element_blank())
+  }
+  
   # run garbage collector
   gc()
   #if (!identical(dev.list(), NULL)) {
   #  dev.off()
   #}
-
+  
   ##################################################################
   ##                        Prepare output                        ##
   ##################################################################
-
+  
   # print(metcor.plot)
-  output <- list(
-    "plot" = plot,
-    call = match.call()
-  )
+  output <- list("plot" = plot,
+                 call = match.call())
   class(output) <- "me2tools"
   if (show.plot) {
     plot(output$plot)

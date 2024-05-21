@@ -6,7 +6,9 @@
 \usage{
 epa_plot_profile(
   F_matrix,
+  by = NA,
   xlabel.angle = 45,
+  xlabel.parse = FALSE,
   xlabel.vjust = NA,
   xlabel.hjust = NA,
   xlabel.order = NA,
@@ -37,6 +39,8 @@ epa_plot_profile(
   perc.x.interval = 20,
   cp.run.type = "base_run",
   facet.parse.label = FALSE,
+  rm.facets = FALSE,
+  facet.wrap = NA,
   ...
 )
 }
@@ -45,19 +49,29 @@ epa_plot_profile(
 the results for the F_matrix. In order to use this function only the
 results from a single run should be provided.}
 
+\item{by}{Grouping variable that can be used to plot multiple analysis into a
+single plot. Useful for exploring the difference in profiles between
+regular analysis and a dispersion normalised analysis. Works best if
+factor names are the same for the analysis.}
+
 \item{xlabel.angle}{What angle should the x-axis labels be presented in? If
 your labels are long, \code{45} degrees can be useful, which is also the
 default.}
 
+\item{xlabel.parse}{should the xlabels be parsed as an expression? If set to
+\code{FALSE}, the labels are plotted as characters.}
+
 \item{xlabel.vjust}{vertical justification of the xlabel, between [0,1].
 The default is NA, so that ggplot uses some heuristics to pick the best
 value for this parameter. Any other value is processed by changing theme
-settings,}
+settings. Note that for this to work the \code{xlabel.hjust} also needs to
+have a value.}
 
 \item{xlabel.hjust}{horizontal justification of the xlabel, between [0,1].
-The default is NA, so that ggplot uses some heuristics to pick the best
-value for this parameter. Any other value is processed by changing theme
-settings,}
+The default is \code{NA}, so that ggplot uses some heuristics to pick the
+best value for this parameter. Any other value is processed by changing
+theme settings. Note that for this to work the \code{xlabel.vjust} also
+needs to have a value.}
 
 \item{xlabel.order}{The labels containing the species on the x-axis are
 plotted based on the factor levels. This parameter can contain the levels
@@ -95,7 +109,9 @@ with a large number of species. Also allows for a larger
 
 \item{bar.color}{Provide the fill color for the concentration based bars on
 the logarithmic scale. Is set to \sQuote{cadetblue3}, as an approximation
-of the color used in EPA-PMF program.}
+of the color used in EPA-PMF program. In case of using the \code{by}
+parameter, the length of the \code{bar.color} should ideally match the length of
+the unique items in the \code{by} column.}
 
 \item{bar.width}{The width of the bar, expressed as a value between [0,1].}
 
@@ -166,6 +182,10 @@ this variable to \sQuote{DISP_avg}, \sQuote{BS_median} or
 \item{facet.parse.label}{Should the labels be parsed using the
 \code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
 will use subscript on the labels shown in the facet.}
+
+\item{rm.facets}{Should the facets labels be removed? When each factor has
+its own color, they will show up in the legend. This will make the facets
+labels redundant. Default is \code{FALSE}.}
 
 \item{...}{Other parameters, for example renamed parameters.}
 }
