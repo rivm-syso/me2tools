@@ -12,7 +12,8 @@ me2_read_dat(
   tidy_output = FALSE,
   rescale_unity = FALSE,
   threshold_unity = 0.01,
-  tz = "Etc/GMT-1"
+  tz = "Etc/GMT-1",
+  debug = FALSE
 )
 }
 \arguments{
@@ -50,6 +51,9 @@ a warning message. Default: 0.01}
 
 \item{tz}{Parameter to control the time zone when parameter \dQuote{dates} is
 not used. Default: 'Etc/GMT-1'}
+
+\item{debug}{Provides more information about the status of the function.
+Default: FALSE.}
 }
 \value{
 \code{me2_read_dat} returns an object of class ``me2tools''.

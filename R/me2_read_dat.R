@@ -47,6 +47,8 @@
 #'   a warning message. Default: 0.01
 #' @param tz Parameter to control the time zone when parameter \dQuote{dates} is
 #'   not used. Default: 'Etc/GMT-1'
+#' @param debug Provides more information about the status of the function.
+#'   Default: FALSE.
 #'
 #' @return \code{me2_read_dat} returns an object of class ``me2tools''.
 #'   The object includes five main components: \code{call}, the command used
@@ -109,7 +111,8 @@ me2_read_dat <- function (me2_dat_file,
                           tidy_output = FALSE,
                           rescale_unity = FALSE,
                           threshold_unity = 0.01,
-                          tz = "Etc/GMT-1"
+                          tz = "Etc/GMT-1",
+                          debug = FALSE
 ) {
 
 
@@ -226,6 +229,11 @@ me2_read_dat <- function (me2_dat_file,
       F_matrix <- tmp_f_tibble
     } else {
       F_matrix <- dplyr::bind_rows(F_matrix, tmp_f_tibble)
+    }
+    if (debug) {
+      cli::cli_alert_info(paste0(format(Sys.time(), format = "%F %T %Z"),
+                                 ": Finished processing F-matrix run ",
+                                 run_number))
     }
     run_number <- run_number+1
     # update progress bar
@@ -384,6 +392,11 @@ me2_read_dat <- function (me2_dat_file,
       G_matrix <- tmp_g_tibble
     } else {
       G_matrix <- dplyr::bind_rows(G_matrix, tmp_g_tibble)
+    }
+    if (debug) {
+      cli::cli_alert_info(paste0(format(Sys.time(), format = "%F %T %Z"),
+                                 ": Finished processing G-matrix run ",
+                                 run_number))
     }
     run_number <- run_number+1
     # update progress bar
