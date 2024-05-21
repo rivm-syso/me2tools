@@ -6,7 +6,7 @@
 #' @param mydata A data frame of hourly (or higher temporal resolution data).
 #'   Must include a \code{date} field and at least one variable (factor
 #'   contributions) to plot.
-#' @param factor Name of variable to plot, typically a factor contribution 
+#' @param factor Name of variable to plot, typically a factor contribution
 #'   from the G-matrix.
 #' @param type \code{type} determines how the data are split i.e. conditioned,
 #'   and then plotted. The \dQuote{default} will produce a single plot using the
@@ -24,6 +24,10 @@
 #' @param group This sets the grouping variable to be used. For example, if a
 #'   data frame had a column \code{year} setting \code{group = "year"} will
 #'   plot the years as individual box plots.
+#' @param by Grouping variable that can be used to plot multiple analysis into a
+#'   single plot. Useful for exploring the difference in profiles between
+#'   regular analysis and a dispersion normalised analysis. Works best if
+#'   factor names are the same for the analysis.  
 #' @param facet This sets the faceting variable to be used. For example, if a
 #'   data frame had a column \code{site} setting \code{facet = "site"} will
 #'   plot all sites individually in their own panels.
@@ -43,29 +47,44 @@
 #'   \dQuote{default}, \dQuote{increment}, \dQuote{heat}, \dQuote{jet} and
 #'   \code{RColorBrewer} colours --- see the \code{openair} \code{openColours}
 #'   function for more details. For user defined the user can supply a list of
-#'   colour names recognised by R (type \code{colours()} to see the full list).
+#'   colour names recognized by R (type \code{colours()} to see the full list).
 #'   An example would be \code{cols = c("yellow", "green", "blue")}
 #' @param whisk.lim User defined limits for the whiskers. Default is
 #'   \code{NULL}, in this case the whiskers calculated by \dQuote{geom_boxplot}
-#'   are used. In other cases a vector should be provided with two values
+#'   are used (min/max). In other cases a vector should be provided with two values
 #'   between 0..1 denoting the percentile (i.e., \code{c(0.05, 0.95)} will use
 #'   the P05 and P95 for the whisker limits).
 #' @param point.size The size of the points. Defaults to 1.25.
 #' @param line.size The size of the lines. Defaults to 1.
-#' @param ribbon.alpha The transparency of the ribbons. Defaults to 
-#'   \code{c(0.25, 0.25)}, meaning that the min/max and IQR ribbons both have a 
-#'   transparency of 0.25. Since the IQR is on top the min/max, the 
+#' @param ribbon.minmax.show Show the ribbon with the min/max values (or 
+#'   defined percentiles (see whisk.lim)). Defaults to \code{TRUE}
+#' @param ribbon.iqr.show Show the ribbon with the interquartile range (IQR). 
+#'   Defaults to \code{TRUE}
+#' @param ribbon.alpha The transparency of the ribbons. Defaults to
+#'   \code{c(0.25, 0.25)}, meaning that the min/max and IQR ribbons both have a
+#'   transparency of 0.25. Since the IQR is on top the min/max, the
 #'   transparency of the IQR is effectively 0.50 in this case.
 #' @param box.alpha The transparency of the IQR box in the box-whisker plot.
-#'   The default setting is 0.5. 
+#'   The default setting is 0.5.
+#' @param box.width The width of the box. Default is set at \code{0.9}, but
+#'   with a "group" variable some overlapping can occur. Changing this to a
+#'   lower value will provide more room between the boxes within a group.
 #' @param facet.col The number of columns for the faceted plot. If the number of
 #'   columns is set to 1, the faceting will be in rows only. Defaults to 2.
-#' @param facet.scales Should scales be fixed ("fixed", the default), free 
-#'   ("free"), or free in one dimension ("free_x", "free_y")? See also 
+#' @param facet.scales Should scales be fixed ("fixed", the default), free
+#'   ("free"), or free in one dimension ("free_x", "free_y")? See also
 #'   ggplot2::facet_wrap or ggplot2::facet_grid.
-#' @param facet.parse.label Should the labels be parsed using the 
-#'   \code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
-#'   will use subscript on the labels shown in the facet.
+#' @param facet.parse.label Should the labels be parsed as an expression? 
+#'   If set to \code{TRUE} then \code{"SO[2]"} will use subscript on the labels 
+#'   shown in the facet.
+#' @param legend.justification The legend is by default placed on top, and this
+#'   parameter allows for changing the justification to \dQuote{left}, 
+#'   \dQuote{right} and \dQuote{center}. The default is \dQuote{right}.
+#' @param legend.parse.label Should the labels be parsed as an expression? 
+#'   If set to \code{TRUE} then \code{"SO[2]"} will use subscript on the labels 
+#'   shown in the legend. 
+#' @param show.legend A logical argument evaluating to TRUE or FALSE indicating
+#'   whether the legend should be shown by default. Default: FALSE.
 #' @param ... Other parameters passed onto \code{cutData}. For example, in the
 #'   case of \code{cutData} the option \code{hemisphere = "southern"}.
 #'
@@ -81,7 +100,7 @@
 #'   including \code{print}, \code{plot} and \code{summary}.
 #'
 #' @seealso \code{\link[ggplot2]{geom_boxplot}}, \code{\link[openair]{cutData}}
-#'   
+#'
 #' @importFrom grDevices adjustcolor
 #' @import cli
 #' @import openair
@@ -90,11 +109,13 @@
 #' @import dplyr
 #' @importFrom stats reformulate
 #' @importFrom stats quantile
-#' 
+#' @importFrom scales label_parse
+#'
 temporal_contributions <- function(mydata,
                                    factor = NA,
                                    type = "default",
                                    group = NA,
+                                   by = NA,
                                    facet = NA,
                                    na.rm = TRUE,
                                    xlab = NA,
@@ -106,104 +127,170 @@ temporal_contributions <- function(mydata,
                                    whisk.lim = NULL,
                                    point.size = 1.25,
                                    line.size = 1,
+                                   ribbon.minmax.show = TRUE,
+                                   ribbon.iqr.show = TRUE,
                                    ribbon.alpha = c(0.25, 0.25),
                                    box.alpha = 0.5,
+                                   box.width = 0.9,
                                    facet.col = 2,
                                    facet.scales = "fixed",
                                    facet.parse.label = FALSE,
+                                   legend.justification = "right",
+                                   legend.parse.label = FALSE,
+                                   show.legend = FALSE,
                                    ...) {
-
   ## extra.args setup
   extra.args <- list(...)
-
+  
+  #################################################################
+  ##                      Input data checks                      ##
+  #################################################################
   # check if type is length 1
   if (length(type) > 1) {
-    cli::cli_abort(c(
-      "Must have only one type:",
-      "i" = "There {?is/are} {length(type)} type{?s}.",
-      "x" = "You've tried to add multiple elements for {.var type}. Do you want
+    cli::cli_abort(
+      c(
+        "Must have only one type:",
+        "i" = "There {?is/are} {length(type)} type{?s}.",
+        "x" = "You've tried to add multiple elements for {.var type}. Do you want
         to apply a facet or group variable instead?"
-    ))
+      )
+    )
   }
-
-  if((!identical(facet, NA)) & (!identical(group, NA))) {
-    cli::cli_abort(c(
-      "Cannot have both facets and grouping:",
-      "i" = "Currently this function cannot handle facet and grouping variables.",
-      "x" = "Both {.var facet} and {.var group} are provided."
-    ))
+  
+  # check if facet column exists
+  if (!identical(facet, NA)) {
+    if (!(facet %in% names(mydata))) {
+      cli::cli_abort(
+        c(
+          "Must have a valid {.var facet}:",
+          "i" = "{.var facet} does not exists in the data.",
+          "x" = "Did you forget to add the column `{facet}` to the data?"
+        )
+      )
+    }
   }
-
+  
+  # check if group column exists
+  if (!identical(group, NA)) {
+    if (!(group %in% names(mydata))) {
+      cli::cli_abort(
+        c(
+          "Must have a valid {.var group}:",
+          "i" = "{.var group} does not exists in the data.",
+          "x" = "Did you forget to add the column `{group}` to the data?"
+        )
+      )
+    }
+  }
+  
+  # check if by column exists
+  if (!identical(by, NA)) {
+    if (!(by %in% names(mydata))) {
+      cli::cli_abort(
+        c(
+          "Must have a valid {.var by}:",
+          "i" = "{.var by} does not exists in the data.",
+          "x" = "Did you forget to add the column `{by}` to the data?"
+        )
+      )
+    }
+  }
+  
+  # check if there is a group and a by (double grouping...)
+  if ((!identical(group, NA)) & (!identical(by, NA))) {
+    cli::cli_abort(
+      c(
+        "Cannot have both by and grouping:",
+        "i" = "Currently this function cannot handle by and grouping variables.",
+        "x" = "Both {.var by} and {.var group} are provided. Do you want to use the {.var facet} variable?"
+      )
+    )
+  }
+  # check if there is a facet and a group (double grouping...)
+  if ((!identical(facet, NA)) & (!identical(group, NA))) {
+    cli::cli_abort(
+      c(
+        "Cannot have both facets and grouping:",
+        "i" = "Currently this function cannot handle facet and grouping variables.",
+        "x" = "Both {.var facet} and {.var group} are provided. Do you want to use the {.var by} variable?"
+      )
+    )
+  }
+  
   # check if type exists in data if not part of cutData
-  type_cutData = c("default",
-                   "year",
-                   "hour",
-                   "month",
-                   "season",
-                   "weekday",
-                   "weekend",
-                   "monthyear",
-                   "daylight",
-                   "dst")
-
+  type_cutData = c(
+    "default",
+    "year",
+    "hour",
+    "month",
+    "season",
+    "weekday",
+    "weekend",
+    "monthyear",
+    "daylight",
+    "dst"
+  )
+  
   if (!(type %in% type_cutData)) {
     # check if in dataframe
     if (!(type %in% names(mydata))) {
-      cli_abort(c(
-        "Must have a valid {.var type}:",
-        "i" = "{.var type} does not exists in 'cutData' or in the data.",
-        "x" = "Did you forget to add the column `{type}` to the data?"
-      ))
+      cli_abort(
+        c(
+          "Must have a valid {.var type}:",
+          "i" = "{.var type} does not exists in 'cutData' or in the data.",
+          "x" = "Did you forget to add the column `{type}` to the data?"
+        )
+      )
+    }
+  }
+  
+  if (length(whisk.lim) > 0) {
+    if (length(whisk.lim) == 1) {
+      cli::cli_abort(
+        c("Must have two values:",
+          "i" = "There {?is/are} {length(whisk.lim)} whisker limit{?s}.",
+          "x" = "Two values for {.var whisk.lim} should be provided.")
+      )
+    }
+    if (length(whisk.lim) > 2) {
+      cli::cli_abort(
+        c(
+          "Must have only two values:",
+          "i" = "There {?is/are} {length(whisk.lim)} whisker limit{?s}.",
+          "x" = "You've tried to provide more that two values for {.var whisk.lim}."
+        )
+      )
+    }
+    if (max(whisk.lim) > 1) {
+      cli::cli_abort(
+        c(
+          "Maximum cannot be larger than 1:",
+          "i" = "The maximum for {.var whisk.lim} is {max(whisk.lim)}.",
+          "x" = "Values for {.var whisk.lim} should be between [0..1]."
+        )
+      )
+    }
+    if (max(whisk.lim) < 0) {
+      cli::cli_abort(
+        c(
+          "Minimum cannot be smaller than 0:",
+          "i" = "The minimum for {.var whisk.lim} is {min(whisk.lim)}.",
+          "x" = "Values for {.var whisk.lim} should be between [0..1]."
+        )
+      )
     }
   }
 
-  if(length(whisk.lim) > 0) {
-    if(length(whisk.lim) == 1) {
-      cli::cli_abort(c(
-        "Must have two values:",
-        "i" = "There {?is/are} {length(whisk.lim)} whisker limit{?s}.",
-        "x" = "Two values for {.var whisk.lim} should be provided."
-      ))
-    }
-    if(length(whisk.lim) > 2) {
-      cli::cli_abort(c(
-        "Must have only two values:",
-        "i" = "There {?is/are} {length(whisk.lim)} whisker limit{?s}.",
-        "x" = "You've tried to provide more that two values for {.var whisk.lim}."
-      ))
-    }
-    if(max(whisk.lim) > 1) {
-      cli::cli_abort(c(
-        "Maximum cannot be larger than 1:",
-        "i" = "The maximum for {.var whisk.lim} is {max(whisk.lim)}.",
-        "x" = "Values for {.var whisk.lim} should be between [0..1]."
-      ))
-    }
-    if(max(whisk.lim) < 0) {
-      cli::cli_abort(c(
-        "Minimum cannot be smaller than 0:",
-        "i" = "The minimum for {.var whisk.lim} is {min(whisk.lim)}.",
-        "x" = "Values for {.var whisk.lim} should be between [0..1]."
-      ))
-    }
-  }
-
-  # check if we have a faceting variable
+  # get some default settings based on user input
   if (identical(facet, NA)) {
     if (identical(group, NA)) {
       vars <- type
     } else {
       vars <- c(group, type)
+      ngroup <- length(unique(mydata[[group]]))
     }
     nfacet <- 1
   } else {
-    if (!(facet %in% names(mydata))) {
-      cli::cli_abort(c(
-        "Must have a valid {.var facet}:",
-        "i" = "{.var facet} does not exists in the data.",
-        "x" = "Did you forget to add the column `{facet}` to the data?"
-      ))
-    }
     if (identical(group, NA)) {
       vars <- c(facet, type)
     } else {
@@ -211,14 +298,66 @@ temporal_contributions <- function(mydata,
     }
     nfacet <- length(unique(mydata[[facet]])) ## number of facets
   }
-
+  
   # create the colors
-  myColors <- openair::openColours(cols, nfacet)
-  boxplotColor <- grDevices::adjustcolor(myColors, alpha.f = box.alpha)
-
+  if (identical(by, NA)) {
+    ############################################################################
+    ## Default coloring, no grouping
+    ############################################################################
+    if (identical(facet, NA)) {
+      if (identical(group, NA)) {
+        myColors <- tibble("f_by" = "concentration",
+                           "color" = openair::openColours(cols, nfacet))
+      } else {
+        if ("factor" %in% class(mydata[[group]])) {
+          myColors <- tibble("f_by" = levels(mydata[[group]]),
+                             "color" = openair::openColours(cols, ngroup))
+        } else {
+          myColors <- tibble("f_by" = unique(mydata[[group]]),
+                             "color" = openair::openColours(cols, ngroup))
+        }
+      }
+    } else {
+      if ("factor" %in% class(mydata[[facet]])) {
+        myColors <- tibble("f_by" = levels(mydata[[facet]]),
+                           "color" = openair::openColours(cols, nfacet))
+      } else {
+        myColors <- tibble("f_by" = unique(mydata[[facet]]),
+                           "color" = openair::openColours(cols, nfacet))
+      }
+    }
+  } else {
+    ############################################################################
+    ## Apply group coloring
+    ############################################################################
+    
+    if ("factor" %in% class(mydata[[by]])) {
+      myColors <- tibble("f_by" = levels(mydata[[by]]),
+                         "color" = openair::openColours(cols,
+                                                        length(levels(mydata[[by]]))))
+    } else {
+      myColors <- tibble("f_by" = unique(mydata[[by]]),
+                         "color" = openair::openColours(cols,
+                                                        length(unique(mydata[[by]]))))
+    }
+  }
+  
+  # boxplot colors:
+  myColors <- myColors %>%
+    mutate(boxplotColor = grDevices::adjustcolor(color, alpha.f = box.alpha))
+  
+  myColors.vector <- myColors %>%
+    pull(color, f_by) # first = values, second = names
+  
+  boxplotColor.vector <- myColors %>%
+    pull(boxplotColor, f_by) # first = values, second = names
+  
+  #myColors <- openair::openColours(cols, nfacet)
+  #boxplotColor <- grDevices::adjustcolor(myColors, alpha.f = box.alpha)
+  
   # cut the data
   mydata <- openair::cutData(mydata, type = vars)
-
+  
   # Here is where we calculate the data for all the plots using the geom_boxplot
   # routine.
   # different plot routines for none faceting and faceting
@@ -226,17 +365,18 @@ temporal_contributions <- function(mydata,
     # use geom_boxplot to create the default plot and grab the data.
     # we first create a white boxplot
     if (identical(group, NA)) {
-      box.plot <- ggplot2::ggplot(
-        mydata,
-        ggplot2::aes(x = !!sym(type), y = !!sym(factor))
-      ) +
+      #################################################################
+      ##                    No facet and no group                    ##
+      #################################################################
+      box.plot <- ggplot2::ggplot(mydata,
+                                  ggplot2::aes(x = !!sym(type), y = !!sym(factor))) +
         ggplot2::geom_boxplot(outlier.shape = NA, na.rm = TRUE) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "none")
       
       # then we grab the data
       box.data <- ggplot2::layer_data(box.plot)
-  
+      
       # since we have type variable, we need to apply this as well.
       # The output data has now a GROUP variable that we can use.
       box.data <- box.data %>%
@@ -249,109 +389,201 @@ temporal_contributions <- function(mydata,
         # not a factor
         levels(box.data[[type]]) <- sort(unique(mydata[[type]]))
       }
-  
+      
       ############################################
       # see if we need to replace the whiskers
       ############################################
-      if(length(whisk.lim) == 2) {
+      if (length(whisk.lim) == 2) {
         additional.data <- mydata %>%
-          dplyr::select(!!vars, !!factor) %>%
+          dplyr::select(!!vars,!!factor) %>%
           dplyr::group_by(dplyr::across(all_of(vars))) %>%
           dplyr::summarise(
-            n_wllimit = stats::quantile(!!sym(factor), probs = min(whisk.lim), na.rm = na.rm),
-            n_wulimit = stats::quantile(!!sym(factor), probs = max(whisk.lim), na.rm = na.rm),
+            n_wllimit = stats::quantile(
+              !!sym(factor),
+              probs = min(whisk.lim),
+              na.rm = na.rm
+            ),
+            n_wulimit = stats::quantile(
+              !!sym(factor),
+              probs = max(whisk.lim),
+              na.rm = na.rm
+            ),
             .groups = "drop_last"
           )
         # combine with the boxplot data
         box.data <- box.data %>%
           left_join(., additional.data, by = vars) %>%
-          rename(ymin_old = ymin,
-                 ymax_old = ymax,
-                 ymin = n_wllimit,
-                 ymax = n_wulimit)
-  
-        cli::cli_warn(c(
-          "The limits of the whiskers have been changed by the user.",
-          "i" = "Whisker limits are set to {whisk.lim}, which are probabilities for quantiles."
-        ))
+          rename(
+            ymin_old = ymin,
+            ymax_old = ymax,
+            ymin = n_wllimit,
+            ymax = n_wulimit
+          )
+        
+        cli::cli_warn(
+          c(
+            "The limits of the whiskers have been changed by the user.",
+            "i" = "Whisker limits are set to {whisk.lim}, which are probabilities for quantiles."
+          )
+        )
       }
-  
+      
       # now we can construct the plots.
-      default.plot <- ggplot2::ggplot(
-        data = box.data,
-        ggplot2::aes(x = !!sym(type), y = middle, group = 1)
-      ) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymin = ymin, ymax = ymax), fill = myColors, colour = NA, alpha = ribbon.alpha[[1]]) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper), fill = myColors, colour = NA, alpha = ribbon.alpha[[2]]) +
-        ggplot2::geom_line(colour = myColors, size = line.size) +
-        ggplot2::geom_point(colour = myColors, size = point.size) +
-        ggplot2::theme_bw() +
-        ggplot2::theme(legend.position = "none")
-  
+      default.plot <- ggplot2::ggplot(data = box.data,
+                                      ggplot2::aes(
+                                        x = !!sym(type),
+                                        y = middle,
+                                        group = 1
+                                      )) 
+      
+      if (ribbon.minmax.show) {
+        default.plot <- default.plot +
+          ggplot2::geom_ribbon(
+            ggplot2::aes(ymin = ymin,
+                         ymax = ymax,
+                         fill = "concentration"),
+            colour = NA,
+            alpha = ribbon.alpha[[1]]
+          )
+      }
+      
+      if (ribbon.iqr.show) {
+        default.plot <- default.plot +
+          ggplot2::geom_ribbon(
+            ggplot2::aes(ymin = lower,
+                         ymax = upper,
+                         fill = "concentration"),
+            colour = NA,
+            alpha = ribbon.alpha[[2]]
+          )
+      }
+      
+      default.plot <- default.plot +
+        ggplot2::geom_line(ggplot2::aes(color = "concentration"),
+                           linewidth = line.size) +
+        ggplot2::geom_point(ggplot2::aes(color = "concentration"),
+                            size = point.size) +
+        ggplot2::scale_fill_manual(values = myColors.vector) +
+        ggplot2::scale_color_manual(values = myColors.vector) +
+        ggplot2::theme_bw()
+      
       # make sure
       #test.data <- mydata %>%
       #  dplyr::select(!!vars, !!factor)
       #default.plot + geom_boxplot(mapping = ggplot2::aes(x = !!sym(type), y = !!sym(factor), group = !!sym(type), alpha = 0.2), outlier.shape = NA, data = test.data)
-  
+      
       # boxplot (replacing intial boxplot used to get data)
       box.plot <- ggplot2::ggplot(
         box.data,
-        ggplot2::aes(x = !!sym(type),
-            ymin = ymin,
-            lower = lower,
-            middle = middle,
-            upper = upper,
-            ymax = ymax)) +
-        geom_boxplot(stat = "identity", color = "white", outlier.shape = NA, na.rm = TRUE) +
-        ggplot2::theme_bw() +
-        ggplot2::theme(legend.position = "none")
-  
+        ggplot2::aes(
+          x = !!sym(type),
+          ymin = ymin,
+          lower = lower,
+          middle = middle,
+          upper = upper,
+          ymax = ymax
+        )
+      ) +
+        ggplot2::geom_boxplot(
+          stat = "identity",
+          color = "white",
+          outlier.shape = NA,
+          na.rm = TRUE
+        ) +
+        ggplot2::theme_bw()
+      
       # create the colors
-      iqrColor <- adjustcolor(myColors, alpha.f = box.alpha)
+      iqrColor <- adjustcolor(myColors.vector,
+                              alpha.f = box.alpha)
       # add colored segments to plot
       box.plot <- box.plot +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = xmin, y = lower, xend = xmax, yend = lower),
+          mapping = ggplot2::aes(
+            x = xmin,
+            y = lower,
+            xend = xmax,
+            yend = lower
+          ),
           color = iqrColor
         ) +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = xmin, y = lower, xend = xmin, yend = upper),
+          mapping = ggplot2::aes(
+            x = xmin,
+            y = lower,
+            xend = xmin,
+            yend = upper
+          ),
           color = iqrColor
         ) +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = xmax, y = lower, xend = xmax, yend = upper),
+          mapping = ggplot2::aes(
+            x = xmax,
+            y = lower,
+            xend = xmax,
+            yend = upper
+          ),
           color = iqrColor
         ) +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = xmin, y = upper, xend = xmax, yend = upper),
+          mapping = ggplot2::aes(
+            x = xmin,
+            y = upper,
+            xend = xmax,
+            yend = upper
+          ),
           color = iqrColor
         ) +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = xmin, y = middle, xend = xmax, yend = middle),
-          color = myColors, size = 1.2
+          mapping = ggplot2::aes(
+            x = xmin,
+            y = middle,
+            xend = xmax,
+            yend = middle
+          ),
+          color = myColors.vector,
+          size = 1.2
         ) +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = x, y = upper, xend = x, yend = ymax),
+          mapping = ggplot2::aes(
+            x = x,
+            y = upper,
+            xend = x,
+            yend = ymax
+          ),
           color = "black"
         ) +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = x, y = ymin, xend = x, yend = lower),
+          mapping = ggplot2::aes(
+            x = x,
+            y = ymin,
+            xend = x,
+            yend = lower
+          ),
           color = "black"
         )
-    } else { # check grouping
+    } else {
+      ##################################################################
+      ##                 No facet but does have group                 ##
+      ##################################################################
+      # check grouping
       # we have to apply grouping here.
-      box.plot <- ggplot2::ggplot(
-        mydata,
-        ggplot2::aes(x = !!sym(type), y = !!sym(factor), fill = !!sym(group))
-      ) +
-        ggplot2::geom_boxplot(outlier.shape = NA, na.rm = TRUE) +
+      box.plot <- ggplot2::ggplot(mydata,
+                                  ggplot2::aes(
+                                    x = !!sym(type),
+                                    y = !!sym(factor),
+                                    fill = !!sym(group)
+                                  )) +
+        ggplot2::geom_boxplot(outlier.shape = NA,
+                              na.rm = TRUE,
+                              position = position_dodge(width = 0.9),
+                              width = box.width) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "none")
       
@@ -361,16 +593,15 @@ temporal_contributions <- function(mydata,
       # since we have type variable, we need to apply this as well.
       # The output data has now a GROUP variable that we can use.
       box.data <- box.data %>%
-        mutate(!!sym(type) := factor(group),
-               !!sym(group) := factor(group))
+        mutate(!!sym(type) := factor(group),!!sym(group) := factor(group))
       # in order to make this work, we need to set the correct group names
       # to the panel. Since we have grouped data we need to find the number
       # of items for each type.
-
-      type_items <- mydata %>% 
-        select(!!sym(type), !!sym(group)) %>% 
-        unique() %>% 
-        group_by(!!sym(type)) %>% 
+      
+      type_items <- mydata %>%
+        select(!!sym(type),!!sym(group)) %>%
+        unique() %>%
+        group_by(!!sym(type)) %>%
         tally()
       
       types <- c() # emtpy to start with
@@ -383,23 +614,24 @@ temporal_contributions <- function(mydata,
         # not a factor
         group_levels <- sort(unique(mydata[[group]]))
       }
-
+      
       for (type_level in levels(mydata[[type]])) {
-        group_count <- as.numeric(type_items %>% 
-                                    filter(!!sym(type) == type_level) %>% 
+        group_count <- as.numeric(type_items %>%
+                                    filter(!!sym(type) == type_level) %>%
                                     select(n))
         types <- c(types, replicate(group_count, type_level))
         # add groups
-        for (item in seq(1,group_count,1)) {
+        for (item in seq(1, group_count, 1)) {
           groups <- c(groups, group_levels[item])
         }
       }
-
+      
       if ("factor" %in% class(mydata[[type]])) {
         box.data[[type]] <- factor(types, levels(mydata[[type]]))
       } else {
         # not a factor
-        box.data[[type]] <- factor(types, sort(unique(mydata[[type]])))
+        box.data[[type]] <-
+          factor(types, sort(unique(mydata[[type]])))
       }
       if ("factor" %in% class(mydata[[group]])) {
         box.data[[group]] <- factor(groups, levels(mydata[[group]]))
@@ -407,35 +639,45 @@ temporal_contributions <- function(mydata,
         # not a factor
         box.data[[groups]] <- factor(groups, sort(unique(mydata[[groups]])))
       }
-
+      
       ############################################
       # see if we need to replace the whiskers
       ############################################
-      if(length(whisk.lim) == 2) {
+      if (length(whisk.lim) == 2) {
         additional.data <- mydata %>%
-          dplyr::select(!!vars, !!factor) %>%
+          dplyr::select(!!vars,!!factor) %>%
           dplyr::group_by(dplyr::across(all_of(vars))) %>%
           dplyr::summarise(
-            n_wllimit = stats::quantile(!!sym(factor), probs = min(whisk.lim), na.rm = na.rm),
-            n_wulimit = stats::quantile(!!sym(factor), probs = max(whisk.lim), na.rm = na.rm),
+            n_wllimit = stats::quantile(
+              !!sym(factor),
+              probs = min(whisk.lim),
+              na.rm = na.rm
+            ),
+            n_wulimit = stats::quantile(
+              !!sym(factor),
+              probs = max(whisk.lim),
+              na.rm = na.rm
+            ),
             .groups = "drop_last"
           )
         # combine with the boxplot data
         box.data <- box.data %>%
           left_join(., additional.data, by = vars) %>%
-          rename(ymin_old = ymin,
-                 ymax_old = ymax,
-                 ymin = n_wllimit,
-                 ymax = n_wulimit)
+          rename(
+            ymin_old = ymin,
+            ymax_old = ymax,
+            ymin = n_wllimit,
+            ymax = n_wulimit
+          )
         
-        cli::cli_warn(c(
-          "The limits of the whiskers have been changed by the user.",
-          "i" = "Whisker limits are set to {whisk.lim}, which are probabilities for quantiles."
-        ))
+        cli::cli_warn(
+          c(
+            "The limits of the whiskers have been changed by the user.",
+            "i" = "Whisker limits are set to {whisk.lim}, which are probabilities for quantiles."
+          )
+        )
       }
-      # Change MyColors to the default fill colors
-      myColors <- box.data$fill
-      
+
       # now we can construct the plots.
       #default.plot <- ggplot2::ggplot(
       #  data = box.data,
@@ -447,160 +689,381 @@ temporal_contributions <- function(mydata,
       #  ggplot2::geom_point(ggplot2::aes(group = !!sym(group)),colour = myColors, size = point.size) +
       #  ggplot2::theme_bw() +
       #  ggplot2::theme(legend.position = "none")
-      default.plot = NULL
-      
-      # Change MyColors to the default fill colors
-      myColors <- box.data$fill
+      default.plot = ggplot2::ggplot() +
+        ggplot2::theme_void() +
+        ggplot2::geom_text(aes(0,0,label='N/A')) +
+        ggplot2::xlab(NULL)
       
       # boxplot (replacing intial boxplot used to get data)
       box.plot <- ggplot2::ggplot(
         box.data,
-        ggplot2::aes(x = !!sym(type),
-                     ymin = ymin,
-                     lower = lower,
-                     middle = middle,
-                     upper = upper,
-                     ymax = ymax,
-                     fill = !!sym(group))) +
-        geom_boxplot(stat = "identity", color = NA, outlier.shape = NA, na.rm = TRUE) +
-        scale_fill_manual(values = replicate(length(group_levels), NA), 
-                          na.value = NA) +
-        ggplot2::theme_bw() +
-        ggplot2::theme(legend.position = "none")
-
-      # create the colors
-      iqrColor <- adjustcolor(myColors, alpha.f = box.alpha)
+        ggplot2::aes(
+          x = !!sym(type),
+          ymin = ymin,
+          lower = lower,
+          middle = middle,
+          upper = upper,
+          ymax = ymax,
+          fill = !!sym(group)
+        )
+      ) +
+        ggplot2::geom_boxplot(
+          stat = "identity",
+          color = NA,
+          outlier.shape = NA,
+          na.rm = TRUE,
+          position = position_dodge(width = 0.9),
+          width = box.width
+        ) +
+        ggplot2::scale_fill_manual(values = replicate(length(group_levels), NA),
+                          na.value = NA,
+                          guide = "none") +
+        ggplot2::theme_bw()
+      
       # add colored segments to plot
       box.plot <- box.plot +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = xmin, y = lower, xend = xmax, yend = lower, group = !!sym(group)),
-          color = iqrColor
+          mapping = ggplot2::aes(
+            x = xmin,
+            y = lower,
+            xend = xmax,
+            yend = lower,
+            color = !!sym(group),
+            group = !!sym(group)
+          ),
+          key_glyph = draw_key_boxplot
         ) +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = xmin, y = lower, xend = xmin, yend = upper, group = !!sym(group)),
-          color = iqrColor
+          mapping = ggplot2::aes(
+            x = xmin,
+            y = lower,
+            xend = xmin,
+            yend = upper,
+            color = !!sym(group),
+            group = !!sym(group)
+          )
         ) +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = xmax, y = lower, xend = xmax, yend = upper, group = !!sym(group)),
-          color = iqrColor
+          mapping = ggplot2::aes(
+            x = xmax,
+            y = lower,
+            xend = xmax,
+            yend = upper,
+            color = !!sym(group),
+            group = !!sym(group)
+          )
         ) +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = xmin, y = upper, xend = xmax, yend = upper, group = !!sym(group)),
-          color = iqrColor
+          mapping = ggplot2::aes(
+            x = xmin,
+            y = upper,
+            xend = xmax,
+            yend = upper,
+            color = !!sym(group),
+            group = !!sym(group)
+          )
         ) +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = xmin, y = middle, xend = xmax, yend = middle, group = !!sym(group)),
-          color = myColors, size = 1.2
+          mapping = ggplot2::aes(
+            x = xmin,
+            y = middle,
+            xend = xmax,
+            yend = middle,
+            color = !!sym(group),
+            group = !!sym(group)
+          ),
+          size = 1.2
         ) +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = x, y = upper, xend = x, yend = ymax, group = !!sym(group)),
+          mapping = ggplot2::aes(
+            x = x,
+            y = upper,
+            xend = x,
+            yend = ymax,
+            group = !!sym(group)
+          ),
           color = "black"
         ) +
         ggplot2::geom_segment(
           data = box.data,
-          mapping = ggplot2::aes(x = x, y = ymin, xend = x, yend = lower, group = !!sym(group)),
+          mapping = ggplot2::aes(
+            x = x,
+            y = ymin,
+            xend = x,
+            yend = lower,
+            group = !!sym(group)
+          ),
           color = "black"
         )
       
+      # parse legend items or not?
+      if(legend.parse.label) {
+        box.plot <- box.plot +
+          ggplot2::scale_color_manual(values = myColors.vector,
+                                      name = NULL,
+                                      labels = scales::label_parse())
+      } else {
+        box.plot <- box.plot +
+          ggplot2::scale_color_manual(values = myColors.vector,
+                                      name = NULL)
+      }
+      
     } # end grouping
-
+    
     # end
-  } else { # faceted data
-    # we first create a white boxplot
-    box.plot <- ggplot2::ggplot(
-      mydata,
-      ggplot2::aes(x = !!sym(type), y = !!sym(factor))
-    ) +
-      ggplot2::geom_boxplot(color = "black", outlier.shape = NA, na.rm = TRUE) +
-      ggplot2::theme_bw() +
-      ggplot2::theme(legend.position = "none")
+  } else {
+    #################################################################
+    ##                  Facet and possibly a `by`                  ##
+    #################################################################
+    if (identical(by, NA)) {
+      # we first create a white boxplot
+      box.plot <- ggplot2::ggplot(mydata,
+                                  ggplot2::aes(
+                                    x = !!sym(type),
+                                    y = !!sym(factor),
+                                    color = !!sym(facet)
+                                  )) +
+        ggplot2::geom_boxplot(
+          color = "black",
+          outlier.shape = NA,
+          na.rm = TRUE
+        ) +
+        ggplot2::theme_bw() +
+        ggplot2::theme(legend.position = "none")
+    } else {
+      # we first create a white boxplot
+      box.plot <- ggplot2::ggplot(mydata,
+                                  ggplot2::aes(
+                                    x = !!sym(type),
+                                    y = !!sym(factor),
+                                    color = !!sym(by)
+                                  )) +
+        ggplot2::geom_boxplot(outlier.shape = NA, 
+                              na.rm = TRUE,
+                              position = position_dodge(width = 0.9),
+                              width=box.width) +
+        ggplot2::theme_bw() +
+        ggplot2::theme(legend.position = "none")
+    }
     
     # parse facet labels
     if (facet.parse.label) {
-      box.plot <- box.plot+
-        ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col, labeller = label_parsed)
+      box.plot <- box.plot +
+        ggplot2::facet_wrap(stats::reformulate(facet),
+                            ncol = facet.col,
+                            labeller = label_parsed)
     } else {
-      box.plot <- box.plot+
+      box.plot <- box.plot +
         ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col)
     }
-    
-    
 
     # then we grab the data
     box.data <- ggplot2::layer_data(box.plot)
     # since we have group variable, we need to apply this as well.
     # The output data has now a PANEL variable that we can use.
     box.data <- box.data %>%
-      mutate(!!sym(type) := factor(group),
-             !!sym(facet) := factor(PANEL))
+      mutate(!!sym(type) := factor(group),!!sym(facet) := factor(PANEL))
     # in order to make this work, we need to set the correct type and facet names
-    # to the panel.
+    # to the panel. This is different when the by variable is used
     if ("factor" %in% class(mydata[[type]])) {
-      levels(box.data[[type]]) <- levels(mydata[[type]])
+      if (identical(by, NA)) {
+        levels(box.data[[type]]) <- levels(mydata[[type]])
+      } else {
+        # need to duplicate
+        n_by <- length(unique(mydata[[by]]))
+        levels(box.data[[type]]) <-
+          rep(levels(mydata[[type]]), each = n_by)
+      }
     } else {
       # not a factor
-      levels(box.data[[type]]) <- sort(unique(mydata[[type]]))
+      if (identical(by, NA)) {
+        levels(box.data[[type]]) <- sort(unique(mydata[[type]]))
+      } else {
+        # need to duplicate
+        n_by <- length(unique(mydata[[by]]))
+        levels(box.data[[type]]) <-
+          rep(sort(unique(mydata[[type]])), each = n_by)
+      }
     }
+
     if ("factor" %in% class(mydata[[facet]])) {
       levels(box.data[[facet]]) <- levels(mydata[[facet]])
     } else {
       # not a factor
       levels(box.data[[facet]]) <- sort(unique(mydata[[facet]]))
     }
-
+    
+    if (!identical(by, NA)) {
+      # we need to add another column for coloring
+      if ("factor" %in% class(mydata[[by]])) {
+        box.data[[by]] <- factor(rep(levels(mydata[[by]]),
+                                     times = nrow(box.data) / length(levels(mydata[[by]]))),
+                                 levels = levels(mydata[[by]]))
+        
+      } else {
+        box.data[[by]] <- factor(rep(sort(unique(mydata[[by]])),
+                                     times = nrow(box.data) / length(sort(
+                                       unique(mydata[[by]])
+                                     ))),
+                                 levels = sort(unique(mydata[[by]])))
+      }
+      # here we fix the coloring when there is only 1 set
+      # first find if there are facets with only one set.
+      facet_one_item <- mydata %>% 
+        distinct(!!sym(facet), !!sym(by)) %>% 
+        group_by(!!sym(facet)) %>% 
+        tally() %>% 
+        filter(n == 1)
+      
+      # if there are facets with one set, then process them correctly
+      if (nrow(facet_one_item) > 0) {
+        set_one_item <- mydata  %>% 
+          distinct(!!sym(facet), !!sym(by)) %>% 
+          filter(!!sym(facet) == facet_one_item[[facet]])
+        # loop over results and fix the set      
+        for (i_fix in seq(1,nrow(set_one_item),1)) {
+          box.data[[by]][box.data[[facet]]==set_one_item[[facet]][i_fix]] <- set_one_item[[by]][i_fix]  
+        }
+      }
+    }
+    
     ############################################
     # see if we need to replace the whiskers
     ############################################
-    if(length(whisk.lim) == 2) {
+    if (length(whisk.lim) == 2) {
       additional.data <- mydata %>%
-        dplyr::select(!!vars, !!factor) %>%
+        dplyr::select(!!vars,!!factor) %>%
         dplyr::group_by(dplyr::across(all_of(vars))) %>%
         dplyr::summarise(
-          n_wllimit = stats::quantile(!!sym(factor), probs = min(whisk.lim), na.rm = na.rm),
-          n_wulimit = stats::quantile(!!sym(factor), probs = max(whisk.lim), na.rm = na.rm),
+          n_wllimit = stats::quantile(
+            !!sym(factor),
+            probs = min(whisk.lim),
+            na.rm = na.rm
+          ),
+          n_wulimit = stats::quantile(
+            !!sym(factor),
+            probs = max(whisk.lim),
+            na.rm = na.rm
+          ),
           .groups = "drop_last"
         )
       # combine with the boxplot data
       box.data <- box.data %>%
         left_join(., additional.data, by = vars) %>%
-        rename(ymin_old = ymin,
-               ymax_old = ymax,
-               ymin = n_wllimit,
-               ymax = n_wulimit)
-
-      cli::cli_warn(c(
-        "The limits of the whiskers have been changed by the user.",
-        "i" = "Whisker limits are set to {whisk.lim}, which are probabilities for quantiles."
-      ))
+        rename(
+          ymin_old = ymin,
+          ymax_old = ymax,
+          ymin = n_wllimit,
+          ymax = n_wulimit
+        )
+      
+      cli::cli_warn(
+        c(
+          "The limits of the whiskers have been changed by the user.",
+          "i" = "Whisker limits are set to {whisk.lim}, which are probabilities for quantiles."
+        )
+      )
     }
-
-    # now we can construct the plots.
-    default.plot <- ggplot2::ggplot(
-      data = box.data,
-      ggplot2::aes(x = !!sym(type), y = middle, group = 1)
-    ) +
-      ggplot2::scale_fill_manual(values = myColors) +
-      ggplot2::scale_color_manual(values = myColors) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = ymin, ymax = ymax), alpha = ribbon.alpha[[1]]) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper), alpha = ribbon.alpha[[2]]) +
-      ggplot2::geom_line(ggplot2::aes(colour = !!sym(facet)), size = line.size) +
-      ggplot2::geom_point(ggplot2::aes(colour = !!sym(facet)), size = point.size) +
-      ggplot2::theme_bw() +
-      ggplot2::theme(legend.position = "none") +
-      ggplot2::aes(fill = !!sym(facet))
-
+    if (identical(by, NA)) {
+      # now we can construct the plots.
+      default.plot <- ggplot2::ggplot(data = box.data,
+                                      ggplot2::aes(
+                                        x = !!sym(type),
+                                        y = middle,
+                                        group = 1
+                                      ))
+      if (ribbon.minmax.show) {
+        default.plot <- default.plot +
+          ggplot2::geom_ribbon(ggplot2::aes(
+            ymin = ymin,
+            ymax = ymax,
+            fill = !!sym(facet)),
+            alpha = ribbon.alpha[[1]])
+      }
+      if (ribbon.iqr.show) {
+        default.plot <- default.plot +
+          ggplot2::geom_ribbon(ggplot2::aes(
+            ymin = lower,
+            ymax = upper,
+            fill = !!sym(facet)
+          ),
+          alpha = ribbon.alpha[[2]])
+      }
+      
+      default.plot <- default.plot +
+        ggplot2::geom_line(ggplot2::aes(color = !!sym(facet)),
+                           size = line.size) +
+        ggplot2::geom_point(ggplot2::aes(color = !!sym(facet)),
+                            size = point.size) +
+        ggplot2::scale_fill_manual(values = myColors.vector) +
+        ggplot2::scale_color_manual(values = myColors.vector) +
+        ggplot2::theme_bw() 
+    } else {
+      default.plot <- ggplot2::ggplot(data = box.data,
+                                      ggplot2::aes(
+                                        x = !!sym(type),
+                                        y = middle,
+                                        group = !!sym(by)
+                                      ))
+      if (ribbon.minmax.show) {
+        default.plot <- default.plot +
+          ggplot2::geom_ribbon(ggplot2::aes(
+            ymin = ymin,
+            ymax = ymax,
+            fill = !!sym(by)
+          ),
+          alpha = ribbon.alpha[[1]])
+      }
+      if (ribbon.iqr.show) {
+        default.plot <- default.plot +
+          ggplot2::geom_ribbon(ggplot2::aes(
+            ymin = lower,
+            ymax = upper,
+            fill = !!sym(by)
+          ),
+          alpha = ribbon.alpha[[2]])
+      }
+      
+      default.plot <- default.plot +
+        ggplot2::geom_line(ggplot2::aes(color = !!sym(by)),
+                           linewidth = line.size) +
+        ggplot2::geom_point(ggplot2::aes(color = !!sym(by)),
+                            size = point.size) +
+        ggplot2::theme_bw()
+      
+      if(legend.parse.label) {
+        default.plot <- default.plot +
+          ggplot2::scale_fill_manual(values = myColors.vector,
+                                      name = NULL,
+                                      labels = scales::label_parse()) +
+          ggplot2::scale_color_manual(values = myColors.vector,
+                                      name = NULL,
+                                      labels = scales::label_parse())
+      } else {
+        default.plot <- default.plot +
+          ggplot2::scale_fill_manual(values = myColors.vector,
+                                      name = NULL) +
+          ggplot2::scale_color_manual(values = myColors.vector,
+                                      name = NULL)
+      }
+    }
+    
     # apply wrapping
     if (facet.col == 1) {
       # parse facet labels
       if (facet.parse.label) {
         default.plot <- default.plot +
-          ggplot2::facet_grid(rows = vars(!!sym(facet)), scales = facet.scales, labeller = label_parsed)
+          ggplot2::facet_grid(
+            rows = vars(!!sym(facet)),
+            scales = facet.scales,
+            labeller = label_parsed
+          )
       } else {
         default.plot <- default.plot +
           ggplot2::facet_grid(rows = vars(!!sym(facet)), scales = facet.scales)
@@ -609,34 +1072,74 @@ temporal_contributions <- function(mydata,
       # parse facet labels
       if (facet.parse.label) {
         default.plot <- default.plot +
-          ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col, , scales = facet.scales, labeller = label_parsed)
+          ggplot2::facet_wrap(
+            stats::reformulate(facet),
+            ncol = facet.col,
+            scales = facet.scales,
+            labeller = label_parsed
+          )
       } else {
         default.plot <- default.plot +
-          ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col, , scales = facet.scales)
+          ggplot2::facet_wrap(stats::reformulate(facet),
+                              ncol = facet.col,
+                              scales = facet.scales)
       }
     }
     
     # add boxplot
     # we first create a white boxplot
-    box.plot <- ggplot2::ggplot(
-      box.data,
-      ggplot2::aes(x = !!sym(type),
-                   ymin = ymin,
-                   lower = lower,
-                   middle = middle,
-                   upper = upper,
-                   ymax = ymax,
-                   group = group)) +
-      geom_boxplot(stat = "identity", color = NA) +
-      ggplot2::theme_bw() +
-      ggplot2::theme(legend.position = "none")
+    if (identical(by, NA)) {
+      box.plot <- ggplot2::ggplot(
+        box.data,
+        ggplot2::aes(
+          x = !!sym(type),
+          ymin = ymin,
+          lower = lower,
+          middle = middle,
+          upper = upper,
+          ymax = ymax,
+          group = group
+        )
+      ) +
+        ggplot2::geom_boxplot(stat = "identity", 
+                              color = NA) +
+        ggplot2::theme_bw()
+    } else {
+      # update box.data
+      box.data <- box.data %>%
+        mutate(group_var = paste(!!sym(type),!!sym(facet),!!sym(by), sep = "_"))
+      # create plot
+      box.plot <- ggplot2::ggplot(
+        box.data,
+        ggplot2::aes(
+          x = !!sym(type),
+          ymin = ymin,
+          lower = lower,
+          middle = middle,
+          upper = upper,
+          ymax = ymax,
+          group = group_var
+        )
+      ) +
+        ggplot2::geom_boxplot(
+          ggplot2::aes(color = !!sym(by)),
+          stat = "identity",
+          position = position_dodge(width = 0.9),
+          width = box.width
+        ) +
+        ggplot2::theme_bw() 
+    }
     
     # apply wrapping
     if (facet.col == 1) {
       # parse facet labels
       if (facet.parse.label) {
         box.plot <- box.plot +
-          ggplot2::facet_grid(rows = vars(!!sym(facet)), scales = facet.scales, labeller = label_parsed)
+          ggplot2::facet_grid(
+            rows = vars(!!sym(facet)),
+            scales = facet.scales,
+            labeller = label_parsed
+          )
       } else {
         box.plot <- box.plot +
           ggplot2::facet_grid(rows = vars(!!sym(facet)), scales = facet.scales)
@@ -645,57 +1148,135 @@ temporal_contributions <- function(mydata,
       # parse facet labels
       if (facet.parse.label) {
         box.plot <- box.plot +
-          ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col, scales = facet.scales, labeller = label_parsed)
+          ggplot2::facet_wrap(
+            stats::reformulate(facet),
+            ncol = facet.col,
+            scales = facet.scales,
+            labeller = label_parsed
+          )
       } else {
         box.plot <- box.plot +
-          ggplot2::facet_wrap(stats::reformulate(facet), ncol = facet.col, scales = facet.scales)
+          ggplot2::facet_wrap(stats::reformulate(facet),
+                              ncol = facet.col,
+                              scales = facet.scales)
       }
     }
+    
+    if (identical(by, NA)) {
+      # create the colors. Here we can have different colors per factor
+      iqrColor <- adjustcolor(myColors.vector, alpha.f = box.alpha)
+      
+      iqrColor <- rep(iqrColor[1], each = nrow(box.data))
+      
+      medianColor <- rep(myColors.vector[1], each = nrow(box.data))
+      
+      # add colored segments to plot
+      box.plot <- box.plot +
+        ggplot2::geom_segment(
+          data = box.data,
+          mapping = ggplot2::aes(
+            x = xmin,
+            y = lower,
+            xend = xmax,
+            yend = lower
+          ),
+          color = iqrColor
+        ) +
+        ggplot2::geom_segment(
+          data = box.data,
+          mapping = ggplot2::aes(
+            x = xmin,
+            y = lower,
+            xend = xmin,
+            yend = upper
+          ),
+          color = iqrColor
+        ) +
+        ggplot2::geom_segment(
+          data = box.data,
+          mapping = ggplot2::aes(
+            x = xmax,
+            y = lower,
+            xend = xmax,
+            yend = upper
+          ),
+          color = iqrColor
+        ) +
+        ggplot2::geom_segment(
+          data = box.data,
+          mapping = ggplot2::aes(
+            x = xmin,
+            y = upper,
+            xend = xmax,
+            yend = upper
+          ),
+          color = iqrColor
+        ) +
+        ggplot2::geom_segment(
+          data = box.data,
+          mapping = ggplot2::aes(
+            x = xmin,
+            y = middle,
+            xend = xmax,
+            yend = middle
+          ),
+          color = medianColor,
+          size = 1.2
+        ) +
+        ggplot2::geom_segment(
+          data = box.data,
+          mapping = ggplot2::aes(
+            x = x,
+            y = upper,
+            xend = x,
+            yend = ymax
+          ),
+          color = "black"
+        ) +
+        ggplot2::geom_segment(
+          data = box.data,
+          mapping = ggplot2::aes(
+            x = x,
+            y = ymin,
+            xend = x,
+            yend = lower
+          ),
+          color = "black"
+        )
+    } else {
+      # apply the coloring for the by factor
+      
+      if(legend.parse.label) {
+        box.plot <- box.plot +
+          ggplot2::scale_color_manual(values = myColors.vector,
+                                      name = NULL,
+                                      labels = scales::label_parse())
+          #ggplot2::scale_fill_manual(values = myColors.vector,
+          #                            name = NULL,
+          #                            labels = scales::label_parse())
+      } else {
+        box.plot <- box.plot +
+          ggplot2::scale_color_manual(values = myColors.vector,
+                                      name = NULL)
+          #ggplot2::scale_fill_manual(values = myColors.vector,
+          #                            name = NULL)
+      }
 
-    # create the colors
-    iqrColor <- adjustcolor(myColors, alpha.f = box.alpha)
-
-    iqrColor <- rep(iqrColor[1], each = nrow(box.data))
-
-    medianColor <- rep(myColors[1], each = nrow(box.data))
-
-    # add colored segments to plot
-    box.plot <- box.plot +
-      ggplot2::geom_segment(
-        data = box.data,
-        mapping = ggplot2::aes(x = xmin, y = lower, xend = xmax, yend = lower),
-        color = iqrColor
-      ) +
-      ggplot2::geom_segment(
-        data = box.data,
-        mapping = ggplot2::aes(x = xmin, y = lower, xend = xmin, yend = upper),
-        color = iqrColor
-      ) +
-      ggplot2::geom_segment(
-        data = box.data,
-        mapping = ggplot2::aes(x = xmax, y = lower, xend = xmax, yend = upper),
-        color = iqrColor
-      ) +
-      ggplot2::geom_segment(
-        data = box.data,
-        mapping = ggplot2::aes(x = xmin, y = upper, xend = xmax, yend = upper),
-        color = iqrColor
-      ) +
-      ggplot2::geom_segment(
-        data = box.data,
-        mapping = ggplot2::aes(x = xmin, y = middle, xend = xmax, yend = middle),
-        color = medianColor, size = 1.2
-      ) +
-      ggplot2::geom_segment(
-        data = box.data,
-        mapping = ggplot2::aes(x = x, y = upper, xend = x, yend = ymax),
-        color = "black"
-      ) +
-      ggplot2::geom_segment(
-        data = box.data,
-        mapping = ggplot2::aes(x = x, y = ymin, xend = x, yend = lower),
-        color = "black"
-      )
+      # making the wishker line black does not work as the original color shines
+      # through
+      #  ggplot2::geom_segment(
+      #    data = box.data,
+      #    mapping = ggplot2::aes(x = x, y = upper, xend = x, yend = ymax),
+      #    color = "black",
+      #    size = 1
+      #  ) +
+      #  ggplot2::geom_segment(
+      #    data = box.data,
+      #    mapping = ggplot2::aes(x = x, y = ymin, xend = x, yend = lower),
+      #    color = "black",
+      #    size = 1
+      #  )
+    }
   }
   if (!identical(xlab, NA)) {
     if (auto.text) {
@@ -733,50 +1314,116 @@ temporal_contributions <- function(mydata,
       } else {
         # remove the label
         default.plot <- default.plot +
-          theme(axis.title.y = element_blank())
+          ggplot2::theme(axis.title.y = element_blank())
         box.plot <- box.plot +
-          theme(axis.title.y = element_blank())
+          ggplot2::theme(axis.title.y = element_blank())
       }
     }
   }
   # fix the hour levels when facet is set
   if ((!identical(facet, NA)) & (type == "hour")) {
     default.plot <- default.plot +
-      ggplot2::scale_x_discrete(labels = c(
-        "00", "", "02", "", "04", "",
-        "06", "", "08", "", "10", "",
-        "12", "", "14", "", "16", "",
-        "18", "", "20", "", "22", ""
-      ))
-
+      ggplot2::scale_x_discrete(
+        labels = c(
+          "00",
+          "",
+          "02",
+          "",
+          "04",
+          "",
+          "06",
+          "",
+          "08",
+          "",
+          "10",
+          "",
+          "12",
+          "",
+          "14",
+          "",
+          "16",
+          "",
+          "18",
+          "",
+          "20",
+          "",
+          "22",
+          ""
+        )
+      )
+    
     box.plot <- box.plot +
-      ggplot2::scale_x_discrete(labels = c(
-        "00", "", "02", "", "04", "",
-        "06", "", "08", "", "10", "",
-        "12", "", "14", "", "16", "",
-        "18", "", "20", "", "22", ""
-      ))
+      ggplot2::scale_x_discrete(
+        labels = c(
+          "00",
+          "",
+          "02",
+          "",
+          "04",
+          "",
+          "06",
+          "",
+          "08",
+          "",
+          "10",
+          "",
+          "12",
+          "",
+          "14",
+          "",
+          "16",
+          "",
+          "18",
+          "",
+          "20",
+          "",
+          "22",
+          ""
+        )
+      )
   }
-
+  
   if (txt.x.rm) {
     default.plot <- default.plot +
       ggplot2::theme(axis.text.x = ggplot2::element_blank())
     box.plot <- box.plot +
       ggplot2::theme(axis.text.x = ggplot2::element_blank())
   }
-
+  
   if (txt.y.rm) {
     default.plot <- default.plot +
       ggplot2::theme(axis.text.y = ggplot2::element_blank())
     box.plot <- box.plot +
       ggplot2::theme(axis.text.y = ggplot2::element_blank())
   }
-
+  
   #  default.plot <- default.plot +
   #  #theme(axis.text.x = element_text(angle = 45, hjust = 0.5))
   #    ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(n.dodge = 2))
-
-
+  
+  # remove legend?
+  if (show.legend) {
+    default.plot <- default.plot +
+      theme(
+        legend.position = "top",
+        legend.justification = legend.justification,
+        legend.margin = margin(b = -10),
+        legend.text.align = 0
+      )
+    box.plot <- box.plot +
+      theme(
+        legend.position = "top",
+        legend.justification = legend.justification,
+        legend.margin = margin(b = -10),
+        legend.text.align = 0
+      )
+  } else {
+    default.plot <- default.plot +
+      ggplot2::theme(legend.position = "none")
+    box.plot <- box.plot +
+      ggplot2::theme(legend.position = "none")
+  }
+  
   output <- list(
     "plot" = default.plot,
     "box.plot" = box.plot,

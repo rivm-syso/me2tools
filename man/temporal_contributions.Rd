@@ -9,6 +9,7 @@ temporal_contributions(
   factor = NA,
   type = "default",
   group = NA,
+  by = NA,
   facet = NA,
   na.rm = TRUE,
   xlab = NA,
@@ -20,11 +21,17 @@ temporal_contributions(
   whisk.lim = NULL,
   point.size = 1.25,
   line.size = 1,
+  ribbon.minmax.show = TRUE,
+  ribbon.iqr.show = TRUE,
   ribbon.alpha = c(0.25, 0.25),
   box.alpha = 0.5,
+  box.width = 0.9,
   facet.col = 2,
   facet.scales = "fixed",
   facet.parse.label = FALSE,
+  legend.justification = "right",
+  legend.parse.label = FALSE,
+  show.legend = FALSE,
   ...
 )
 }
@@ -54,6 +61,11 @@ different variables and how they depend on one another.}
 data frame had a column \code{year} setting \code{group = "year"} will
 plot the years as individual box plots.}
 
+\item{by}{Grouping variable that can be used to plot multiple analysis into a
+single plot. Useful for exploring the difference in profiles between
+regular analysis and a dispersion normalised analysis. Works best if
+factor names are the same for the analysis.}
+
 \item{facet}{This sets the faceting variable to be used. For example, if a
 data frame had a column \code{site} setting \code{facet = "site"} will
 plot all sites individually in their own panels.}
@@ -80,18 +92,24 @@ y-axis tick labels should be removed.}
 \dQuote{default}, \dQuote{increment}, \dQuote{heat}, \dQuote{jet} and
 \code{RColorBrewer} colours --- see the \code{openair} \code{openColours}
 function for more details. For user defined the user can supply a list of
-colour names recognised by R (type \code{colours()} to see the full list).
+colour names recognized by R (type \code{colours()} to see the full list).
 An example would be \code{cols = c("yellow", "green", "blue")}}
 
 \item{whisk.lim}{User defined limits for the whiskers. Default is
 \code{NULL}, in this case the whiskers calculated by \dQuote{geom_boxplot}
-are used. In other cases a vector should be provided with two values
+are used (min/max). In other cases a vector should be provided with two values
 between 0..1 denoting the percentile (i.e., \code{c(0.05, 0.95)} will use
 the P05 and P95 for the whisker limits).}
 
 \item{point.size}{The size of the points. Defaults to 1.25.}
 
 \item{line.size}{The size of the lines. Defaults to 1.}
+
+\item{ribbon.minmax.show}{Show the ribbon with the min/max values (or
+defined percentiles (see whisk.lim)). Defaults to \code{TRUE}}
+
+\item{ribbon.iqr.show}{Show the ribbon with the interquartile range (IQR).
+Defaults to \code{TRUE}}
 
 \item{ribbon.alpha}{The transparency of the ribbons. Defaults to
 \code{c(0.25, 0.25)}, meaning that the min/max and IQR ribbons both have a
@@ -101,6 +119,10 @@ transparency of the IQR is effectively 0.50 in this case.}
 \item{box.alpha}{The transparency of the IQR box in the box-whisker plot.
 The default setting is 0.5.}
 
+\item{box.width}{The width of the box. Default is set at \code{0.9}, but
+with a "group" variable some overlapping can occur. Changing this to a
+lower value will provide more room between the boxes within a group.}
+
 \item{facet.col}{The number of columns for the faceted plot. If the number of
 columns is set to 1, the faceting will be in rows only. Defaults to 2.}
 
@@ -108,9 +130,20 @@ columns is set to 1, the faceting will be in rows only. Defaults to 2.}
 ("free"), or free in one dimension ("free_x", "free_y")? See also
 ggplot2::facet_wrap or ggplot2::facet_grid.}
 
-\item{facet.parse.label}{Should the labels be parsed using the
-\code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
-will use subscript on the labels shown in the facet.}
+\item{facet.parse.label}{Should the labels be parsed as an expression?
+If set to \code{TRUE} then \code{"SO[2]"} will use subscript on the labels
+shown in the facet.}
+
+\item{legend.justification}{The legend is by default placed on top, and this
+parameter allows for changing the justification to \dQuote{left},
+\dQuote{right} and \dQuote{center}. The default is \dQuote{right}.}
+
+\item{legend.parse.label}{Should the labels be parsed as an expression?
+If set to \code{TRUE} then \code{"SO[2]"} will use subscript on the labels
+shown in the legend.}
+
+\item{show.legend}{A logical argument evaluating to TRUE or FALSE indicating
+whether the legend should be shown by default. Default: FALSE.}
 
 \item{...}{Other parameters passed onto \code{cutData}. For example, in the
 case of \code{cutData} the option \code{hemisphere = "southern"}.}
