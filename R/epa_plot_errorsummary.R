@@ -18,12 +18,12 @@
 #' @param xlabel.vjust vertical justification of the xlabel, between \[0,1\].
 #'   The default is NA, so that ggplot uses some heuristics to pick the best
 #'   value for this parameter. Any other value is processed by changing theme
-#'   settings. Note that for this to work the \code(xlabel.hjust) also needs to
+#'   settings. Note that for this to work the \code{xlabel.hjust} also needs to
 #'   have a value.
 #' @param xlabel.hjust horizontal justification of the xlabel, between \[0,1\].
 #'   The default is \code{NA}, so that ggplot uses some heuristics to pick the
 #'   best value for this parameter. Any other value is processed by changing
-#'   theme settings. Note that for this to work the \code(xlabel.vjust) also 
+#'   theme settings. Note that for this to work the \code{xlabel.vjust} also 
 #'   needs to have a value.
 #' @param xlabel.order The labels containing the species on the x-axis are
 #'   plotted based on the factor levels. This parameter can contain the levels
@@ -51,6 +51,8 @@
 #'   \sQuote{x.font.size}.
 #' @param bar.colors The bar colors for each error estimate (BS, DISP, BSDISP)
 #'   and the color for the average of the base run.
+#' @param bar.labels The bar labels for each error estimate (BS, DISP, BSDISP)
+#'   and the label for the average of the base run (BASE).
 #' @param bar.width The width of the bar, expressed as a value between \[0,1\].
 #' @param show.plot A logical argument evaluating to TRUE or FALSE indicating
 #'   whether the plot should be shown by default.
@@ -101,6 +103,10 @@ epa_plot_errorsummary <- function(F_matrix,
                                                "BSDISP" = "green4",
                                                "DISP" = "royalblue2",
                                                "base" = "black"),
+                             bar.labels = list("BS" = "BS",
+                                               "BSDISP" = "BSDISP",
+                                               "DISP" = "DISP",
+                                               "base" = "BASE"),
                              bar.width = 0.9,
                              show.plot = TRUE,
                              show.legend = FALSE,
@@ -427,10 +433,10 @@ epa_plot_errorsummary <- function(F_matrix,
   plot.output <- plot.output +
     ylab(ylab)  +
     scale_fill_manual(
-      labels = c("BS" = "BS",
-                 "BSDISP" = "BSDISP",
-                 "DISP" = "DISP",
-                 "base" = "BASE"),
+      labels = c("BS" = bar.labels[["BS"]],
+                 "BSDISP" = bar.labels[["BSDISP"]],
+                 "DISP" = bar.labels[["DISP"]],
+                 "base" = bar.labels[["base"]]),
       values = c("BS" = bar.colors[["BS"]], 
                  "BSDISP" = bar.colors[["BSDISP"]],
                  "DISP" = bar.colors[["DISP"]],
@@ -440,10 +446,10 @@ epa_plot_errorsummary <- function(F_matrix,
                  "DISP",
                  "base")) +
     scale_color_manual(
-      labels = c("BS" = "BS",
-                 "BSDISP" = "BSDISP",
-                 "DISP" = "DISP",
-                 "base" = "BASE"),
+      labels = c("BS" = bar.labels[["BS"]],
+                 "BSDISP" = bar.labels[["BSDISP"]],
+                 "DISP" = bar.labels[["DISP"]],
+                 "base" = bar.labels[["base"]]),
       values = c("BS" = bar.colors[["BS"]], 
                  "BSDISP" = bar.colors[["BSDISP"]],
                  "DISP" = bar.colors[["DISP"]],

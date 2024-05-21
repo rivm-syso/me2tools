@@ -43,13 +43,13 @@ default.}
 \item{xlabel.vjust}{vertical justification of the xlabel, between [0,1].
 The default is NA, so that ggplot uses some heuristics to pick the best
 value for this parameter. Any other value is processed by changing theme
-settings. Note that for this to work the \code(xlabel.hjust) also needs to
+settings. Note that for this to work the \code{xlabel.hjust} also needs to
 have a value.}
 
 \item{xlabel.hjust}{horizontal justification of the xlabel, between [0,1].
 The default is \code{NA}, so that ggplot uses some heuristics to pick the
 best value for this parameter. Any other value is processed by changing
-theme settings. Note that for this to work the \code(xlabel.vjust) also
+theme settings. Note that for this to work the \code{xlabel.vjust} also
 needs to have a value.}
 
 \item{xlabel.order}{The labels containing the species on the x-axis are
