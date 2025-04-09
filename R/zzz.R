@@ -67,7 +67,8 @@ if (getRversion() >= "2.15.1") {
     "CI.linetype", "pred_lwr", "pred_upr", "PI.linetype",  "plot_type", 
     "group_type", ".x", "dummy","run_number_final", "corr", "fit", "eq.label",
     "adj.rr.label", "residual_type", "pmf.concentration", "pmf.uncertainty", 
-    "sn", "guidance", "Q.Qexp"
+    "sn", "guidance", "Q.Qexp", "dupe", "f_by", "p_by", "eb_by" , "boxplotColor", 
+    "group_var", "myColor"
   )
   
   # Squash the notes
