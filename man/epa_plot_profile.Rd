@@ -40,7 +40,7 @@ epa_plot_profile(
   cp.run.type = "base_run",
   facet.parse.label = FALSE,
   rm.facets = FALSE,
-  facet.wrap = NA,
+  facet.string.wrap = NA,
   ...
 )
 }
@@ -186,6 +186,9 @@ will use subscript on the labels shown in the facet.}
 \item{rm.facets}{Should the facets labels be removed? When each factor has
 its own color, they will show up in the legend. This will make the facets
 labels redundant. Default is \code{FALSE}.}
+
+\item{facet.string.wrap}{Long facet titles can be wrapped by providing a
+integer for the length of the string.}
 
 \item{...}{Other parameters, for example renamed parameters.}
 }

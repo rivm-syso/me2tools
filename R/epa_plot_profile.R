@@ -111,6 +111,8 @@
 #' @param rm.facets Should the facets labels be removed? When each factor has
 #'   its own color, they will show up in the legend. This will make the facets
 #'   labels redundant. Default is \code{FALSE}.
+#' @param facet.string.wrap Long facet titles can be wrapped by providing a 
+#'    integer for the length of the string.
 #' @param ... Other parameters, for example renamed parameters.
 #'
 #' @return me2tools list containing the ggplot2 with segment and point
@@ -226,7 +228,7 @@ epa_plot_profile <- function(F_matrix,
                              cp.run.type = "base_run",
                              facet.parse.label = FALSE,
                              rm.facets = FALSE,
-                             facet.wrap = NA,
+                             facet.string.wrap = NA,
                              ...) {
   # The EPA factor profile plot consists of a dual-axis plot containing the
   # log10 concentrations and the percentage of each species in a plot. At first
@@ -373,13 +375,13 @@ epa_plot_profile <- function(F_matrix,
     }
   }
   
-  if (!identical(facet.wrap, NA) &
-      (!class(facet.wrap) %in% c("numeric"))) {
+  if (!identical(facet.string.wrap, NA) &
+      (!class(facet.string.wrap) %in% c("numeric"))) {
     cli::cli_abort(
       c(
-        "Invalid value for {.var facet.wrap} :",
-        "i" = "'{facet.wrap}' is not a valid value.",
-        "x" = "Valid value for {.var facet.wrap} is 'NA' (default) or an integer."
+        "Invalid value for {.var facet.string.wrap} :",
+        "i" = "'{facet.string.wrap}' is not a valid value.",
+        "x" = "Valid value for {.var facet.string.wrap} is 'NA' (default) or an integer."
       )
     )
   }
@@ -1074,7 +1076,7 @@ epa_plot_profile <- function(F_matrix,
   
   # use label_wrap_gen to wrap long names?
   if (facet.parse.label) {
-    if (identical(facet.wrap, NA)) {
+    if (identical(facet.string.wrap, NA)) {
       plot <- plot +
         ggplot2::facet_grid(factor ~ .,
                             labeller = label_parsed)
@@ -1083,14 +1085,14 @@ epa_plot_profile <- function(F_matrix,
         ggplot2::facet_grid(rows = vars(
           stringr::str_wrap(
             string = factor,
-            width = facet.wrap,
+            width = facet.string.wrap,
             whitespace_only = FALSE
           )
         ),
         labeller = label_parsed)
     }
   } else {
-    if (identical(facet.wrap, NA)) {
+    if (identical(facet.string.wrap, NA)) {
       plot <- plot +
         ggplot2::facet_grid(factor ~ .)
     } else {
@@ -1098,7 +1100,7 @@ epa_plot_profile <- function(F_matrix,
         ggplot2::facet_grid(rows = vars(
           stringr::str_wrap(
             string = factor,
-            width = facet.wrap,
+            width = facet.string.wrap,
             whitespace_only = FALSE
           )
         ))
