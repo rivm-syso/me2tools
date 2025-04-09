@@ -8,8 +8,10 @@ metcor_export(
   G_matrix,
   file,
   time_res = "auto",
+  time_format = "0000",
   factor_names = "auto",
   na.rm = TRUE,
+  neg.replace = TRUE,
   force_utc = FALSE
 )
 }
@@ -33,6 +35,11 @@ derive the time resolution automatically from the data. Note: the "auto"
 feature only works when data sets of different time resolutions are not
 mixed.}
 
+\item{time_format}{This parameter controls the definition of the start and
+end times in the MetCor output. \code{"0000"} ensures that the hour starts
+at '0000' and ends at '0059'. When using \code{"0001"} the hour starts at
+'0001' and ends at '0100'. Default is set to \code{"0000"}.}
+
 \item{factor_names}{The names of the columns in the G-matrix that are
 identified as factors. These columns will be used to add the
 data/threshold values to output file. If \code{factor_names} is set to
@@ -42,6 +49,9 @@ are present in the G-matrix.}
 
 \item{na.rm}{remove rows with NA values for the factor contributions?
 Default is \code{TRUE}}
+
+\item{neg.replace}{replace any negative value in the G contributions with 0.
+This is set to \code{TRUE} by default.}
 
 \item{force_utc}{With this parameter the date time output for Metcor can be
 forced into UTC (the same timezone as Hysplit results). When set to
