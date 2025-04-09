@@ -202,7 +202,7 @@ me2_read_dat <- function (me2_dat_file,
         cli::cli_abort(c(
           "Different lengths:",
           "i" = "{.var species} has a different length ({length(species)})
-           compared to the F-matrix ({nrow(tmp_f_tibble)})",
+           compared to the F-matrix ({nrow(tmp_f_tibble)}) in run {f_index}.",
           "x" = "{.var species} must have the same length as the number of
           rows in the F-matrix"
         ))
@@ -212,7 +212,7 @@ me2_read_dat <- function (me2_dat_file,
         cli::cli_abort(c(
           "Different lengths:",
           "i" = "{.var species} has a different length ({length(species)})
-           compared to the F-matrix ({nrow(tmp_f_tibble)})",
+           compared to the F-matrix ({nrow(tmp_f_tibble)}) in run {f_index}.",
           "x" = "{.var species} must have the same length as the number of
           rows in the F-matrix or should be set to 'NA'"
         ))
