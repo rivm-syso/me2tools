@@ -39,7 +39,7 @@
 #' @param date.breaks When this parameter is a string it is passed to the 
 #'   function \code{scales::breaks_width()} and deals with the number of x 
 #'   ticks. It contains the distance between each break. Either a number, or for 
-#'   date/times, a single string of the form "{n} {unit}", e.g. "1 month", 
+#'   date/times, a single string of the form "\{n\} \{unit\}", e.g. "1 month", 
 #'   "5 days". Unit can be of one "sec", "min", "hour", "day", "week", 
 #'   "month", "year". It can also be a single integer, in which case the
 #'   variable is passed to \code{scales::breaks_pretty()}.
@@ -255,10 +255,10 @@ epa_plot_QQexp <- function(residuals,
   }
   
   # find the species > threshold
-  Q.Qexp_F <- Q.Qexp_F %>% 
+  Q.Qexp_F_threshold <- Q.Qexp_F %>% 
     filter(Q.Qexp > threshold)
   
-  Q.Qexp_G <- Q.Qexp_G %>% 
+  Q.Qexp_G_threshold <- Q.Qexp_G %>% 
     filter(Q.Qexp > threshold)
   
   
@@ -278,6 +278,8 @@ epa_plot_QQexp <- function(residuals,
     "Q.Qexp_G_plot" = plot_G,
     "Q.Qexp_F" = Q.Qexp_F,
     "Q.Qexp_G" = Q.Qexp_G,
+    "Q.Qexp_F_threshold" = Q.Qexp_F_threshold,
+    "Q.Qexp_G_threshold" = Q.Qexp_G_threshold,
     call = match.call()
   )
   class(output) <- "me2tools"
