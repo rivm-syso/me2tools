@@ -53,6 +53,6 @@ End              \tab Unique number, expressing the end of the sample in time-un
 }
 
 For more information on the multi time data format see, for example,
-\doi{10.1016/j.scitotenv.2022.157981}{Mooibroek et al.(2022)}
+\doi{10.1016/j.scitotenv.2022.157981}
 }
 

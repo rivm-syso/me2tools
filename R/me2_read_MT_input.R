@@ -21,7 +21,7 @@
 #'   }
 #'
 #'   For more information on the multi time data format see, for example,
-#'   \doi{10.1016/j.scitotenv.2022.157981}{Mooibroek et al.(2022)}
+#'   \doi{10.1016/j.scitotenv.2022.157981}
 #'
 #' @param file File name of the multi time data file.
 #' @param unc_identifier Vector containing the prefix/suffix to denote the

@@ -10,9 +10,9 @@
 #'   \dQuote{worl} for the world.
 #' @param type The type of grid, can be \dQuote{metcor} or \dQuote{WGS84}.
 #'   With the latter option the grid is transformed to a regular lat/lon grid
-#'   within the boundaries of [-180,180] for longitude and [-90,90] for 
+#'   within the boundaries of \[-180,180\] for longitude and \[-90,90\] for 
 #'   latitude. The \dQuote{metcor} option uses the MetCor transformed grid with
-#'   longitude set as [0,360].
+#'   longitude set as \[0,360\].
 #' @param na.rm remove columns and rows with only NA values? Default is
 #'   \code{TRUE}
 #'

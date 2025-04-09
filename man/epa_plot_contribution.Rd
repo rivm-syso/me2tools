@@ -43,7 +43,7 @@ Defaults to 1.}
 \item{date.breaks}{When this parameter is a string it is passed to the
 function \code{scales::breaks_width()} and deals with the number of x
 ticks. It contains the distance between each break. Either a number, or for
-date/times, a single string of the form "{n} {unit}", e.g. "1 month",
+date/times, a single string of the form "\{n\} \{unit\}", e.g. "1 month",
 "5 days". Unit can be of one "sec", "min", "hour", "day", "week",
 "month", "year". It can also be a single integer, in which case the
 variable is passed to \code{scales::breaks_pretty()}.}
