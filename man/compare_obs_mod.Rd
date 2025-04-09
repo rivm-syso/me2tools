@@ -14,14 +14,14 @@ compare_obs_mod(
   intercept = FALSE,
   mod.line = FALSE,
   regress.details = TRUE,
-  CI = TRUE,
+  CI = FALSE,
   CI.type = "area",
   CI.level = 0.95,
   CI.color = "dodgerblue4",
   CI.alpha = 0.4,
   CI.linetype = "dotted",
   CI.linewidth = 1,
-  PI = TRUE,
+  PI = FALSE,
   PI.type = "area",
   PI.level = 0.95,
   PI.color = "dodgerblue4",
@@ -130,7 +130,8 @@ whether the plot should be shown as default.}
 
 \item{line.size}{The thickness of the regression line. Defaults to 1.}
 
-\item{point.color}{The color of the points. Defaults to "red".}
+\item{point.color}{The color of the points. This can be either a color (i.e.,
+"red") or a column in the data. Defaults to "red".}
 
 \item{point.shape}{The shape of the points. Defaults to 16.}
 

@@ -69,7 +69,8 @@
 #' @param line.color The color of the regression line. Defaults to
 #'   "dodgerblue4".
 #' @param line.size The thickness of the regression line. Defaults to 1.
-#' @param point.color The color of the points. Defaults to "red".
+#' @param point.color The color of the points. This can be either a color (i.e.,
+#'   "red") or a column in the data. Defaults to "red".
 #' @param point.shape The shape of the points. Defaults to 16.
 #' @param point.size The size of the points. Defaults to 2.
 #' @param point.alpha The alpha transparency for the points. Defaults to 0.25.
@@ -117,14 +118,14 @@ compare_obs_mod <- function(data,
                             intercept = FALSE,
                             mod.line = FALSE,
                             regress.details = TRUE,
-                            CI = TRUE,
+                            CI = FALSE,
                             CI.type = "area",
                             CI.level = 0.95,
                             CI.color = "dodgerblue4",
                             CI.alpha = 0.4,
                             CI.linetype = "dotted",
                             CI.linewidth = 1,
-                            PI = TRUE,
+                            PI = FALSE,
                             PI.type = "area",
                             PI.level = 0.95,
                             PI.color = "dodgerblue4",
@@ -202,7 +203,24 @@ compare_obs_mod <- function(data,
       ))
     }
   }
-
+  
+  # check if point.color is a color, or a column in the data, or neither.
+  check_color <- is_color(point.color)
+  point.color.in.aes = FALSE # assume it is a color string by default
+  if (!check_color[point.color]) {
+    # this is not a valid color, check if it consists in data
+    if (!point.color %in% names(data)) {
+      cli::cli_abort(c(
+        "{.var point.color} is neither a color or a column in the data:",
+        "i" = "The {.var point.color} should be either a color or a column name in {.var data}.",
+        "x" = "Did you provide the correct {.var point.color} to be used?"
+      ))
+    } else {
+      point.color.in.aes = TRUE
+    }
+  }
+  
+  
   # create the data for regression
   regr_data <- data %>% 
     rename(x := !!sym(x),
@@ -222,6 +240,26 @@ compare_obs_mod <- function(data,
       modelLM <- MASS::rlm(fm, data = regr_data, maxit = maxit)
     } else {
       # models per group
+      test_non_na <- regr_data %>% 
+        group_by(!!sym(group)) %>% 
+        summarize(non_na_x = sum(!is.na(x)),
+                  non_na_y = sum(!is.na(y))) %>% 
+        pivot_longer(cols = c("non_na_x",
+                              "non_na_y"),
+                     names_to = "type",
+                     values_to = "value") %>% 
+        filter(value == 0)
+      
+      if (nrow(test_non_na) > 0) {
+        na_group <- paste(unique(test_non_na[[group]]), sep = ", ")
+        
+        cli::cli_abort(c(
+          "{.var group} with only NA values:",
+          "i" = "The {.var group(s)} {na_group} has a variable with only NA values.",
+          "x" = "{na_group} should consists of variables with non-NA values. Please remove this group from the analysis."
+        ))
+      }
+      
       modelLM <- regr_data %>% 
         tidyr::nest(data = -sym(group)) %>% 
         mutate(fit = map(data, ~MASS::rlm(fm, data = ., maxit = maxit)))
@@ -231,12 +269,32 @@ compare_obs_mod <- function(data,
       modelLM <- stats::lm(fm, data = regr_data)
     } else {
       # models per group
+      test_non_na <- regr_data %>% 
+        group_by(!!sym(group)) %>% 
+        summarize(non_na_x = sum(!is.na(x)),
+                  non_na_y = sum(!is.na(y))) %>% 
+        pivot_longer(cols = c("non_na_x",
+                              "non_na_y"),
+                     names_to = "type",
+                     values_to = "value") %>% 
+        filter(value == 0)
+      
+      if (nrow(test_non_na) > 0) {
+        na_group <- paste(unique(test_non_na[[group]]), sep = ", ")
+        
+        cli::cli_abort(c(
+          "{.var group} with only NA values:",
+          "i" = "The {.var group(s)} {na_group} has a variable with only NA values.",
+          "x" = "{na_group} should consists of variables with non-NA values. Please remove this group from the analysis."
+        ))
+      }
+      
       modelLM <- regr_data %>% 
         tidyr::nest(data = -sym(group)) %>% 
         mutate(fit = map(data, ~stats::lm(fm, data = .)))
     }
   }
-  
+
   if ("lm" %in% class(modelLM)) {
     # create plot
     n_data <- seq(min(regr_data$x, na.rm = TRUE), 
@@ -336,14 +394,23 @@ compare_obs_mod <- function(data,
       ))
     }
   }
-
+  
   # add points and regression line
-  scatter <- scatter +
-    geom_point(data = regr_data,
-               shape = point.shape,
-               colour = point.color,
-               alpha = point.alpha,
-               size = point.size)
+  if (point.color.in.aes) {
+    scatter <- scatter +
+      geom_point(data = regr_data,
+                 aes(colour = !!sym(point.color)),
+                 shape = point.shape,
+                 alpha = point.alpha,
+                 size = point.size)
+  } else {
+    scatter <- scatter +
+      geom_point(data = regr_data,
+                 shape = point.shape,
+                 colour = point.color,
+                 alpha = point.alpha,
+                 size = point.size)
+  }
   
   
   # confidence intervals (CI)
@@ -455,6 +522,7 @@ compare_obs_mod <- function(data,
   }
 
   if(regress.details) {
+    oldw <- options(warn = -1)
     if (robust) {
       scatter <- scatter +
         ggpmisc::stat_poly_eq(mapping = ggpmisc::use_label("eq"), 
@@ -471,6 +539,7 @@ compare_obs_mod <- function(data,
                               label.x = 0.05, 
                               label.y = 0.90)
     }
+    on.exit(options(oldw))
   }
   
   scatter <- scatter +
