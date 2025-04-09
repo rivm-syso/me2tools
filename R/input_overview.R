@@ -35,6 +35,9 @@
 #' @param xlabel.angle What angle should the x-axis labels be presented in? If
 #'   your labels are long, \code{45} degrees can be useful, which is also the
 #'   default.
+#' @param xlabel Named character vector that is used to rename the species on 
+#'   the x-axis. Note that the renaming is also applied on the limit.species and
+#'   it also defines the order of the species in the plotting.
 #' @param facet.col The number of columns for the faceted plot. If the number of
 #'   columns is set to 1, the faceting will be in rows only. Defaults to 3.
 #' @param show.plot A logical argument evaluating to TRUE or FALSE indicating
@@ -65,6 +68,7 @@ input_overview  <- function(me2_input,
                             auto.text = TRUE,
                             x.font.size = 10,
                             xlabel.angle = 45,
+                            xlabel = NA,
                             facet.col = 3,
                             show.plot = TRUE,
                             rm.grid.x = FALSE,
@@ -100,22 +104,73 @@ input_overview  <- function(me2_input,
       ylab <- openair::quickText(ylab)
     }
   }
-
-  species.order <- names(me2_input[[concentration]][2:length(me2_input[[concentration]])])
   
   conc.data <- me2_input[[concentration]] %>% 
     tidyr::pivot_longer(cols = -"date",
                         names_to = "species",
                         values_to = "value") %>% 
-    mutate(type = "pmf.concentration",
-           species = factor(species, levels = species.order))
+    mutate(type = "pmf.concentration")
   
   unc.data <- me2_input[[uncertainty]] %>% 
     tidyr::pivot_longer(cols = -"date",
                         names_to = "species",
                         values_to = "value") %>% 
-    mutate(type = "pmf.uncertainty",
-           species = factor(species, levels = species.order))
+    mutate(type = "pmf.uncertainty")
+  
+  # perform cleanup of species if needed
+  # start with initial order
+  species.order <- names(me2_input[[concentration]][2:length(me2_input[[concentration]])])
+  
+  # check for replacements
+  if (length(xlabel) > 1) {
+    if (length(species.order) != length(xlabel)) {
+      cli::cli_abort(c(
+        "{.var xlabel} does not contain all species",
+        "i" = "The {.var xlabel} has to have the same items as the number of species.",
+        "x" = "Did you provide replacements for all species?"
+      ))
+    }
+    # check against species.order
+    if (!identical(sort(species.order), sort(names(xlabel)))) {
+      # error message that the names of the label are not the same as the original labels
+      cli::cli_abort(c(
+        "{.var xlabel} does not contain all species",
+        "i" = "The {.var xlabel} has to have the same 'before' names for each of the species.",
+        "x" = "Did you provide the correct 'before' names for all species?"
+      ))
+    }
+    
+    for (i_replacement in seq(1, length(xlabel), 1)) {
+      # replace conc.data
+      conc.data$species <- gsub(names(xlabel)[i_replacement],
+                                xlabel[[i_replacement]],
+                                conc.data$species)
+      
+      unc.data$species <- gsub(names(xlabel)[i_replacement],
+                               xlabel[[i_replacement]],
+                               unc.data$species)
+      
+      limit.species <- gsub(names(xlabel)[i_replacement],
+                            xlabel[[i_replacement]],
+                            limit.species)
+      
+    }
+    species.order <- xlabel
+    
+  } else if (!is.na(xlabel)) {
+    cli::cli_abort(c(
+      "{.var xlabel} does not contain all species",
+      "i" = "The {.var xlabel} has to have the same items as the number of species.",
+      "x" = "Did you provide replacements for all species?"
+    ))
+  }
+  
+  # set the order of the factors
+  conc.data <- conc.data %>% 
+    mutate(species = factor(species, levels = species.order))
+  
+  unc.data <- unc.data %>% 
+    mutate(species = factor(species, levels = species.order))
   
   plot.data <- dplyr::bind_rows(conc.data,
                                 unc.data) %>% 
@@ -146,6 +201,7 @@ input_overview  <- function(me2_input,
   # apply limit to species.
   if (length(limit.species) == 1) {
     if(!is.na(limit.species)) {
+      
       plot.data <- plot.data %>% 
         filter(species %in% limit.species)
       

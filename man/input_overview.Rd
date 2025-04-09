@@ -16,6 +16,7 @@ input_overview(
   auto.text = TRUE,
   x.font.size = 10,
   xlabel.angle = 45,
+  xlabel = NA,
   facet.col = 3,
   show.plot = TRUE,
   rm.grid.x = FALSE,
@@ -65,6 +66,10 @@ the \sQuote{2} in NO2.}
 \item{xlabel.angle}{What angle should the x-axis labels be presented in? If
 your labels are long, \code{45} degrees can be useful, which is also the
 default.}
+
+\item{xlabel}{Named character vector that is used to rename the species on
+the x-axis. Note that the renaming is also applied on the limit.species and
+it also defines the order of the species in the plotting.}
 
 \item{facet.col}{The number of columns for the faceted plot. If the number of
 columns is set to 1, the faceting will be in rows only. Defaults to 3.}
