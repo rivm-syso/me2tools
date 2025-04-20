@@ -106,8 +106,8 @@ metcor_import <- function(file,
   
   # adjust output if type = wgs84
   if (tolower(type) == "wgs84") {
-    metcor.data <- dplyr::bind_cols(metcor.data[,181:360],
-                                    metcor.data[,1:180])
+    metcor.data <- dplyr::bind_cols(metcor.data[,((ncol(metcor.data)/2)+1):ncol(metcor.data)],
+                                    metcor.data[,1:(ncol(metcor.data)/2)])
     # change ranges for x
     x_range <- x_range - 180
   }
