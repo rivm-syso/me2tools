@@ -72,10 +72,23 @@ as well.
 with OpenStreet map (OSM) in the sense that a larger number equals a
 larger zoom. Can be overridden by \code{xlim} and \code{ylim}.
 \item \code{xlim} limits of x, used for manual zoom. Defaults are set to
-\code{NA}.
+\code{NA}. When using default projection, the provided values should be
+given in meters.
 \item \code{ylim} limits of y, used for manual zoom. Defaults are set to
-\code{NA}.
-
+\code{NA}. When using default projection, the provided values should be
+given in meters.
+\item \code{xy.ratio} ratio between x and y (x/y). Only used when
+\code{xlim} and \code{ylim} are calculated automatically. When
+\code{xlim} and \code{ylim} are provided (see above), \code{xy.ratio}
+is ignored. Default is set to \code{3/2}.
+\item \code{nudge.x} variable to nudge the middle point of the plot in
+the x-direction. Can be negative or positive, while keeping the overall
+window size of the plot the same size. When using default projection,
+the provided value should be given in meters.
+\item \code{nudge.y} variable to nudge the middle point of the plot in
+the y-direction. Can be negative or positive, while keeping the overall
+window size of the plot the same size. When using default projection,
+the provided value should be given in meters.
 }
 }
 

@@ -91,14 +91,14 @@ metcor_plot <- function(metcor.raster,
       "x" = "Only 'gradient' or 'discrete' is supported."
     ))
   }
-  
+
   if (!metcor.plot.options$plot$world.scale %in% c("small", "medium", "large")){
     cli::cli_abort(c(
       "Invalid option for {.var plot$world.scale} in the plot options:",
       "x" = "Only 'small', 'medium' or 'large' is supported."
     ))
   }
-  
+
   if(metcor.plot.options$plot$world.scale == "large") {
     # check for package
     nehires <- system.file(package = "rnaturalearthhires")
@@ -108,7 +108,7 @@ metcor_plot <- function(metcor.raster,
         "x" = "Necessary data for using {.var plot$worldscale} = 'large' not available.
         This package can be installed using {.function check_rnaturalearthhires()}"
       ))
-    } 
+    }
   }
   ###########################################################################
   ###########################################################################
@@ -118,16 +118,17 @@ metcor_plot <- function(metcor.raster,
   ###########################################################################
   ###########################################################################
   if (verbose) {
-    message("- processing options")
+    cli::cli_h1("Plotting MetCor grid")
+    cli::cli_alert_info("- processing options")
   }
   ##################################################################
   ##                        Raster options                        ##
   ##################################################################
-  
+
   # set an offset for the raster minimum to include it in the lowest bin.
-  raster.min.offset <- 0.1 
+  raster.min.offset <- 0.1
   applied.offset.minimum.grid.value = FALSE
-  
+
   if (metcor.plot.options$raster$type == "discrete") {
     raster.minmax <- terra::minmax(metcor.raster)
     if (length(metcor.plot.options$raster$discrete.breaks) == 1) {
@@ -145,7 +146,7 @@ metcor_plot <- function(metcor.raster,
       } else if(!all.equal(metcor.plot.options$raster$discrete.breaks, as.integer(metcor.plot.options$raster$discrete.breaks))) {
         cli::cli_abort(c(
           "Invalid option for {.var discrete.breaks}:",
-          "x" = "Only 'automatic', an integer representing the number of breaks 
+          "x" = "Only 'automatic', an integer representing the number of breaks
                  or a vector with breaks are supported."
         ))
       }
@@ -185,7 +186,7 @@ metcor_plot <- function(metcor.raster,
         ))
       }
     }
-    
+
   }
   ## Calculate stats
   stats <- c(
@@ -316,9 +317,9 @@ metcor_plot <- function(metcor.raster,
 
   # read and prepare the wmap shape for plotting
   if (verbose) {
-    message("- preparing world map")
+    cli::cli_alert_info("- preparing world map")
   }
-  world <- rnaturalearth::ne_countries(scale = metcor.plot.options$plot$world.scale, 
+  world <- rnaturalearth::ne_countries(scale = metcor.plot.options$plot$world.scale,
                                        returnclass = "sf")
 
   # try to make a grid raster
@@ -340,7 +341,7 @@ metcor_plot <- function(metcor.raster,
   ###########################################################################
   if (metcor.plot.options$plot$center.from == "raster") {
     if (verbose) {
-      message("- raster is used for mid point calculation, based on coordinate distribution peaks")
+      cli::cli_alert_info("- raster is used for mid point calculation, based on coordinate distribution peaks")
     }
 
     # turn raster into tibble
@@ -363,7 +364,7 @@ metcor_plot <- function(metcor.raster,
   }
   if (metcor.plot.options$plot$center.from == "receptor") {
     if (verbose) {
-      message("- receptor is used for mid point calculation")
+      cli::cli_alert_info("- receptor is used for mid point calculation")
     }
     if (!identical(receptor, NA)) {
       zoom_to <- t(as.matrix(c("X" = receptor$lon[[1]], "Y" = receptor$lat[[1]])))
@@ -376,7 +377,7 @@ metcor_plot <- function(metcor.raster,
   }
   if (metcor.plot.options$plot$center.from == "manual") {
     if (verbose) {
-      message("- manually supplied coordinates are used for mid point")
+      cli::cli_alert_info("- manually supplied coordinates are used for mid point")
     }
     zoom_to <- t(as.matrix(c(
       "X" = metcor.plot.options$plot$center.point[["lon"]],
@@ -422,38 +423,61 @@ metcor_plot <- function(metcor.raster,
 
   C <- 40075016.686 # ~ circumference of Earth in meters
   x_span <- C / 2^metcor.plot.options$plot$zoom.level
-  y_span <- C / 2^(metcor.plot.options$plot$zoom.level + 1) # also sets aspect ratio
+  y_span <- x_span * (1/(metcor.plot.options$plot$xy.ratio))
+  #y_span <- C / 2^(metcor.plot.options$plot$zoom.level + 1) # also sets aspect ratio
 
   zoom_to_xy <- sf::st_transform(
     sf::st_sfc(sf::st_point(zoom_to), crs = 4326),
     crs = projection_crs
   )
 
+  # check the nudge values
+  if(abs(metcor.plot.options$plot$nudge_x) > (x_span/2)) {
+    cli::cli_abort(
+      c(
+        "Value to high:",
+        "i" = "The value for {.var nudge_x} in the options pushes the mid point out of view.",
+        "x" = "Please provide a value for {.var nudge_x} above -{(x_span/2)} or below {(x_span/2)}"
+      )
+    )
+  }
+
+  if(abs(metcor.plot.options$plot$nudge_y) > (y_span/2)) {
+    cli::cli_abort(
+      c(
+        "Value to high:",
+        "i" = "The value for {.var nudge_y} in the options pushes the midpoint out of view.",
+        "x" = "Please provide a value for {.var nudge_y} above -{(y_span/2)} or below {(y_span/2)}"
+      )
+    )
+  }
+
+  # calculate the display window
   disp_window <- sf::st_sfc(
-    sf::st_point(sf::st_coordinates(zoom_to_xy - c(x_span / 2, y_span / 2))),
-    sf::st_point(sf::st_coordinates(zoom_to_xy + c(x_span / 2, y_span / 2))),
+    sf::st_point((sf::st_coordinates(zoom_to_xy) - c(x_span / 2, (y_span / 2))) - c(metcor.plot.options$plot$nudge_x, metcor.plot.options$plot$nudge_y)),
+    sf::st_point((sf::st_coordinates(zoom_to_xy) + c(x_span / 2, (y_span / 2))) - c(metcor.plot.options$plot$nudge_x, metcor.plot.options$plot$nudge_y)),
     crs = projection_crs
   )
 
   if (identical(metcor.plot.options$plot$xlim, NA)) {
     if (verbose) {
-      message("   - setting automatic xlim")
+      cli::cli_alert_info("   - setting automatic xlim")
     }
     metcor.plot.options$plot$xlim <- sf::st_coordinates(disp_window)[, "X"]
   } else {
     if (verbose) {
-      message("   - using provided xlim")
+      cli::cli_alert_info("   - using provided xlim")
     }
   }
 
   if (identical(metcor.plot.options$plot$ylim, NA)) {
     if (verbose) {
-      message("   - setting automatic ylim")
+      cli::cli_alert_info("   - setting automatic ylim")
     }
     metcor.plot.options$plot$ylim <- sf::st_coordinates(disp_window)[, "Y"]
   } else {
     if (verbose) {
-      message("   - using provided ylim")
+      cli::cli_alert_info("   - using provided ylim")
     }
   }
 
@@ -470,19 +494,19 @@ metcor_plot <- function(metcor.raster,
     if (identical(metcor.plot.options$raster$discrete.colors, NA)) {
       # apply default coloring
       if (verbose) {
-        message("- applying default coloring from ArcMap")
+        cli::cli_alert_info("- applying default coloring from ArcMap")
       }
-      legend.colors <- c("#2892c7", 
-                         "#a0c79b", 
-                         "#fafa64", 
-                         "#fa8d34", 
+      legend.colors <- c("#2892c7",
+                         "#a0c79b",
+                         "#fafa64",
+                         "#fa8d34",
                          "#e81014")
     }
 
   # calculate the breaks using classInt
     if (length(metcor.plot.options$raster$discrete.breaks) == 1) {
       if (verbose) {
-        message(paste0(
+        cli::cli_alert_info(paste0(
           "- calculating '",
           metcor.plot.options$raster$discrete.breaks,
           "' equal breaks using non-smoothed raster"
@@ -495,7 +519,7 @@ metcor_plot <- function(metcor.raster,
       )
       metcor.plot.options$raster$discrete.breaks <- metcor.plot.options$raster$discrete.breaks$brks
       # location where we need to apply the offset
-      metcor.plot.options$raster$discrete.breaks[[1]] <- metcor.plot.options$raster$discrete.breaks[[1]] - raster.min.offset 
+      metcor.plot.options$raster$discrete.breaks[[1]] <- metcor.plot.options$raster$discrete.breaks[[1]] - raster.min.offset
       applied.offset.minimum.grid.value = TRUE
     }
 
@@ -516,7 +540,7 @@ metcor_plot <- function(metcor.raster,
     # create legend labels, if not provided
     if (identical(metcor.plot.options$legend$labels, NA)) {
       if (verbose) {
-        message("- creating legend labels based on the break values")
+        cli::cli_alert_info("- creating legend labels based on the break values")
       }
       for (i in seq_along(metcor.plot.options$raster$discrete.colors)) {
         if (i == 1) {
@@ -580,7 +604,7 @@ metcor_plot <- function(metcor.raster,
   # ArcMap resampling during display (properties of the raster -> display tab).
   if (metcor.plot.options$raster$smooth.factor > 0) {
     if (verbose) {
-      message("- applying display smoothing to raster")
+      cli::cli_alert_info("- applying display smoothing to raster")
     }
     metcor.raster <- terra::disagg(metcor.raster,
       fact = metcor.plot.options$raster$smooth.factor,
@@ -589,27 +613,27 @@ metcor_plot <- function(metcor.raster,
   }
 
   if (verbose) {
-    message("- preparing raster for plotting")
+    cli::cli_alert_info("- preparing raster for plotting")
   }
 
   # create the default ggplot object
   if (verbose) {
-    message("- creating the plot")
+    cli::cli_alert_info("- creating the plot")
   }
   metcor.plot <- ggplot2::ggplot()
-  
+
   # check to see if we need to add base layers
   if (length(metcor.plot.options$plot$layers.base) > 0) {
     # add layers
     if (verbose) {
-      message("- adding additional provided base layers")
+      cli::cli_alert_info("- adding additional provided base layers")
     }
     num.layer <- 0
     for (layer in metcor.plot.options$plot$layers.base) {
       num.layer <- num.layer + 1
       if (verbose) {
-        message(paste("    + layer", num.layer))
-      } 
+        cli::cli_alert_info(paste("    + layer", num.layer))
+      }
       # check that the layer is a sf object
       if ("sf" %in% class(layer$data)) {
         metcor.plot <- metcor.plot +
@@ -628,7 +652,7 @@ metcor_plot <- function(metcor.raster,
       }
     }
   }
-  
+
   metcor.plot <- metcor.plot +
     ggplot2::geom_sf(
       data = graticules,
@@ -649,14 +673,14 @@ metcor_plot <- function(metcor.raster,
   if (length(metcor.plot.options$raster$layers.before) > 0) {
     # add layers
     if (verbose) {
-      message("- adding additional provided layers before raster")
+      cli::cli_alert_info("- adding additional provided layers before raster")
     }
     num.layer <- 0
     for (layer in metcor.plot.options$raster$layers.before) {
       num.layer <- num.layer + 1
       if (verbose) {
-        message(paste("    + layer", num.layer))
-      } 
+        cli::cli_alert_info(paste("    + layer", num.layer))
+      }
       # check that the layer is a sf object
       if ("sf" %in% class(layer$data)) {
         metcor.plot <- metcor.plot +
@@ -683,12 +707,12 @@ metcor_plot <- function(metcor.raster,
   # check if we need to apply the gradient
   if (metcor.plot.options$raster$type == "gradient") {
     if (verbose) {
-      message("- applying gradient")
+      cli::cli_alert_info("- applying gradient")
     }
     metcor.plot <- metcor.plot +
       tidyterra::geom_spatraster(
         data = metcor.raster,
-        ggplot2::aes(fill = lyr.1),
+        mapping = ggplot2::aes(fill = lyr.1),
         alpha = metcor.plot.options$raster$alpha
       ) +
       ggplot2::scale_fill_gradientn(
@@ -698,8 +722,9 @@ metcor_plot <- function(metcor.raster,
       )
   } else {
     if (verbose) {
-      message("- applying legend breaks and colors")
+      cli::cli_alert_info("- applying legend breaks and colors")
     }
+
     ## Discrete rasters
     metcor.raster.discrete <- terra::classify(
       metcor.raster,
@@ -707,11 +732,11 @@ metcor_plot <- function(metcor.raster,
     )
     # plot
     metcor.plot <- metcor.plot +
-      tidyterra::geom_spatraster(
+      suppressMessages(tidyterra::geom_spatraster(
         data = metcor.raster.discrete,
-        ggplot2::aes(fill = lyr.1),
+        mapping = ggplot2::aes(fill = lyr.1),
         alpha = metcor.plot.options$raster$alpha
-      ) +
+      )) +
       ggplot2::scale_fill_manual(
         values = metcor.plot.options$raster$discrete.colors,
         na.value = NA,
@@ -728,7 +753,7 @@ metcor_plot <- function(metcor.raster,
   if (length(metcor.plot.options$raster$layers.after) > 0) {
     # add layers
     if (verbose) {
-      message("- adding additional provided layers after raster")
+      cli::cli_alert_info("- adding additional provided layers after raster")
     }
     for (layer in metcor.plot.options$raster$layers.after) {
       # check that the layer is a sf object
@@ -753,7 +778,7 @@ metcor_plot <- function(metcor.raster,
   # check if we need to add receptors
   if ("sf" %in% class(receptor)) {
     if (verbose) {
-      message("- adding receptors")
+      cli::cli_alert_info("- adding receptors")
     }
     metcor.plot <- metcor.plot +
       ggplot2::geom_sf(
@@ -780,7 +805,7 @@ metcor_plot <- function(metcor.raster,
   # add scale if needed
   if (metcor.plot.options$plot$show.scale == TRUE) {
     if (verbose) {
-      message("- adding scale bar")
+      cli::cli_alert_info("- adding scale bar")
     }
     metcor.plot <- metcor.plot +
       ggspatial::annotation_scale(
@@ -789,26 +814,26 @@ metcor_plot <- function(metcor.raster,
         text_cex = 1
       )
   }
-  
+
   # add compass if needed
   if (metcor.plot.options$plot$show.compass == TRUE) {
     if (verbose) {
-      message("- adding compass")
+      cli::cli_alert_info("- adding compass")
     }
     if (metcor.plot.options$plot$show.scale == TRUE) {
       # add some padding
       metcor.plot <- metcor.plot +
-        ggspatial::annotation_north_arrow(location = "br", 
-                                          which_north = metcor.plot.options$plot$compass.which_north, 
+        ggspatial::annotation_north_arrow(location = "br",
+                                          which_north = metcor.plot.options$plot$compass.which_north,
                                           style = ggspatial::north_arrow_fancy_orienteering,
-                                          pad_x = unit(0.0, "in"), 
+                                          pad_x = unit(0.0, "in"),
                                           pad_y = unit(0.2, "in"))
     } else {
       metcor.plot <- metcor.plot +
-        ggspatial::annotation_north_arrow(location = "br", 
-                                          which_north = metcor.plot.options$plot$compass.which_north, 
+        ggspatial::annotation_north_arrow(location = "br",
+                                          which_north = metcor.plot.options$plot$compass.which_north,
                                           style = ggspatial::north_arrow_fancy_orienteering,
-                                          pad_x = unit(0.0, "in"), 
+                                          pad_x = unit(0.0, "in"),
                                           pad_y = unit(0.0, "in"))
     }
   }
@@ -816,7 +841,7 @@ metcor_plot <- function(metcor.raster,
   # add annotation if not NA
   if (!identical(metcor.plot.options$annotation$text, NA)) {
     if (verbose) {
-      message("- adding annotation")
+      cli::cli_alert_info("- adding annotation")
     }
     # offsets for the annotation. The offset is 2 percent of the total range
     annotate.x <- max(metcor.plot.options$plot$xlim) - ((max(metcor.plot.options$plot$xlim) - min(metcor.plot.options$plot$xlim)) * 0.02)
@@ -859,7 +884,7 @@ metcor_plot <- function(metcor.raster,
   }
 
   if (verbose) {
-    message("- applying theme")
+    cli::cli_alert_info("- applying theme")
   }
   # apply styling
   metcor.plot <- metcor.plot +
@@ -874,7 +899,7 @@ metcor_plot <- function(metcor.raster,
   # don't show legend if metcor.plot.options$legend$show == FALSE
   if (metcor.plot.options$legend$show == FALSE) {
     if (verbose) {
-      message("- removing legend")
+      cli::cli_alert_info("- removing legend")
     }
     metcor.plot <- metcor.plot +
       list(ggplot2::theme(legend.position = "none"))
@@ -882,7 +907,7 @@ metcor_plot <- function(metcor.raster,
 
   # return plot object
   if (verbose) {
-    message("Done!")
+    cli::cli_alert_success("Done!")
   }
 
   #################

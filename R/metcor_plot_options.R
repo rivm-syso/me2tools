@@ -16,8 +16,8 @@
 #'  \itemize{
 #'    \item \code{layers.base} can contain a list with several simple feature
 #'     (SF) layers that are plotted below the countries. An example of such a
-#'     layer might be the oceans present in \dQuote{RNaturalEarth} package or 
-#'     from shapes from OpenStreetMap. Each item in the list should contain a 
+#'     layer might be the oceans present in \dQuote{RNaturalEarth} package or
+#'     from shapes from OpenStreetMap. Each item in the list should contain a
 #'     list with \dQuote{data}: dataframe with SF;
 #'    \item \code{panel.background} is the color of the background of the plot.
 #'      With countries this color is mostly applied to the sea. As such the
@@ -26,21 +26,21 @@
 #'    \item \code{world.scale} is the scale of the map that should be used.
 #'      valid options are 'small', 'medium' and 'large', with 'medium' being
 #'      the default option. Note that the package \dQuote{rnaturalearthhires} is
-#'      required when using the option 'large'. Other data is present in package 
+#'      required when using the option 'large'. Other data is present in package
 #'      \dQuote{rnaturalearthdata}.
-#'    \item \code{world.background} is the fill color of the natural earth 
+#'    \item \code{world.background} is the fill color of the natural earth
 #'      world country polygons. The default value for this color
-#'      is \dQuote{white} or \dQuote{#ffffff}, but can be any HEX formatted 
+#'      is \dQuote{white} or \dQuote{#ffffff}, but can be any HEX formatted
 #'      code.
-#'    \item \code{world.outline} is the color of the outline of the natural 
-#'      earth world country polygons. The default color is set to 
+#'    \item \code{world.outline} is the color of the outline of the natural
+#'      earth world country polygons. The default color is set to
 #'      \dQuote{#6e6e6e}, but can be any HEX formatted code.
 #'    \item \code{world.linewidth} is the width of the outline of the worldmap.
 #'      The default value for the width is set at \dQuote{0.05}.
 #'    \item \code{graticules.outline} is the color of the graticules, also known
-#'      as the network of lines on the map that delineate the degrees of 
-#'      latitude and longitude. The default color for the lines is set to 
-#'      \dQuote{#0083b3}, which matches with the default 
+#'      as the network of lines on the map that delineate the degrees of
+#'      latitude and longitude. The default color for the lines is set to
+#'      \dQuote{#0083b3}, which matches with the default
 #'      \code{panel.background}.
 #'    \item \code{graticules.linewidth} is the width of the outline of the
 #'      graticules, with a default setting of \dQuote{0.05}.
@@ -48,16 +48,16 @@
 #'      whether a scale should be shown at the lower right hand side of the
 #'      plot. Defaults to \code{TRUE}.
 #'    \item \code{show.compass} A logical evaluating to TRUE or FALSE indicating
-#'      whether a compass pointing to the North should be shown at the lower 
+#'      whether a compass pointing to the North should be shown at the lower
 #'      right hand side of the plot. If there is also a scale present, the
 #'      compass will be added on top of the scale. Defaults to \code{TRUE}.
-#'    \item \code{compass.which_north} Has two options: \dQuote{grid} results 
-#'      in a north arrow always pointing up; \dQuote{true} always points to the 
-#'      north pole from whichever corner of the map the north arrow is in. 
+#'    \item \code{compass.which_north} Has two options: \dQuote{grid} results
+#'      in a north arrow always pointing up; \dQuote{true} always points to the
+#'      north pole from whichever corner of the map the north arrow is in.
 #'      Defaults to \dQuote{grid}
-#'    \item \code{center.from} How to calculate the center point of the plot. 
-#'      Can be one of \dQuote{raster}, \dQuote{receptor} or \dQuote{manual}. 
-#'      In case of \dQuote{manual} the \code{center.point} has to be provided 
+#'    \item \code{center.from} How to calculate the center point of the plot.
+#'      Can be one of \dQuote{raster}, \dQuote{receptor} or \dQuote{manual}.
+#'      In case of \dQuote{manual} the \code{center.point} has to be provided
 #'      as well.
 #'    \item \code{center.point} A vector containing lon and lat coordinates:
 #'      \code{c("lon" = 0, "lat" = 0)} to be used as the center point.
@@ -65,10 +65,23 @@
 #'      with OpenStreet map (OSM) in the sense that a larger number equals a
 #'      larger zoom. Can be overridden by \code{xlim} and \code{ylim}.
 #'    \item \code{xlim} limits of x, used for manual zoom. Defaults are set to
-#'      \code{NA}.
+#'      \code{NA}. When using default projection, the provided values should be
+#'      given in meters.
 #'    \item \code{ylim} limits of y, used for manual zoom. Defaults are set to
-#'      \code{NA}.
-#'      
+#'      \code{NA}. When using default projection, the provided values should be
+#'      given in meters.
+#'    \item \code{xy.ratio} ratio between x and y (x/y). Only used when
+#'      \code{xlim} and \code{ylim} are calculated automatically. When
+#'      \code{xlim} and \code{ylim} are provided (see above), \code{xy.ratio}
+#'      is ignored. Default is set to \code{3/2}.
+#'    \item \code{nudge.x} variable to nudge the middle point of the plot in
+#'      the x-direction. Can be negative or positive, while keeping the overall
+#'      window size of the plot the same size. When using default projection,
+#'      the provided value should be given in meters.
+#'    \item \code{nudge.y} variable to nudge the middle point of the plot in
+#'      the y-direction. Can be negative or positive, while keeping the overall
+#'      window size of the plot the same size. When using default projection,
+#'      the provided value should be given in meters.
 #' }
 #'
 #' # Receptor options
@@ -115,8 +128,8 @@
 #'   \item \code{layers.before} can contain a list with several simple feature
 #'     (SF) layers that are plotted below the MetCor results. Each item in the
 #'     list should contain a list with \dQuote{data}: dataframe with SF;
-#'     \dQuote{color} color of the outline of the shapes; \dQuote{linewidth} 
-#'     size of the outline of the shape; \dQuote{fill} the fill color of the 
+#'     \dQuote{color} color of the outline of the shapes; \dQuote{linewidth}
+#'     size of the outline of the shape; \dQuote{fill} the fill color of the
 #'     shape.
 #'   \item \code{layers.after} can contain a list with several SF layers that
 #'     are plotted on top of the MetCor results. See \code{layers.before} for
@@ -156,40 +169,40 @@
 #'
 #'  \itemize{
 #'    \item \code{text} annotation text for the upper right corner.
-#'    \item \code{background.color} color of the background of the annotation. 
-#'      This helps when the annotation has a poor visibility on the maps 
+#'    \item \code{background.color} color of the background of the annotation.
+#'      This helps when the annotation has a poor visibility on the maps
 #'      background. Defaults to \code{NA} (no background color).
 #'    \item \code{background.alpha} the alpha transparency of the background
 #'      color. Defaults to \code{0.5}.
 #'    \item \code{fontsize} font size of the annotation.Defaults to \code{8}.
 #'    \item \code{fontface} font face of the annotation.Defaults to \code{bold}.
-#'    \item \code{fontcolor} font color of the annotation. 
+#'    \item \code{fontcolor} font color of the annotation.
 #'       Defaults to \code{black}.
-#'    \item \code{vjust} the vjust of the annotation ("bottom", "middle", "top", 
+#'    \item \code{vjust} the vjust of the annotation ("bottom", "middle", "top",
 #'       "inward", "outward" or a numerical value between 0 and 1]). Defaults
 #'       to \code{"inward"}.
 #'    \item \code{hjust} the hjust of the annotation ("left", "center", "right",
 #'       "inward", "outward" or a numerical value between 0 and 1]). Defaults
 #'       to \code{"inward"}.
 #'  }
-#'  
+#'
 #'  # Adding extra layers
-#'  
+#'
 #'  The options \code{layers.base}, \code{layers.before} and \code{layers.after}
 #'  provide an oppertunity to inject layers at certain points. For example, the
-#'  \code{layers.base} can be used to add a layer containing all the oceans, 
-#'  which are plotted below the country data. Another example is 
+#'  \code{layers.base} can be used to add a layer containing all the oceans,
+#'  which are plotted below the country data. Another example is
 #'  \code{layers.before} which are plotted before the raster data from MetCor.
 #'  In this case a layer containing the lakes can be added or a country can be
 #'  highlighted.
-#'  
+#'
 #'  Each list item in one of the \code{layers.xxx} parameters should contain
 #'  four items: \code{data} containing the SF or raster data, \code{color} for
 #'  the outline color (use NA for no color), \code{linewidth} for the width of
 #'  the outline and \code{fill} for the fill color.
 #'
-#' @seealso \code{\link{metcor_import}}, \code{\link{metcor_project_raster}}, 
-#' \code{\link{metcor_plot}}, \code{\link{metcor_export}}, 
+#' @seealso \code{\link{metcor_import}}, \code{\link{metcor_project_raster}},
+#' \code{\link{metcor_plot}}, \code{\link{metcor_export}},
 #' \code{\link{metcor_fix_hysplit}}
 #'
 #' @export
@@ -217,7 +230,10 @@ metcor_plot_options <- function() {
       "center.point" = c("lon" = 0, "lat" = 0),
       "zoom.level" = 1,
       "xlim" = NA,
-      "ylim" = NA
+      "ylim" = NA,
+      "xy.ratio" = 3/2,
+      "nudge_x" = 0,
+      "nudge_y" = 0
     ),
     "receptor" = list(
       "size" = 3,
