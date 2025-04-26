@@ -130,14 +130,6 @@
 #'
 #' @seealso \code{\link{compare_obs_mod}}
 #'
-#' @import cli
-#' @importFrom MASS rlm
-#' @importFrom stats lm
-#' @import dplyr
-#' @import ggplot2
-#' @importFrom openair quickText
-#' @importFrom stats predict
-#' @importFrom ggpmisc stat_poly_eq
 #'
 compare_obs_mod_mlr <- function(measurements,
                             obs = "pm10",
@@ -178,6 +170,15 @@ compare_obs_mod_mlr <- function(measurements,
                             auto.text = TRUE,
                             asp.ratio.1 = FALSE  ) {
   
+  # check availability of needed packages
+  required_packages <- c("MASS")
+  for (required_package in required_packages) {
+    if (!requireNamespace(required_package, quietly = TRUE)) {
+      cli::cli_abort("Package {.pkg {required_package}} is required for this function. Please install it using {.code install.packages('{required_package}')}.")
+    }
+  }
+  
+  # check inputs
   if (!"normalised" %in% unique(G_matrix$unit)) {
     cli::cli_abort(c(
       "{.var unit} == 'normalised' not detected:",

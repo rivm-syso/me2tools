@@ -77,12 +77,6 @@
 #' \code{\link{me2_DISP_read_F}}, \code{\link{me2_read_all}}, 
 #' \code{\link{me2_read_dat}}
 #'
-#' @import cli
-#' @import readr
-#' @import stringr
-#' @import purrr
-#' @import tibble
-#' @import dplyr
 #'
 me2_DISP_read_res <- function(DISPres_file,
                               base_run = 1,

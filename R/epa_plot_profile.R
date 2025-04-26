@@ -181,13 +181,6 @@
 #'
 #' @export
 #'
-#' @import cli
-#' @import openair
-#' @import dplyr
-#' @import tidyr
-#' @import ggplot2
-#' @import stringr
-#' @import ggnewscale
 #'
 epa_plot_profile <- function(F_matrix,
                              by = NA,

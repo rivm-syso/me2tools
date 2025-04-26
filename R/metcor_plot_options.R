@@ -207,11 +207,19 @@
 #'
 #' @export
 #'
-#' @importFrom pals kovesi.rainbow
 #'
 
 
 metcor_plot_options <- function() {
+
+  # check availability of needed packages
+  required_packages <- c("pals")
+  for (required_package in required_packages) {
+    if (!requireNamespace(required_package, quietly = TRUE)) {
+      cli::cli_abort("Package {.pkg {required_package}} is required for this function. Please install it using {.code install.packages('{required_package}')}.")
+    }
+  }
+
   ## Metcor.plot.options
   metcor.plot.options <- list(
     "plot" = list(

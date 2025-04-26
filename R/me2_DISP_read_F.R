@@ -128,11 +128,6 @@
 #' \code{\link{me2_DISP_read_res}}, \code{\link{me2_read_all}}, 
 #' \code{\link{me2_read_dat}}
 #'
-#' @import cli
-#' @import readxl
-#' @import dplyr
-#' @import lubridate
-#' @import stringr
 #'
 me2_DISP_read_F <- function(me2_disp_txt_file,
                             tidy_output = FALSE,

@@ -9,7 +9,6 @@
 #' @returns a named logical vector containing TRUE or FALSE
 #' @export
 #'
-#' @examples
 is_color <- function(x) {
   vapply(x, function(X) {
     tryCatch(is.matrix(col2rgb(X)), 

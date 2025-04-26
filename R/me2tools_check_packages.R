@@ -8,9 +8,6 @@
 
 #' @export
 #'
-#' @import stringr
-#' @importFrom utils installed.packages
-#' @importFrom utils packageDescription
 #'
 me2tools_check_packages <- function() {
   my_packages <- utils::packageDescription("me2tools")

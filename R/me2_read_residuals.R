@@ -37,12 +37,6 @@
 #'
 #' @seealso \code{\link{me2_read_all}}
 #'
-#' @import cli
-#' @import readr
-#' @import stringr
-#' @import dplyr
-#' @import tibble
-#' @import lubridate
 #'
 me2_read_residuals <- function(me2_res_file,
                                base_run = NA,

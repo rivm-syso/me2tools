@@ -24,18 +24,19 @@
 #' \code{\link{metcor_plot_options}}, \code{\link{metcor_export}},
 #' \code{\link{metcor_fix_hysplit}}
 #'
-#' @importFrom readr read_lines
-#' @importFrom terra rast
-#' @importFrom terra values
-#' @importFrom terra trim
-#' @importFrom utils read.table
-#' @importFrom cli cli_abort
-#' @importFrom dplyr bind_cols
 #'
 metcor_import <- function(file, 
                           extent = "north",
                           type = "wgs84",
                           na.rm = TRUE) {
+  
+  # check availability of needed packages
+  required_packages <- c("terra")
+  for (required_package in required_packages) {
+    if (!requireNamespace(required_package, quietly = TRUE)) {
+      cli::cli_abort("Package {.pkg {required_package}} is required for this function. Please install it using {.code install.packages('{required_package}')}.")
+    }
+  }  
 
   # check if file exists
   if (!file.exists(file)) {

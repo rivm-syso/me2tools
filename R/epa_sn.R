@@ -11,9 +11,6 @@
 #'
 #' @export
 #'
-#' @importFrom tibble tibble
-#' @importFrom dplyr mutate
-#' @importFrom dplyr if_else
 #' 
 epa_sn <- function(x, x_unc, na.rm = TRUE) {
   

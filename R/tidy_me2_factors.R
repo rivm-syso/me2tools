@@ -13,8 +13,6 @@
 #'
 #' @noRd
 #'
-#' @import tibble
-#' @import dplyr
 #'
 tidy_me2_factors <- function(F_matrix,
                              run_number = 1,

@@ -61,13 +61,6 @@
 #'
 #' @export
 #'
-#' @import cli
-#' @import dplyr
-#' @import tidyr
-#' @import ggplot2
-#' @importFrom scales trans_breaks
-#' @importFrom scales trans_format
-#' @importFrom scales math_format
 #' 
 epa_plot_BSboxplot <- function(BS_results,
                                xlabel.angle = 45,

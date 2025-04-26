@@ -97,12 +97,6 @@
 #' \code{\link{me2_read_all}}
 #'
 
-#' @import tibble
-#' @import cli
-#' @import dplyr
-#' @importFrom utils setTxtProgressBar
-#' @importFrom utils txtProgressBar
-#' @importFrom utils read.table
 #' 
 me2_read_dat <- function (me2_dat_file,
                           factor_mass = NA,

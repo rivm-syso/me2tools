@@ -159,11 +159,6 @@
 #' \code{\link{me2_read_all}}, \code{\link{me2_read_dat}}
 #'
 
-#' @import cli
-#' @import readr
-#' @import stringr
-#' @import tibble
-#' @import dplyr
 #'
 me2_BS_read_F <- function(me2_bs_txt_file,
                           corr_threshold = 0.6,

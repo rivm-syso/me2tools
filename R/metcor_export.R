@@ -59,14 +59,6 @@
 #' \code{\link{metcor_plot}}, \code{\link{metcor_plot_options}},
 #' \code{\link{metcor_fix_hysplit}}
 #'
-#' @import cli
-#' @import dplyr
-#' @import lubridate
-#' @importFrom stats median
-#' @importFrom stats complete.cases
-#' @importFrom utils head
-#' @importFrom utils tail
-#' @importFrom utils write.table
 #'
 metcor_export <- function(G_matrix,
                           file,

@@ -119,11 +119,6 @@
 #' \code{\link{me2_read_all}}, \code{\link{me2_read_dat}}
 #'
 
-#' @import cli
-#' @import readr
-#' @import stringr
-#' @import tibble
-#' @import dplyr
 #'
 me2_BSDISP_read_res <- function(BSDISPres_file,
                                 base_run = 1,

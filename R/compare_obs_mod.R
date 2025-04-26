@@ -99,15 +99,6 @@
 #'
 #' @seealso \code{\link{compare_obs_mod_mlr}}
 #'
-#' @import cli
-#' @importFrom MASS rlm
-#' @importFrom stats lm
-#' @import dplyr
-#' @import ggplot2
-#' @importFrom openair quickText
-#' @importFrom stats predict
-#' @importFrom ggpmisc stat_poly_eq
-#' @importFrom tidyr nest
 #'
 compare_obs_mod <- function(data,
                             x = "pm10",
@@ -150,6 +141,17 @@ compare_obs_mod <- function(data,
                                                                  "1.0" = 0.95,
                                                                  "2.0" = 0.95))) {
   
+  # check availability of needed packages
+  required_packages <- c("geomtextpath",
+                         "ggpmisc",
+                         "MASS")
+  for (required_package in required_packages) {
+    if (!requireNamespace(required_package, quietly = TRUE)) {
+      cli::cli_abort("Package {.pkg {required_package}} is required for this function. Please install it using {.code install.packages('{required_package}')}.")
+    }
+  }
+  
+  # check inputs
   if (ncol(data) < 2) {
     cli::cli_abort(c(
       "Not enough information in {.var data}",

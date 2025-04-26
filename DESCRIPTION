@@ -17,38 +17,29 @@ Depends:
     R (>= 3.5.0)
 Imports:
     cli,
-    crayon,
-    classInt,
-    dplyr,
-    ggplot2,
-    ggspatial,
-    ggtext,
-    ggnewscale,
-    ggpmisc,
-    lubridate,
-    MASS,
     openair,
-    pals,
-    purrr,
-    raster,
-    readr,
-    readxl,
-    rnaturalearth,
-    rnaturalearthdata,
-    scales,
-    sf,
-    stringr,
-    terra,
-    tibble,
-    tidyterra,
-    tidyr
+    tidyverse,
+    scales
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 Suggests: 
+    classInt,
+    rnaturalearth,
+    rnaturalearthdata,
+    rnaturalearthhires,
     geomtextpath,
+    ggnewscale,
+    ggpmisc,
+    ggspatial,
+    ggtext,
+    MASS,
+    pals,
+    sf,
+    terra,
+    tidyterra,
     knitr,
     rmarkdown
 VignetteBuilder: knitr

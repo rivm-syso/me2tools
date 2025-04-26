@@ -27,11 +27,6 @@
 #'
 #' @seealso \code{\link{me2_read_all}}
 #'
-#' @import cli
-#' @import readr
-#' @import stringr
-#' @import tibble
-#' @import dplyr
 #'
 me2_read_Q <- function(me2_txt_file,
                        block_boundaries = list("start" = "^\\s*Sum-of-squares  Q, Qmain, Qaux")) {

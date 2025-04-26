@@ -21,10 +21,6 @@
 #'
 #' @export
 #'
-#' @import cli
-#' @import readr
-#' @import stringr
-#' @import dplyr
 #'
 me2_BS_read_correlations <- function(me2_bs_txt_file,
                                      tidy_output = FALSE,

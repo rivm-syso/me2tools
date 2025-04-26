@@ -39,9 +39,6 @@
 #'
 #' @export
 #'
-#' @import cli
-#' @import dplyr
-#' @importFrom stats cor
 match_factor_order <- function(base,
                                source,
                                F.profile = "percentage_of_species_sum",

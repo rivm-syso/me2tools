@@ -29,10 +29,6 @@
 #'
 #' @export
 #'
-#' @import cli
-#' @import lubridate
-#' @import tibble
-#' @importFrom utils read.table
 #'
 me2_read_input <- function(file,
                            unc_identifier = c(

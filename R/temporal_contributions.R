@@ -101,15 +101,6 @@
 #'
 #' @seealso \code{\link[ggplot2]{geom_boxplot}}, \code{\link[openair]{cutData}}
 #'
-#' @importFrom grDevices adjustcolor
-#' @import cli
-#' @import openair
-#' @import grDevices
-#' @import ggplot2
-#' @import dplyr
-#' @importFrom stats reformulate
-#' @importFrom stats quantile
-#' @importFrom scales label_parse
 #'
 temporal_contributions <- function(mydata,
                                    factor = NA,

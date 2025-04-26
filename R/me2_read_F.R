@@ -114,11 +114,6 @@
 #' @seealso \code{\link{me2_BS_read_F}}, \code{\link{me2_DISP_read_F}},
 #' \code{\link{me2_read_all}}, \code{\link{me2_read_dat}}
 #'
-#' @import cli
-#' @import readxl
-#' @import dplyr
-#' @import lubridate
-#' @import stringr
 #'
 me2_read_F <- function(me2_txt_file,
                        tidy_output = FALSE,

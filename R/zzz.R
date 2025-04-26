@@ -1,53 +1,151 @@
 # Startup messages
-#' @importFrom utils packageVersion
-#' @import cli
-#' @importFrom crayon green
-#' @importFrom crayon red
-#' @importFrom crayon blue
-#' @importFrom crayon black
+
+.onLoad <- function(libname, pkgname) {
+  suppressPackageStartupMessages(
+    requireNamespace("ggpmisc", quietly = TRUE)
+  )
+}
 
 .onAttach <- function(lib, pkg, ...){
+
+  core <- data.frame(
+    "package" = c(
+      "cli",
+      "openair",
+      "tidyverse",
+      "scales"
+    )
+  )
+  core$system_location <- ""
+  core$message <- ""
   
-  startup_msg <- paste0("Welcome to ME2tools version ",
-                        packageVersion("me2tools"),".\n\n")
+  header <- cli::col_black(
+    cli::rule(
+      left = cli::style_bold("Attaching core packages"),
+      right = paste0("me2tools ", packageVersion("me2tools"))
+    )
+  )
   
+  # loop over core packages
+  for (i_core in seq_len(nrow(core))) {
+    # check packages
+    core[i_core,]$system_location <- system.file(package = core[i_core,]$package)
   
-  # check for packages
-  ne <- system.file(package = "rnaturalearth")
-  nedata <- system.file(package = "rnaturalearthdata")
-  nehires <- system.file(package = "rnaturalearthhires")
-  
-  if(nzchar(ne)) {
-    startup_msg <- paste0(startup_msg, 
-                          crayon::green(cli::symbol$tick), " ", crayon::blue("rnaturalearth\n"))
-  } else {
-    startup_msg <- paste0(startup_msg, 
-                          crayon::red(cli::symbol$cross), " ", crayon::blue("rnaturalearth\n"))
+    if(nzchar(core[i_core,]$system_location)) {
+      core[i_core,]$message <- paste0(cli::col_green(cli::symbol$tick), " ", cli::col_blue(cli::ansi_align(core[i_core,]$package, max(cli::ansi_nchar(core$package)))))
+    } else {
+      core[i_core,]$message <- paste0(cli::col_red(cli::symbol$cross), " ", cli::col_blue(cli::ansi_align(core[i_core,]$package, max(cli::ansi_nchar(core$package)))))
+    }  
   }
   
-  if(nzchar(nedata)) {
-    startup_msg <- paste0(startup_msg, 
-                          crayon::green(cli::symbol$tick), " ", crayon::blue("rnaturalearthdata\n"))
-  } else {
-    startup_msg <- paste0(startup_msg, 
-                          crayon::red(cli::symbol$cross), " ", crayon::blue("rnaturalearthdata\n"))
+  if (nrow(core) %% 2 == 1) {
+    core <- rbind(core, list("", "", ""))
   }
-  if(nzchar(nehires)) {
-    startup_msg <- paste0(startup_msg, 
-                          crayon::green(cli::symbol$tick), " ", crayon::blue("rnaturalearthhires\n"))
-  } else {
-    startup_msg <- paste0(startup_msg, 
-                          crayon::red(cli::symbol$cross), " ", crayon::blue("rnaturalearthhires\n"))
+  col1 <- seq_len(nrow(core) / 2)
+  info <- paste0(core[col1,]$message, "     ", core[-col1,]$message)
+  
+  startup_msg <-paste0(header, "\n", paste(info, collapse = "\n"))
+ 
+  ### suggested
+  suggested <- data.frame(
+    "package" = c(
+      "classInt",
+      "geomtextpath",
+      "ggnewscale",
+      "ggpmisc",
+      "ggspatial",
+      "ggtext",
+      "MASS",
+      "pals",
+      "rnaturalearth",
+      "rnaturalearthdata",
+      "sf",
+      "terra",
+      "tidyterra"
+    )
+  )
+  suggested$system_location <- ""
+  suggested$message <- ""
+  
+  header <- cli::col_black(
+    cli::rule(
+      left = cli::style_bold("Suggested packages"),
+      right = "")
+  )
+  
+  # loop over suggested packages
+  for (i_suggested in seq_len(nrow(suggested))) {
+    # check packages
+    suggested[i_suggested,]$system_location <- system.file(package = suggested[i_suggested,]$package)
+    
+    if(nzchar(suggested[i_suggested,]$system_location)) {
+      suggested[i_suggested,]$message <- paste0(cli::col_green(cli::symbol$tick), " ", cli::col_blue(cli::ansi_align(suggested[i_suggested,]$package, max(cli::ansi_nchar(suggested$package)))))
+    } else {
+      suggested[i_suggested,]$message <- paste0(cli::col_red(cli::symbol$cross), " ", cli::col_blue(cli::ansi_align(suggested[i_suggested,]$package, max(cli::ansi_nchar(suggested$package)))))
+    }  
   }
+  if (nrow(suggested) %% 2 == 1) {
+    suggested <- rbind(suggested, list("", "", ""))
+  }
+  col1 <- seq_len(nrow(suggested) / 2)
+  info <- paste0(suggested[col1,]$message, "     ", suggested[-col1,]$message)
+  
+  suggested_message <- paste0(
+    cli::col_cyan(cli::symbol$info), " ",
+    cli::col_black("To get the most out of me2tools, we recommend installing any missing packages from the list below. Adding these packages will enable full plotting and analysis functionality of this package. Run `me2_check_suggests()` for more information.")
+  )
+  
+  startup_msg <-paste0(startup_msg, "\n\n", header, "\n", suggested_message, "\n\n", paste(info, collapse = "\n"))
+  
+  ### suggested
+  optional <- data.frame(
+    "package" = c(
+      "rnaturalearthhires"
+    )
+  )
+  optional$system_location <- ""
+  optional$message <- ""
+  
+  header <- cli::col_black(
+    cli::rule(
+      left = cli::style_bold("Optional packages"),
+      right = "")
+  )
+  
+  # loop over optional packages
+  for (i_optional in seq_len(nrow(optional))) {
+    # check packages
+    optional[i_optional,]$system_location <- system.file(package = optional[i_optional,]$package)
+    
+    if(nzchar(optional[i_optional,]$system_location)) {
+      optional[i_optional,]$message <- paste0(cli::col_green(cli::symbol$tick), " ", cli::col_blue(cli::ansi_align(optional[i_optional,]$package, max(cli::ansi_nchar(optional$package)))))
+    } else {
+      optional[i_optional,]$message <- paste0(cli::col_red(cli::symbol$cross), " ", cli::col_blue(cli::ansi_align(optional[i_optional,]$package, max(cli::ansi_nchar(optional$package)))))
+    }  
+  }
+  if (nrow(optional) %% 2 == 1) {
+    optional <- rbind(optional, list("", "", ""))
+  }
+  col1 <- seq_len(nrow(optional) / 2)
+  info <- paste0(optional[col1,]$message, "     ", optional[-col1,]$message)
+  
+  optional_message <- paste0(
+    cli::col_cyan(cli::symbol$info), " ",
+    cli::col_black("Optional packages are packages that can enhance the output by providing more detail (if needed).")
+  )
+  
+  startup_msg <-paste0(startup_msg, "\n\n", header, "\n", optional_message, "\n\n", paste(info, collapse = "\n"))
+  
+  startup_msg <- paste0(startup_msg,"\n\n",
+                        cli::col_red(cli::symbol$heart), 
+                        cli::col_magenta(" Happy Source Apportioning "), 
+                        cli::col_red(cli::symbol$heart),
+                        cli::col_black("\n\nTurn this message off using `suppressPackageStartupMessages(library(me2tools))`."))
   
   
-  startup_msg <- paste0(startup_msg,"\n",
-                        crayon::red(cli::symbol$heart), crayon::magenta(" Happy Source Apportioning "), crayon::red(cli::symbol$heart),
-                        crayon::black("\n\nTurn this message off using 'suppressPackageStartupMessages(library(me2tools))'"))
   
   packageStartupMessage(startup_msg)
 }
-
 
 ################################################################################
 ## Fix

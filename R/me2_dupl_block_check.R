@@ -10,8 +10,6 @@
 #'
 #' @noRd
 #'
-#' @import stringr
-#' @import cli
 
 me2_dupl_block_check <- function(text) {
   n_block <- sum(stringr::str_count(text, "Contributions to Qaux by smooth & norm equ:s, for each factor"))

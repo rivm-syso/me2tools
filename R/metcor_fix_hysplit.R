@@ -34,9 +34,6 @@
 #' \code{\link{metcor_plot}}, \code{\link{metcor_plot_options}}, 
 #' \code{\link{metcor_export}}
 #'
-#' @importFrom readr read_lines
-#' @importFrom stringr str_which
-#' @importFrom readr write_lines
 #'
 metcor_fix_hysplit <- function(source, target) {
   hysplit.file <- readr::read_lines(source)

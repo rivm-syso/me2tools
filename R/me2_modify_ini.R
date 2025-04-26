@@ -52,8 +52,6 @@
 #'
 #' @export
 #'
-#' @import cli
-#' @import readr
 #' 
 me2_modify_ini <- function(file,
                            openfile = NA,

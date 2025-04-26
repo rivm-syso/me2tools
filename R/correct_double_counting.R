@@ -11,7 +11,6 @@
 #'
 #' @noRd
 #'
-#' @import dplyr
 #'
 correct_double_counting <- function(F_matrix,
                        m.mass = "m.mass",

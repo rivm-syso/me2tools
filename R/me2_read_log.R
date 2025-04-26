@@ -21,11 +21,6 @@
 #'
 #' @seealso \code{\link{me2_read_all}}
 #'
-#' @import cli
-#' @import readr
-#' @import stringr
-#' @import tibble
-#' @import dplyr
 #'
 me2_read_log <- function(me2_log_file,
                          block_boundaries = list("start" = "^\\s*Starting to process with the same .INI file next task:")) {

@@ -12,10 +12,6 @@
 #'
 #' @noRd
 #'
-#' @import readxl
-#' @import dplyr
-#' @import lubridate
-#' @import stringr
 #'
 extract_me2_matrix_between <- function(text,
                                        line.start,

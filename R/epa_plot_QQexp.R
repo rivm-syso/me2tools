@@ -81,11 +81,6 @@
 #'   
 #' @export
 #'
-#' @import cli
-#' @import openair
-#' @import dplyr
-#' @import tidyr
-#' @import ggplot2
 #'
 epa_plot_QQexp <- function(residuals,
                            num_factors = NA,

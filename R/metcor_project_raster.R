@@ -21,15 +21,21 @@
 #' \code{\link{metcor_plot_options}}, \code{\link{metcor_export}}, 
 #' \code{\link{metcor_fix_hysplit}}
 #'
-#' @importFrom terra rast
-#' @importFrom terra project
-#' @importFrom terra trim
-#' @importFrom terra res
 #'
 metcor_project_raster <- function(raster,
                                   projection = "ESRI:102017",
                                   method = "bilinear",
                                   na.rm = TRUE) {
+  
+  # check availability of needed packages
+  required_packages <- c("terra")
+  for (required_package in required_packages) {
+    if (!requireNamespace(required_package, quietly = TRUE)) {
+      cli::cli_abort("Package {.pkg {required_package}} is required for this function. Please install it using {.code install.packages('{required_package}')}.")
+    }
+  }  
+  
+  # check input
   if (!"SpatRaster" %in% class(raster)) {
     cli_abort(c(
       "{.var raster} must be of a class {.cls SpatRaster}:",

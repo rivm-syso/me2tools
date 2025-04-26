@@ -21,12 +21,6 @@
 #'
 #' @seealso \code{\link{me2_read_all}}
 #'
-#' @import cli
-#' @import readr
-#' @import stringr
-#' @import tibble
-#' @import purrr
-#' @import dplyr
 #'
 me2_read_Qcontrib <- function(me2_txt_file,
                               block_boundaries = list(
