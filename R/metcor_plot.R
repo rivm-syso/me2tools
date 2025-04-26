@@ -38,46 +38,6 @@
 #' \code{\link{metcor_plot_options}}, \code{\link{metcor_export}},
 #' \code{\link{metcor_fix_hysplit}}
 #'
-#' @importFrom classInt classIntervals
-#' @importFrom ggplot2 annotate
-#' @importFrom ggplot2 coord_sf
-#' @importFrom ggplot2 element_blank
-#' @importFrom ggplot2 element_rect
-#' @importFrom ggplot2 element_text
-#' @importFrom ggplot2 geom_sf
-#' @importFrom ggplot2 ggplot
-#' @importFrom ggplot2 margin
-#' @importFrom ggplot2 scale_fill_gradientn
-#' @importFrom ggplot2 scale_fill_manual
-#' @importFrom ggplot2 theme
-#' @importFrom ggplot2 theme_minimal
-#' @importFrom ggplot2 unit
-#' @importFrom ggspatial annotation_scale
-#' @importFrom sf st_as_sf
-#' @importFrom sf st_coordinates
-#' @importFrom sf st_point
-#' @importFrom sf st_read
-#' @importFrom sf st_sfc
-#' @importFrom sf st_transform
-#' @importFrom sf st_make_grid
-#' @importFrom sf st_set_crs
-#' @importFrom stats na.omit
-#' @importFrom stats density
-#' @importFrom terra classify
-#' @importFrom terra disagg
-#' @importFrom terra ext
-#' @importFrom terra res
-#' @importFrom terra trim
-#' @importFrom terra minmax
-#' @importFrom tidyterra geom_spatraster
-#' @importFrom pals kovesi.rainbow
-#' @importFrom raster extent
-#' @importFrom ggtext element_markdown
-#' @importFrom ggtext geom_richtext
-#' @importFrom ggnewscale new_scale_color
-#' @import rnaturalearth
-#' @import rnaturalearthdata
-#' @import cli
 #'
 metcor_plot <- function(metcor.raster,
                         metcor.plot.options = metcor_plot_options(),
@@ -85,6 +45,21 @@ metcor_plot <- function(metcor.raster,
                         verbose = TRUE,
                         show.plot = TRUE) {
 
+  # check availability of needed packages
+  required_packages <- c("classInt",
+                         "ggspatial",
+                         "ggtext",
+                         "rnaturalearth",
+                         "sf",
+                         "terra",
+                         "tidyterra")
+  for (required_package in required_packages) {
+    if (!requireNamespace(required_package, quietly = TRUE)) {
+      cli::cli_abort("Package {.pkg {required_package}} is required for this function. Please install it using {.code install.packages('{required_package}')}.")
+    }
+  }
+
+  # check input
   if (!metcor.plot.options$raster$type %in% c("discrete", "gradient")){
     cli::cli_abort(c(
       "Invalid option for {.var raster$type} in the plot options:",
@@ -321,11 +296,6 @@ metcor_plot <- function(metcor.raster,
   }
   world <- rnaturalearth::ne_countries(scale = metcor.plot.options$plot$world.scale,
                                        returnclass = "sf")
-
-  # try to make a grid raster
-  # e <- as(raster::extent(-180, 180, -90, 90), "SpatialPolygons") %>%
-  #  sf::st_as_sf()
-
 
   graticules <- metcor.ne.graticules[["medium"]][["gr_10"]]
 
@@ -725,22 +695,39 @@ metcor_plot <- function(metcor.raster,
       cli::cli_alert_info("- applying legend breaks and colors")
     }
 
-    ## Discrete rasters
-    metcor.raster.discrete <- terra::classify(
-      metcor.raster,
-      metcor.plot.options$raster$discrete.breaks
-    )
-    # plot
+    ## Discrete rasters (using tidyterra approach)
+    metcor.raster.discrete <- metcor.raster %>%
+      tidyterra::mutate(
+        label = cut(lyr.1,
+                    breaks = metcor.plot.options$raster$discrete.breaks,
+                    labels = metcor.plot.options$legend$labels
+        )
+      ) %>% 
+      tidyterra::select(label) %>% 
+      tidyterra::rename(lyr.1 = label)
+
+    
+    ## Discrete rasters (old way using terra)
+    #metcor.raster.discrete <- terra::as.factor(terra::classify(
+    #  metcor.raster,
+    #  metcor.plot.options$raster$discrete.breaks
+    #))
+    
+    ## plot
     metcor.plot <- metcor.plot +
       suppressMessages(tidyterra::geom_spatraster(
         data = metcor.raster.discrete,
         mapping = ggplot2::aes(fill = lyr.1),
-        alpha = metcor.plot.options$raster$alpha
+        alpha = metcor.plot.options$raster$alpha,
+        show.legend = TRUE 
       )) +
       ggplot2::scale_fill_manual(
-        values = metcor.plot.options$raster$discrete.colors,
+        values = setNames(
+          metcor.plot.options$raster$discrete.colors,
+          terra::levels(metcor.raster.discrete$label)[[1]]$label # set the labels from the raster
+        ),
         na.value = NA,
-        labels = metcor.plot.options$legend$labels,
+        #labels = metcor.plot.options$legend$labels,
         na.translate = FALSE,
         name = metcor.plot.options$legend$title,
         drop = FALSE
