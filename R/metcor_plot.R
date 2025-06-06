@@ -371,7 +371,7 @@ metcor_plot <- function(metcor.raster,
       coords = c("lon", "lat"),
       crs = 4326
     ),
-    crs = "ESRI:102017"
+    crs = "EPSG:6931"
     )
   }
 
@@ -702,24 +702,24 @@ metcor_plot <- function(metcor.raster,
                     breaks = metcor.plot.options$raster$discrete.breaks,
                     labels = metcor.plot.options$legend$labels
         )
-      ) %>% 
-      tidyterra::select(label) %>% 
+      ) %>%
+      tidyterra::select(label) %>%
       tidyterra::rename(lyr.1 = label)
 
-    
+
     ## Discrete rasters (old way using terra)
     #metcor.raster.discrete <- terra::as.factor(terra::classify(
     #  metcor.raster,
     #  metcor.plot.options$raster$discrete.breaks
     #))
-    
+
     ## plot
     metcor.plot <- metcor.plot +
       suppressMessages(tidyterra::geom_spatraster(
         data = metcor.raster.discrete,
         mapping = ggplot2::aes(fill = lyr.1),
         alpha = metcor.plot.options$raster$alpha,
-        show.legend = TRUE 
+        show.legend = TRUE
       )) +
       ggplot2::scale_fill_manual(
         values = setNames(
