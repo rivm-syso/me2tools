@@ -92,7 +92,7 @@
   
   suggested_message <- paste0(
     cli::col_cyan(cli::symbol$info), " ",
-    cli::col_black("To get the most out of me2tools, we recommend installing any missing packages from the list below. Adding these packages will enable full plotting and analysis functionality of this package. Run `me2_check_suggests()` for more information.")
+    cli::col_black("To get the most out of me2tools, we recommend installing any missing packages from the list below.\n  Adding these packages will enable full plotting and analysis functionality of this package.\n  Run `me2_check_suggests()` for more information.")
   )
   
   startup_msg <-paste0(startup_msg, "\n\n", header, "\n", suggested_message, "\n\n", paste(info, collapse = "\n"))
