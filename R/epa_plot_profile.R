@@ -24,7 +24,7 @@
 #' @param xlabel.hjust horizontal justification of the xlabel, between \[0,1\].
 #'   The default is \code{NA}, so that ggplot uses some heuristics to pick the
 #'   best value for this parameter. Any other value is processed by changing
-#'   theme settings. Note that for this to work the \code{xlabel.vjust} also 
+#'   theme settings. Note that for this to work the \code{xlabel.vjust} also
 #'   needs to have a value.
 #' @param xlabel.order The labels containing the species on the x-axis are
 #'   plotted based on the factor levels. This parameter can contain the levels
@@ -105,13 +105,15 @@
 #'   plotted using the \sQuote{base_run} values (default). However, by changing
 #'   this variable to \sQuote{DISP_avg}, \sQuote{BS_median} or
 #'   \sQuote{BSDISP_avg}, these values (if available) are plotted.
+#' @param facet.var The column that is used to split the plot into different
+#'    facets. Default is set to \code{factor}.
 #' @param facet.parse.label Should the labels be parsed using the
 #'   \code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
 #'   will use subscript on the labels shown in the facet.
 #' @param rm.facets Should the facets labels be removed? When each factor has
 #'   its own color, they will show up in the legend. This will make the facets
 #'   labels redundant. Default is \code{FALSE}.
-#' @param facet.string.wrap Long facet titles can be wrapped by providing a 
+#' @param facet.string.wrap Long facet titles can be wrapped by providing a
 #'    integer for the length of the string.
 #' @param ... Other parameters, for example renamed parameters.
 #'
@@ -219,6 +221,7 @@ epa_plot_profile <- function(F_matrix,
                              rm.grid.x = FALSE,
                              perc.x.interval = 20,
                              cp.run.type = "base_run",
+                             facet.var = "factor",
                              facet.parse.label = FALSE,
                              rm.facets = FALSE,
                              facet.string.wrap = NA,
@@ -230,12 +233,12 @@ epa_plot_profile <- function(F_matrix,
   # any arbitrary number).
   # Instead in this plotting routine we use geometries to plot the bars with a
   # lower limit of 0.00001 (-5)
-  
-  
+
+
   ##################################################################
   ##                            Checks                            ##
   ##################################################################
-  
+
   # check if tidied
   if (!"factor" %in% names(F_matrix)) {
     cli::cli_abort(
@@ -248,7 +251,7 @@ epa_plot_profile <- function(F_matrix,
   } else {
     num.factors <- length(unique(F_matrix$factor))
   }
-  
+
   # check if by column exists
   if (!identical(by, NA)) {
     if (length(by) > 1) {
@@ -272,21 +275,26 @@ epa_plot_profile <- function(F_matrix,
       num.by <- length(unique(F_matrix[[by]]))
     }
   }
-  
-  
-  # check if only one model_run
-  if ("model_run" %in% names(F_matrix)) {
-    if (length(unique(F_matrix$model_run)) > 1) {
-      cli::cli_abort(
-        c(
-          "More than 1 run detected:",
-          "i" = "The F-matrix contains more than 1 {.var model_run}.",
-          "x" = "Did you select a base case run using a filter on {.var model_run}?"
+
+  ## check number of facets (needed for bar coloring)
+  num.facets <- length(unique(F_matrix[[facet.var]]))
+
+  # check if only one model_run when plotting factors. Do not check if the user
+  # provides another faceting variable.
+  if (facet.var == "factor") {
+    if ("model_run" %in% names(F_matrix)) {
+      if (length(unique(F_matrix$model_run)) > 1) {
+        cli::cli_warn(
+          c(
+            "More than 1 run detected:",
+            "i" = "The F-matrix contains more than 1 {.var model_run}.",
+            "x" = "Do you need to select a base case run using a filter on {.var model_run}?"
+          )
         )
-      )
+      }
     }
   }
-  
+
   # check if errorbar has a valid value
   if (!errorbar %in% c("none", "DISP", "BS", "BSDISP")) {
     cli::cli_abort(
@@ -297,7 +305,7 @@ epa_plot_profile <- function(F_matrix,
       )
     )
   }
-  
+
   if ((errorbar != "none") & (!identical(by, NA))) {
     cli::cli_abort(
       c(
@@ -307,7 +315,7 @@ epa_plot_profile <- function(F_matrix,
       )
     )
   }
-  
+
   # check if cp.run.type has valid value
   if (!cp.run.type %in% c("base_run", "DISP_avg", "BS_median", "BSDISP_avg")) {
     cli::cli_abort(
@@ -318,16 +326,16 @@ epa_plot_profile <- function(F_matrix,
       )
     )
   }
-  
+
   # check if contains duplicates
   if (identical(by, NA)) {
     test_dups <- F_matrix %>%
-      group_by(factor, factor_profile, run_type, species) %>%
+      group_by(!!sym(facet.var), factor_profile, run_type, species) %>%
       mutate(dupe = n() > 1) %>%
       filter(dupe == TRUE)
   } else {
     test_dups <- F_matrix %>%
-      group_by(factor, factor_profile, run_type, species,!!sym(by)) %>%
+      group_by(!!sym(facet.var), factor_profile, run_type, species,!!sym(by)) %>%
       mutate(dupe = n() > 1) %>%
       filter(dupe == TRUE)
   }
@@ -336,7 +344,7 @@ epa_plot_profile <- function(F_matrix,
       cli::cli_abort(
         c(
           "Duplicate rows detected:",
-          "i" = "The F-matrix contains multiple rows for the combination of {.var factor}, {.var factor_profile}, {.var run_type} and {.var species}",
+          "i" = "The F-matrix contains multiple rows for the combination of {.var facet.var}, {.var factor_profile}, {.var run_type} and {.var species}",
           "x" = "Using duplicate rows can lead to unwanted presentational errors"
         )
       )
@@ -344,13 +352,13 @@ epa_plot_profile <- function(F_matrix,
       cli::cli_abort(
         c(
           "Duplicate rows detected:",
-          "i" = "The F-matrix contains multiple rows for the combination of {.var by}, {.var factor}, {.var factor_profile}, {.var run_type} and {.var species}",
+          "i" = "The F-matrix contains multiple rows for the combination of {.var by}, {.var facet.var}, {.var factor_profile}, {.var run_type} and {.var species}",
           "x" = "Using duplicate rows can lead to unwanted presentational errors."
         )
       )
     }
   }
-  
+
   # Check and adjust labels
   if (!identical(xlab, NA)) {
     if (auto.text) {
@@ -367,7 +375,7 @@ epa_plot_profile <- function(F_matrix,
       ylab2 <- openair::quickText(ylab2)
     }
   }
-  
+
   if (!identical(facet.string.wrap, NA) &
       (!class(facet.string.wrap) %in% c("numeric"))) {
     cli::cli_abort(
@@ -378,17 +386,17 @@ epa_plot_profile <- function(F_matrix,
       )
     )
   }
-  
-  
+
+
   # check if it contains "concentration_of_species" and
   # "percentage_of_species_sum"
-  
+
   # check if species is factor
   if (!"factor" %in% class(F_matrix$species)) {
     F_matrix <- F_matrix %>%
       mutate(species = factor(paste0("`", species, "`")))
   }
-  
+
   # create the plot.data
   df <- F_matrix %>%
     dplyr::mutate(
@@ -401,7 +409,7 @@ epa_plot_profile <- function(F_matrix,
     dplyr::mutate_if(is.numeric, list( ~ na_if(., Inf))) %>%
     dplyr::mutate_if(is.numeric, list( ~ na_if(.,-Inf))) %>%
     dplyr::mutate(value = tidyr::replace_na(value, y_min))
-  
+
   if (nrow(df) == 0) {
     cli::cli_abort(
       c("No data selected to plot:",
@@ -409,18 +417,19 @@ epa_plot_profile <- function(F_matrix,
         "x" = "Did you select the correct data for {.var F_matrix}?")
     )
   }
-  
+
   # check colors
   if (length(bar.color) > 1) {
     if (identical(by, NA)) {
-      if (length(bar.color) != num.factors) {
+      if (length(bar.color) != num.facets) {
         cli::cli_abort(
           c(
             "Too few or too many bar colors:",
-            "i" = "The number of bar colors needs to be equal to 1 or the number of factors.",
-            "x" = "Did you provide the correct amount of colors in {.var bar.color}?"
+            "i" = "The number of bar colors needs to be equal to 1 or the number of facets (factors).",
+            "x" = "Did you provide the correct amount of colors in {.var bar.color}? Defaulting to viridis palette."
           )
         )
+        bar.color <- viridis::viridis(num.facets)
       }
     } else {
       if (length(bar.color) != num.by) {
@@ -428,9 +437,10 @@ epa_plot_profile <- function(F_matrix,
           c(
             "Too few or too many bar colors:",
             "i" = "The number of bar colors needs to be equal to the unique values in the {.var by} column.",
-            "x" = "Did you provide the correct amount of colors in {.var bar.color}?"
+            "x" = "Did you provide the correct amount of colors in {.var bar.color}? Defaulting to viridis palette."
           )
         )
+        bar.color <- viridis::viridis(num.by)
       }
     }
   } else {
@@ -440,13 +450,14 @@ epa_plot_profile <- function(F_matrix,
           c(
             "Too few or too many bar colors:",
             "i" = "The number of bar colors needs to be equal to the unique values in the {.var by} column.",
-            "x" = "Did you provide the correct amount of colors in {.var bar.color}?"
+            "x" = "Did you provide the correct amount of colors in {.var bar.color}? Defaulting to viridis palette."
           )
         )
+        bar.color <- viridis::viridis(num.by)
       }
     }
   }
-  
+
   # errorbar colors
   if (is.list(errorbar.color)) {
     if (exists(errorbar, where = errorbar.color)) {
@@ -459,11 +470,11 @@ epa_plot_profile <- function(F_matrix,
       errorbar.color <- "darkorange3"
     }
   }
-  
+
   #################################################################
   ##                    Checks for error data                    ##
   #################################################################
-  
+
   # prepare DISP data if needed
   # check if we need to do something with the DISP profiles so we prepare the
   # data here
@@ -515,7 +526,7 @@ epa_plot_profile <- function(F_matrix,
     error_ymax <- "DISP_max"
     error_yavg <- "DISP_avg"
   }
-  
+
   # prepare BS data if needed
   # check if we need to do something with the DISP profiles so we prepare the
   # data here
@@ -565,7 +576,7 @@ epa_plot_profile <- function(F_matrix,
     error_ymax <- "BS_P95"
     error_yavg <- "BS_median"
   }
-  
+
   # prepare BSDISP data if needed
   # check if we need to do something with the DISP profiles so we prepare the
   # data here
@@ -617,20 +628,20 @@ epa_plot_profile <- function(F_matrix,
     error_ymax <- "BSDISP_P95"
     error_yavg <- "BSDISP_avg"
   }
-  
+
   #################################################################
   ##             Plot preparations (axis breaks etc)             ##
   #################################################################
-  
+
   # order the x_labels
   if (!identical(xlabel.order, NA)) {
     df$species <-
       factor(as.character(df$species), levels = xlabel.order)
   }
-  
+
   # create numeric column based on species. We use this to plot the data.
   df$numeric_x <- as.numeric(df$species)
-  
+
   # Calculate the upper axis value
   max_conc_log <- df %>%
     filter(
@@ -639,26 +650,26 @@ epa_plot_profile <- function(F_matrix,
     ) %>%
     select(value) %>%
     max()
-  
+
   ## calculate the optimum axis
   breaks_log <- seq(y_min, ceiling(max_conc_log), 2)
-  
+
   # if the breaks are to small, then increase them to the minimum
   # special situation
   if ((length(breaks_log) == 4) && (max(breaks_log = 1))) {
     breaks_log <- c(breaks_log, max(breaks_log) + 2)
   }
-  
+
   # bare minimum is 4
   if ((length(breaks_log) < 4)) {
     breaks_log <- c(breaks_log, max(breaks_log) + 2)
   }
-  
+
   labels_log <- paste0("10^", breaks_log)
-  
+
   breaks_percentage <-
     seq(y_min, max(breaks_log), 1) * (length(seq(y_min, max(breaks_log), 1)) - 1) + y_min
-  
+
   # calculate the gap
   gap_percentage <-
     (max(breaks_percentage) - min(breaks_percentage)) / (100 / perc.x.interval)
@@ -670,14 +681,14 @@ epa_plot_profile <- function(F_matrix,
     )) + (seq(
       1, (100 / perc.x.interval), 1
     ) * gap_percentage), 0))
-  
+
   # scale_items <- ceiling(length(breaks_percentage) / 2)
   # sec.breaks <- c(seq(min(breaks_percentage), max(breaks_percentage), round(length(seq(min(breaks_percentage), max(breaks_percentage), 1)) / scale_items, 0)), max(breaks_percentage))
   sec.labels <-
     round(seq(0, 100, (100 / (
       length(sec.breaks) - 1
     ))), 1)
-  
+
   # scale the percentages to the secondary axis
   df <- df %>%
     dplyr::mutate(value = if_else(
@@ -687,8 +698,8 @@ epa_plot_profile <- function(F_matrix,
       )) - 1) + y_min,
       as.double(value)
     ))
-  
-  
+
+
   ##################################################################
   ##                          Set colors                          ##
   ##################################################################
@@ -698,21 +709,21 @@ epa_plot_profile <- function(F_matrix,
     ############################################################################
     df$p_by <- "EV"
     df$eb_by <- errorbar
-    
+
     # create a separate factor group when there is only one bar color
     if (length(bar.color) == 1) {
       df$f_by <- "Concentration"
     } else {
-      df$f_by <- df$factor
+      df$f_by <- df[[facet.var]]
     }
-    
+
     if ("factor" %in% class(df$f_by)) {
       myColors <- tibble(
         "f_by" = levels(df$f_by),
-        "bar.color" = openair::openColours(bar.color, num.factors),
+        "bar.color" = openair::openColours(bar.color, num.facets),
         "bar.alpha" = bar.alpha,
         "p_by" = unique(df$p_by),
-        "point.color" = openair::openColours(point.color, num.by),
+        "point.color" = openair::openColours(point.color, num.facets),
         "point.shape" = point.shape,
         "point.size" = point.size,
         "eb_by" = unique(df$eb_by),
@@ -722,10 +733,10 @@ epa_plot_profile <- function(F_matrix,
     } else {
       myColors <- tibble(
         "f_by" = unique(df$f_by),
-        "bar.color" = openair::openColours(bar.color, num.factors),
+        "bar.color" = openair::openColours(bar.color, num.facets),
         "bar.alpha" = bar.alpha,
         "p_by" = unique(df$p_by),
-        "point.color" = openair::openColours(point.color, num.factors),
+        "point.color" = openair::openColours(point.color, num.facets),
         "point.shape" = point.shape,
         "point.size" = point.size,
         "eb_by" = unique(df$eb_by),
@@ -738,23 +749,28 @@ epa_plot_profile <- function(F_matrix,
     ## Apply group coloring
     ############################################################################
     df$f_by <- df[[by]]
-    
+
     # add a grouping variable for the points to be able to separate the colors
     if (length(point.color) == 1) {
       df$p_by <- "EV"
     } else {
       df$p_by <- paste("EV", df[[by]])
     }
-    
+
     if (length(errorbar.color) == 1) {
       df$eb_by <- errorbar
     } else {
       df$eb_by <- paste(errorbar, df[[by]])
     }
-    
+
     # TURN INTO FACTOR WITH THE RIGHT LEVELS IF WE WANT TO HAVE DIFFERENT COLORS
-    
+
     if ("factor" %in% class(df[[by]])) {
+      # reset levels if needed
+      if (length(levels(df[[by]])) > length(unique(df[[by]]))) {
+        df[[by]] <- forcats::fct_drop(df[[by]])
+      }
+
       myColors <- tibble(
         "f_by" = levels(df[[by]]),
         "bar.color" = openair::openColours(bar.color, num.by),
@@ -785,30 +801,30 @@ epa_plot_profile <- function(F_matrix,
 
   myColors.vector <- myColors %>%
     pull(bar.color, f_by) # first = values, second = names
-  
+
   myAlpha.vector <- myColors %>%
     pull(bar.alpha, f_by) # first = values, second = names
-  
+
   myPColor.vector <- myColors %>%
     pull(point.color, p_by) # first = values, second = names
-  
+
   myPShape.vector <- myColors %>%
     pull(point.shape, p_by) # first = values, second = names
-  
+
   myPSize.vector <- myColors %>%
     pull(point.size, p_by) # first = values, second = names
-  
+
   myEBColor.vector <- myColors %>%
     pull(errorbar.color, eb_by) # first = values, second = names
-  
+
   myEPSize.vector <- myColors %>%
     pull(errorbar.point.size, eb_by) # first = values, second = names
-  
-  
+
+
   ##################################################################
   ##                    Create error bars data                    ##
   ##################################################################
-  
+
   if (errorbar != "none") {
     disp.df <- df %>%
       filter(
@@ -825,10 +841,10 @@ epa_plot_profile <- function(F_matrix,
     df = left_join(df,
                    disp.df,
                    by = join_by(factor_profile, factor, numeric_x))
-    
+
     rm(disp.df)
   }
-  
+
   #################################################################
   ##                         Create plot                         ##
   #################################################################
@@ -901,7 +917,7 @@ epa_plot_profile <- function(F_matrix,
       ggplot2::scale_size_manual(values = myPSize.vector,
                                  name = NULL,
                                  guide = guide_legend(order = 2))
-    
+
     # plot lollipop lines
     if (lollipops) {
       plot <- plot +
@@ -920,12 +936,12 @@ epa_plot_profile <- function(F_matrix,
           alpha = 0.5
         )
     }
-    
+
   } else {
     ############################################################################
     ## Apply grouping using by variable
     ############################################################################
-    
+
     plot <- ggplot2::ggplot(df)  +
       ggplot2::scale_y_continuous(
         limits = c(y_min, max(breaks_log)),
@@ -994,7 +1010,7 @@ epa_plot_profile <- function(F_matrix,
       ggplot2::scale_size_manual(values = myPSize.vector,
                                  name = NULL,
                                  guide = guide_legend(order = 2))
-    
+
     # plot lollipop lines
     if (lollipops) {
       plot <- plot +
@@ -1015,9 +1031,9 @@ epa_plot_profile <- function(F_matrix,
           position = position_dodge(width = 0.9)
         )
     }
-    
+
   }
-  
+
   # plot error bars
   if (errorbar != "none") {
     plot <- plot +
@@ -1043,7 +1059,7 @@ epa_plot_profile <- function(F_matrix,
       ggplot2::scale_color_manual(values = myEBColor.vector,
                                   name = NULL,
                                   guide = guide_legend(order = 3))
-    
+
     if (cp.run.type == "base_run") {
       # add point for the average/median
       plot <- plot +
@@ -1066,18 +1082,18 @@ epa_plot_profile <- function(F_matrix,
                                    guide = guide_legend(order = 3))
     }
   }
-  
+
   # use label_wrap_gen to wrap long names?
   if (facet.parse.label) {
     if (identical(facet.string.wrap, NA)) {
       plot <- plot +
-        ggplot2::facet_grid(factor ~ .,
+        ggplot2::facet_grid( as.formula(paste(facet.var, "~ .")),
                             labeller = label_parsed)
     } else {
       plot <- plot +
         ggplot2::facet_grid(rows = vars(
           stringr::str_wrap(
-            string = factor,
+            string = .data[[facet.var]],
             width = facet.string.wrap,
             whitespace_only = FALSE
           )
@@ -1087,19 +1103,19 @@ epa_plot_profile <- function(F_matrix,
   } else {
     if (identical(facet.string.wrap, NA)) {
       plot <- plot +
-        ggplot2::facet_grid(factor ~ .)
+        ggplot2::facet_grid( as.formula(paste(facet.var, "~ .")))
     } else {
       plot <- plot +
         ggplot2::facet_grid(rows = vars(
           stringr::str_wrap(
-            string = factor,
+            string = .data[[facet.var]],
             width = facet.string.wrap,
             whitespace_only = FALSE
           )
         ))
     }
   }
-  
+
   plot <- plot +
     ggplot2::ylab(ylab) +
     ggplot2::annotation_logticks(sides = "l") +
@@ -1109,14 +1125,14 @@ epa_plot_profile <- function(F_matrix,
       legend.justification = "right",
       legend.margin = margin(b = -10)
     )
-  
+
   # get the labels
   x_labels <- levels(df$species)
-  
+
   if (xlabel.parse) {
     x_labels <- parse(text = x_labels)
   }
-  
+
   # split into even and odd
   x_labels_top <- x_labels
   x_labels_bottom <- x_labels
@@ -1128,7 +1144,7 @@ epa_plot_profile <- function(F_matrix,
   # split the labels
   x_labels_top[odd(seq(1, length(x_labels_top)))] <- NA
   x_labels_bottom[even(seq(1, length(x_labels_bottom)))] <- NA
-  
+
   if ((identical(xlabel.vjust, NA)) &
       (identical(xlabel.hjust, NA))) {
     # set parameters using guide_axis
@@ -1218,37 +1234,37 @@ epa_plot_profile <- function(F_matrix,
         panel.grid.major.x = element_blank()
       )
   }
-  
+
   # remove legend?
   if (!show.legend) {
     plot <- plot +
       ggplot2::theme(legend.position = "none")
   }
-  
+
   # remove vertical grid lines?
   if (rm.grid.x) {
     plot <- plot +
       ggplot2::theme(panel.grid.major.x = element_blank(),
                      panel.grid.minor.x = element_blank())
   }
-  
+
   # remove facets?
   if (rm.facets) {
     plot <- plot +
       ggplot2::theme(strip.background = element_blank(),
                      strip.text = element_blank())
   }
-  
+
   # run garbage collector
   gc()
   #if (!identical(dev.list(), NULL)) {
   #  dev.off()
   #}
-  
+
   ##################################################################
   ##                        Prepare output                        ##
   ##################################################################
-  
+
   # print(metcor.plot)
   output <- list("plot" = plot,
                  call = match.call())

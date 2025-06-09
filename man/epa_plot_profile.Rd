@@ -38,6 +38,7 @@ epa_plot_profile(
   rm.grid.x = FALSE,
   perc.x.interval = 20,
   cp.run.type = "base_run",
+  facet.var = "factor",
   facet.parse.label = FALSE,
   rm.facets = FALSE,
   facet.string.wrap = NA,
@@ -178,6 +179,9 @@ axis. The default is 20, leading to intervals of
 plotted using the \sQuote{base_run} values (default). However, by changing
 this variable to \sQuote{DISP_avg}, \sQuote{BS_median} or
 \sQuote{BSDISP_avg}, these values (if available) are plotted.}
+
+\item{facet.var}{The column that is used to split the plot into different
+facets. Default is set to \code{factor}.}
 
 \item{facet.parse.label}{Should the labels be parsed using the
 \code{labeller = label_parsed}? If set to \code{TRUE} then \code{"SO[2]"}
