@@ -1,7 +1,7 @@
 #' Plot profiles using the EPA-PMF style
 #'
 #' Function to plot PMF factor profiles using data from PMFR (using
-#' [pmfr::read_pmf_factor_profiles()] and [pmfr::tidy_pmf_profiles()] or from
+#' `pmfr::read_pmf_factor_profiles()` and `pmfr::tidy_pmf_profiles()` or from
 #' the metools package using `me2_read_F()` in the same way as in EPA-PMF.
 #'
 #' @param F_matrix Tibble from `me2_read_F()` containing

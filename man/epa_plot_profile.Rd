@@ -202,7 +202,7 @@ geometries and the call.
 }
 \description{
 Function to plot PMF factor profiles using data from PMFR (using
-\code{\link[pmfr:read_pmf_factor_profiles]{pmfr::read_pmf_factor_profiles()}} and \code{\link[pmfr:tidy_pmf_profiles]{pmfr::tidy_pmf_profiles()}} or from
+\code{pmfr::read_pmf_factor_profiles()} and \code{pmfr::tidy_pmf_profiles()} or from
 the metools package using \code{me2_read_F()} in the same way as in EPA-PMF.
 }
 \section{Input format of the F-matrix}{
