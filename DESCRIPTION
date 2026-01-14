@@ -1,7 +1,7 @@
 Package: me2tools
 Type: Package
 Title: Tools for Processing the Input and Output of the Multilineair Engine Version 2 (ME-2) and MetCor
-Version: 0.2.1
+Version: 0.5.0
 Authors@R: c(
     person(given = "Dennis", 
            family = "Mooibroek", 
@@ -42,4 +42,6 @@ Suggests:
     tidyterra,
     knitr,
     rmarkdown
+Remotes:
+    ropensci/rnaturalearthhires
 VignetteBuilder: knitr
