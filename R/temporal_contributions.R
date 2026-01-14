@@ -27,7 +27,7 @@
 #' @param by Grouping variable that can be used to plot multiple analysis into a
 #'   single plot. Useful for exploring the difference in profiles between
 #'   regular analysis and a dispersion normalised analysis. Works best if
-#'   factor names are the same for the analysis.  
+#'   factor names are the same for the analysis.
 #' @param facet This sets the faceting variable to be used. For example, if a
 #'   data frame had a column \code{site} setting \code{facet = "site"} will
 #'   plot all sites individually in their own panels.
@@ -56,9 +56,9 @@
 #'   the P05 and P95 for the whisker limits).
 #' @param point.size The size of the points. Defaults to 1.25.
 #' @param line.size The size of the lines. Defaults to 1.
-#' @param ribbon.minmax.show Show the ribbon with the min/max values (or 
+#' @param ribbon.minmax.show Show the ribbon with the min/max values (or
 #'   defined percentiles (see whisk.lim)). Defaults to \code{TRUE}
-#' @param ribbon.iqr.show Show the ribbon with the interquartile range (IQR). 
+#' @param ribbon.iqr.show Show the ribbon with the interquartile range (IQR).
 #'   Defaults to \code{TRUE}
 #' @param ribbon.alpha The transparency of the ribbons. Defaults to
 #'   \code{c(0.25, 0.25)}, meaning that the min/max and IQR ribbons both have a
@@ -74,15 +74,15 @@
 #' @param facet.scales Should scales be fixed ("fixed", the default), free
 #'   ("free"), or free in one dimension ("free_x", "free_y")? See also
 #'   ggplot2::facet_wrap or ggplot2::facet_grid.
-#' @param facet.parse.label Should the labels be parsed as an expression? 
-#'   If set to \code{TRUE} then \code{"SO[2]"} will use subscript on the labels 
+#' @param facet.parse.label Should the labels be parsed as an expression?
+#'   If set to \code{TRUE} then \code{"SO[2]"} will use subscript on the labels
 #'   shown in the facet.
 #' @param legend.justification The legend is by default placed on top, and this
-#'   parameter allows for changing the justification to \dQuote{left}, 
+#'   parameter allows for changing the justification to \dQuote{left},
 #'   \dQuote{right} and \dQuote{center}. The default is \dQuote{right}.
-#' @param legend.parse.label Should the labels be parsed as an expression? 
-#'   If set to \code{TRUE} then \code{"SO[2]"} will use subscript on the labels 
-#'   shown in the legend. 
+#' @param legend.parse.label Should the labels be parsed as an expression?
+#'   If set to \code{TRUE} then \code{"SO[2]"} will use subscript on the labels
+#'   shown in the legend.
 #' @param show.legend A logical argument evaluating to TRUE or FALSE indicating
 #'   whether the legend should be shown by default. Default: FALSE.
 #' @param ... Other parameters passed onto \code{cutData}. For example, in the
@@ -132,7 +132,7 @@ temporal_contributions <- function(mydata,
                                    ...) {
   ## extra.args setup
   extra.args <- list(...)
-  
+
   #################################################################
   ##                      Input data checks                      ##
   #################################################################
@@ -147,7 +147,7 @@ temporal_contributions <- function(mydata,
       )
     )
   }
-  
+
   # check if facet column exists
   if (!identical(facet, NA)) {
     if (!(facet %in% names(mydata))) {
@@ -160,7 +160,7 @@ temporal_contributions <- function(mydata,
       )
     }
   }
-  
+
   # check if group column exists
   if (!identical(group, NA)) {
     if (!(group %in% names(mydata))) {
@@ -173,7 +173,7 @@ temporal_contributions <- function(mydata,
       )
     }
   }
-  
+
   # check if by column exists
   if (!identical(by, NA)) {
     if (!(by %in% names(mydata))) {
@@ -186,7 +186,7 @@ temporal_contributions <- function(mydata,
       )
     }
   }
-  
+
   # check if there is a group and a by (double grouping...)
   if ((!identical(group, NA)) & (!identical(by, NA))) {
     cli::cli_abort(
@@ -207,7 +207,7 @@ temporal_contributions <- function(mydata,
       )
     )
   }
-  
+
   # check if type exists in data if not part of cutData
   type_cutData = c(
     "default",
@@ -221,7 +221,7 @@ temporal_contributions <- function(mydata,
     "daylight",
     "dst"
   )
-  
+
   if (!(type %in% type_cutData)) {
     # check if in dataframe
     if (!(type %in% names(mydata))) {
@@ -234,7 +234,7 @@ temporal_contributions <- function(mydata,
       )
     }
   }
-  
+
   if (length(whisk.lim) > 0) {
     if (length(whisk.lim) == 1) {
       cli::cli_abort(
@@ -288,7 +288,7 @@ temporal_contributions <- function(mydata,
     }
     nfacet <- length(na.omit(unique(mydata[[facet]]))) ## number of facets
   }
-  
+
   # create the colors
   if (identical(by, NA)) {
     ############################################################################
@@ -320,7 +320,7 @@ temporal_contributions <- function(mydata,
     ############################################################################
     ## Apply group coloring
     ############################################################################
-    
+
     if ("factor" %in% class(mydata[[by]])) {
       myColors <- tibble("f_by" = levels(mydata[[by]]),
                          "myColor" = openair::openColours(cols,
@@ -335,19 +335,19 @@ temporal_contributions <- function(mydata,
   # boxplot colors:
   myColors <- myColors %>%
     mutate(boxplotColor = grDevices::adjustcolor(myColor, alpha.f = box.alpha))
-  
+
   myColors.vector <- myColors %>%
     pull(myColor, f_by) # first = values, second = names
-  
+
   boxplotColor.vector <- myColors %>%
     pull(boxplotColor, f_by) # first = values, second = names
-  
+
   #myColors <- openair::openColours(cols, nfacet)
   #boxplotColor <- grDevices::adjustcolor(myColors, alpha.f = box.alpha)
-  
+
   # cut the data
   mydata <- openair::cutData(mydata, type = vars)
-  
+
   # Here is where we calculate the data for all the plots using the geom_boxplot
   # routine.
   # different plot routines for none faceting and faceting
@@ -363,10 +363,10 @@ temporal_contributions <- function(mydata,
         ggplot2::geom_boxplot(outlier.shape = NA, na.rm = TRUE) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "none")
-      
+
       # then we grab the data
       box.data <- ggplot2::layer_data(box.plot)
-      
+
       # since we have type variable, we need to apply this as well.
       # The output data has now a GROUP variable that we can use.
       box.data <- box.data %>%
@@ -379,7 +379,7 @@ temporal_contributions <- function(mydata,
         # not a factor
         levels(box.data[[type]]) <- sort(unique(mydata[[type]]))
       }
-      
+
       ############################################
       # see if we need to replace the whiskers
       ############################################
@@ -416,15 +416,15 @@ temporal_contributions <- function(mydata,
           )
         )
       }
-      
+
       # now we can construct the plots.
       default.plot <- ggplot2::ggplot(data = box.data,
                                       ggplot2::aes(
                                         x = !!sym(type),
                                         y = middle,
                                         group = 1
-                                      )) 
-      
+                                      ))
+
       if (ribbon.minmax.show) {
         default.plot <- default.plot +
           ggplot2::geom_ribbon(
@@ -435,7 +435,7 @@ temporal_contributions <- function(mydata,
             alpha = ribbon.alpha[[1]]
           )
       }
-      
+
       if (ribbon.iqr.show) {
         default.plot <- default.plot +
           ggplot2::geom_ribbon(
@@ -446,7 +446,7 @@ temporal_contributions <- function(mydata,
             alpha = ribbon.alpha[[2]]
           )
       }
-      
+
       default.plot <- default.plot +
         ggplot2::geom_line(ggplot2::aes(color = "concentration"),
                            linewidth = line.size) +
@@ -455,12 +455,12 @@ temporal_contributions <- function(mydata,
         ggplot2::scale_fill_manual(values = myColors.vector) +
         ggplot2::scale_color_manual(values = myColors.vector) +
         ggplot2::theme_bw()
-      
+
       # make sure
       #test.data <- mydata %>%
       #  dplyr::select(!!vars, !!factor)
       #default.plot + geom_boxplot(mapping = ggplot2::aes(x = !!sym(type), y = !!sym(factor), group = !!sym(type), alpha = 0.2), outlier.shape = NA, data = test.data)
-      
+
       # boxplot (replacing intial boxplot used to get data)
       box.plot <- ggplot2::ggplot(
         box.data,
@@ -480,7 +480,7 @@ temporal_contributions <- function(mydata,
           na.rm = TRUE
         ) +
         ggplot2::theme_bw()
-      
+
       # create the colors
       iqrColor <- adjustcolor(myColors.vector,
                               alpha.f = box.alpha)
@@ -582,10 +582,10 @@ temporal_contributions <- function(mydata,
                               width = box.width) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "none")
-      
+
       # then we grab the data
       box.data <- ggplot2::layer_data(box.plot)
-      
+
       # since we have type variable, we need to apply this as well.
       # The output data has now a GROUP variable that we can use.
       box.data <- box.data %>%
@@ -593,16 +593,16 @@ temporal_contributions <- function(mydata,
       # in order to make this work, we need to set the correct group names
       # to the panel. Since we have grouped data we need to find the number
       # of items for each type.
-      
+
       type_items <- mydata %>%
         select(!!sym(type),!!sym(group)) %>%
         unique() %>%
         group_by(!!sym(type)) %>%
         tally()
-      
+
       types <- c() # emtpy to start with
       groups <- c() # emtpy to start with
-      
+
       # also grab the group_levels
       if ("factor" %in% class(mydata[[group]])) {
         group_levels <- levels(mydata[[group]])
@@ -610,7 +610,7 @@ temporal_contributions <- function(mydata,
         # not a factor
         group_levels <- sort(unique(mydata[[group]]))
       }
-      
+
       for (type_level in levels(mydata[[type]])) {
         group_count <- as.numeric(type_items %>%
                                     filter(!!sym(type) == type_level) %>%
@@ -621,7 +621,7 @@ temporal_contributions <- function(mydata,
           groups <- c(groups, group_levels[item])
         }
       }
-      
+
       if ("factor" %in% class(mydata[[type]])) {
         box.data[[type]] <- factor(types, levels(mydata[[type]]))
       } else {
@@ -635,7 +635,7 @@ temporal_contributions <- function(mydata,
         # not a factor
         box.data[[groups]] <- factor(groups, sort(unique(mydata[[groups]])))
       }
-      
+
       ############################################
       # see if we need to replace the whiskers
       ############################################
@@ -665,7 +665,7 @@ temporal_contributions <- function(mydata,
             ymin = n_wllimit,
             ymax = n_wulimit
           )
-        
+
         cli::cli_warn(
           c(
             "The limits of the whiskers have been changed by the user.",
@@ -689,7 +689,7 @@ temporal_contributions <- function(mydata,
         ggplot2::theme_void() +
         ggplot2::geom_text(aes(0,0,label='N/A')) +
         ggplot2::xlab(NULL)
-      
+
       # boxplot (replacing intial boxplot used to get data)
       box.plot <- ggplot2::ggplot(
         box.data,
@@ -715,7 +715,7 @@ temporal_contributions <- function(mydata,
                           na.value = NA,
                           guide = "none") +
         ggplot2::theme_bw()
-      
+
       # add colored segments to plot
       box.plot <- box.plot +
         ggplot2::geom_segment(
@@ -804,7 +804,7 @@ temporal_contributions <- function(mydata,
           color = "black",
           na.rm = TRUE
         )
-      
+
       # parse legend items or not?
       if(legend.parse.label) {
         box.plot <- box.plot +
@@ -816,9 +816,9 @@ temporal_contributions <- function(mydata,
           ggplot2::scale_color_manual(values = myColors.vector,
                                       name = NULL)
       }
-      
+
     } # end grouping
-    
+
     # end
   } else {
     #################################################################
@@ -839,7 +839,7 @@ temporal_contributions <- function(mydata,
         ) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "none")
-      
+
     } else {
       # we first create a white boxplot
       box.plot <- ggplot2::ggplot(mydata,
@@ -848,14 +848,14 @@ temporal_contributions <- function(mydata,
                                     y = !!sym(factor),
                                     color = !!sym(by)
                                   )) +
-        ggplot2::geom_boxplot(outliers = FALSE, 
+        ggplot2::geom_boxplot(outliers = FALSE,
                               na.rm = TRUE,
                               position = position_dodge(width = 0.9),
                               width=box.width) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "none")
     }
-    
+
     # parse facet labels
     if (facet.parse.label) {
       box.plot <- box.plot +
@@ -865,14 +865,14 @@ temporal_contributions <- function(mydata,
                             scales = facet.scales)
     } else {
       box.plot <- box.plot +
-        ggplot2::facet_wrap(stats::reformulate(facet), 
+        ggplot2::facet_wrap(stats::reformulate(facet),
                             ncol = facet.col,
                             scales = facet.scales)
     }
 
     # then we grab the data
     box.data <- ggplot2::layer_data(box.plot)
-    
+
     # layer_data only grabs data that is present, empty spaces are silently
     # removed from the output.
     if ("factor" %in% class(mydata[[type]])) {
@@ -895,37 +895,37 @@ temporal_contributions <- function(mydata,
           rep(sort(unique(mydata[[type]])), each = n_by)
       }
     }
-    
+
     if ("factor" %in% class(mydata[[facet]])) {
       facet_levels <- levels(mydata[[facet]])
     } else {
       # not a factor
       facet_levels <- sort(unique(mydata[[facet]]))
     }
-    
+
     if (nrow(box.data) < (length(type_levels) * nfacet)) {
       # we need to fix some stuff.
-      box.data.type <- tibble(!!sym(type) := factor(rep(type_levels, 
+      box.data.type <- tibble(!!sym(type) := factor(rep(type_levels,
                                                         each = length(facet_levels)),
                                                     levels = type_levels),
-                              !!sym(facet) := factor(rep(facet_levels, 
-                                                         times = length(type_levels)), 
+                              !!sym(facet) := factor(rep(facet_levels,
+                                                         times = length(type_levels)),
                                                      levels = facet_levels),
-                              PANEL = factor(rep(seq(1,nfacet,1), times = length(type_levels)))) %>% 
+                              PANEL = factor(rep(seq(1,nfacet,1), times = length(type_levels)))) %>%
         left_join(.,
-                  tibble(!!sym(type) := factor(type_levels)) %>% 
+                  tibble(!!sym(type) := factor(type_levels)) %>%
                     tibble::rowid_to_column("group"),
-                  by = join_by(!!sym(type))) %>% 
+                  by = join_by(!!sym(type))) %>%
         arrange(PANEL, group)
-      
+
       # get some params
       x_diff <- box.data[1,]$x - box.data[1,]$xmin
       bar_width <- box.data[1,]$new_width
-      
-      # join to construct the complete data set  
+
+      # join to construct the complete data set
       box.data <- left_join(box.data.type,
                 box.data,
-                by = join_by(group, PANEL)) %>% 
+                by = join_by(group, PANEL)) %>%
         mutate(x = group,
                flipped_aes = FALSE,
                xmin = x - x_diff,
@@ -940,7 +940,7 @@ temporal_contributions <- function(mydata,
                shape = 19,
                linetype = "solid",
                linewidth = 0.5)
-      
+
     } else {
       # since we have group variable, we need to apply this as well.
       # The output data has now a PANEL variable that we can use.
@@ -953,7 +953,7 @@ temporal_contributions <- function(mydata,
     if ("factor" %in% class(mydata[[type]])) {
       if (identical(by, NA)) {
         if (!identical(levels(box.data[[type]]), levels(mydata[[type]]))) {
-          levels(box.data[[type]]) <- levels(mydata[[type]])  
+          levels(box.data[[type]]) <- levels(mydata[[type]])
         }
       } else {
         # need to duplicate
@@ -981,14 +981,14 @@ temporal_contributions <- function(mydata,
       # not a factor
       levels(box.data[[facet]]) <- sort(unique(mydata[[facet]]))
     }
-    
+
     if (!identical(by, NA)) {
       # we need to add another column for coloring
       if ("factor" %in% class(mydata[[by]])) {
         box.data[[by]] <- factor(rep(levels(mydata[[by]]),
                                      times = nrow(box.data) / length(levels(mydata[[by]]))),
                                  levels = levels(mydata[[by]]))
-        
+
       } else {
         box.data[[by]] <- factor(rep(sort(unique(mydata[[by]])),
                                      times = nrow(box.data) / length(sort(
@@ -998,20 +998,20 @@ temporal_contributions <- function(mydata,
       }
       # here we fix the coloring when there is only 1 set
       # first find if there are facets with only one set.
-      facet_one_item <- mydata %>% 
-        distinct(!!sym(facet), !!sym(by)) %>% 
-        group_by(!!sym(facet)) %>% 
-        tally() %>% 
+      facet_one_item <- mydata %>%
+        distinct(!!sym(facet), !!sym(by)) %>%
+        group_by(!!sym(facet)) %>%
+        tally() %>%
         filter(n == 1)
-      
+
       # if there are facets with one set, then process them correctly
       if (nrow(facet_one_item) > 0) {
-        set_one_item <- mydata  %>% 
-          distinct(!!sym(facet), !!sym(by)) %>% 
+        set_one_item <- mydata  %>%
+          distinct(!!sym(facet), !!sym(by)) %>%
           filter(!!sym(facet) == facet_one_item[[facet]])
-        # loop over results and fix the set      
+        # loop over results and fix the set
         for (i_fix in seq(1,nrow(set_one_item),1)) {
-          box.data[[by]][box.data[[facet]]==set_one_item[[facet]][i_fix]] <- set_one_item[[by]][i_fix]  
+          box.data[[by]][box.data[[facet]]==set_one_item[[facet]][i_fix]] <- set_one_item[[by]][i_fix]
         }
       }
     }
@@ -1035,16 +1035,16 @@ temporal_contributions <- function(mydata,
           ),
           .groups = "drop_last"
         )
-      
+
       type_levels
       levels(additional.data$year_month)
-      
-      
+
+
       # combine with the boxplot data
-      box.data <- left_join(box.data %>% 
+      box.data <- left_join(box.data %>%
                     mutate(!!sym(type) := as.character(!!sym(type)),
-                           !!sym(facet) := as.character(!!sym(facet))), 
-                  additional.data %>% 
+                           !!sym(facet) := as.character(!!sym(facet))),
+                  additional.data %>%
                     mutate(!!sym(type) := as.character(!!sym(type)),
                            !!sym(facet) := as.character(!!sym(facet))),
                   by = join_by(!!sym(type), !!sym(facet))) %>%
@@ -1053,10 +1053,10 @@ temporal_contributions <- function(mydata,
           ymax_old = ymax,
           ymin = n_wllimit,
           ymax = n_wulimit
-        ) %>% 
+        ) %>%
         mutate(!!sym(type) := factor(!!sym(type), levels = type_levels),
                !!sym(facet) := factor(!!sym(facet), levels = facet_levels))
-      
+
       cli::cli_warn(
         c(
           "The limits of the whiskers have been changed by the user.",
@@ -1089,7 +1089,7 @@ temporal_contributions <- function(mydata,
           ),
           alpha = ribbon.alpha[[2]])
       }
-      
+
       default.plot <- default.plot +
         ggplot2::geom_line(ggplot2::aes(color = !!sym(facet)),
                            size = line.size) +
@@ -1097,7 +1097,7 @@ temporal_contributions <- function(mydata,
                             size = point.size) +
         ggplot2::scale_fill_manual(values = myColors.vector) +
         ggplot2::scale_color_manual(values = myColors.vector) +
-        ggplot2::theme_bw() 
+        ggplot2::theme_bw()
     } else {
       default.plot <- ggplot2::ggplot(data = box.data,
                                       ggplot2::aes(
@@ -1123,14 +1123,14 @@ temporal_contributions <- function(mydata,
           ),
           alpha = ribbon.alpha[[2]])
       }
-      
+
       default.plot <- default.plot +
         ggplot2::geom_line(ggplot2::aes(color = !!sym(by)),
                            linewidth = line.size) +
         ggplot2::geom_point(ggplot2::aes(color = !!sym(by)),
                             size = point.size) +
         ggplot2::theme_bw()
-      
+
       if(legend.parse.label) {
         default.plot <- default.plot +
           ggplot2::scale_fill_manual(values = myColors.vector,
@@ -1147,7 +1147,7 @@ temporal_contributions <- function(mydata,
                                       name = NULL)
       }
     }
-    
+
     # apply wrapping
     if (facet.col == 1) {
       # parse facet labels
@@ -1195,7 +1195,7 @@ temporal_contributions <- function(mydata,
           group = group
         )
       ) +
-        ggplot2::geom_boxplot(stat = "identity", 
+        ggplot2::geom_boxplot(stat = "identity",
                               color = NA,
                               fill = NA) +
         ggplot2::theme_bw()
@@ -1222,9 +1222,9 @@ temporal_contributions <- function(mydata,
           position = position_dodge(width = 0.9),
           width = box.width
         ) +
-        ggplot2::theme_bw() 
+        ggplot2::theme_bw()
     }
-    
+
     # apply wrapping
     if (facet.col == 1) {
       # parse facet labels
@@ -1256,15 +1256,16 @@ temporal_contributions <- function(mydata,
                               scales = facet.scales)
       }
     }
-    
+
     if (identical(by, NA)) {
       # create the colors. Here we can have different colors per factor
-      iqrColor <- adjustcolor(myColors.vector, alpha.f = box.alpha)
-      
-      iqrColor <- rep(iqrColor[1], each = nrow(box.data))
-      
-      medianColor <- rep(myColors.vector[1], each = nrow(box.data))
-      
+      iqrColor_all <- adjustcolor(myColors.vector, alpha.f = box.alpha)
+      names(iqrColor_all) <- names(myColors.vector)
+
+      iqrColor <- iqrColor_all[box.data[[facet]]]
+
+      medianColor <- myColors.vector[box.data[[facet]]]
+
       # add colored segments to plot
       box.plot <- box.plot +
         ggplot2::geom_segment(
@@ -1345,9 +1346,10 @@ temporal_contributions <- function(mydata,
           na.rm = TRUE,
           color = "black"
         )
+
     } else {
       # apply the coloring for the by factor
-      
+
       if(legend.parse.label) {
         box.plot <- box.plot +
           ggplot2::scale_color_manual(values = myColors.vector,
@@ -1453,7 +1455,7 @@ temporal_contributions <- function(mydata,
           ""
         )
       )
-    
+
     box.plot <- box.plot +
       ggplot2::scale_x_discrete(
         labels = c(
@@ -1484,25 +1486,25 @@ temporal_contributions <- function(mydata,
         )
       )
   }
-  
+
   if (txt.x.rm) {
     default.plot <- default.plot +
       ggplot2::theme(axis.text.x = ggplot2::element_blank())
     box.plot <- box.plot +
       ggplot2::theme(axis.text.x = ggplot2::element_blank())
   }
-  
+
   if (txt.y.rm) {
     default.plot <- default.plot +
       ggplot2::theme(axis.text.y = ggplot2::element_blank())
     box.plot <- box.plot +
       ggplot2::theme(axis.text.y = ggplot2::element_blank())
   }
-  
+
   #  default.plot <- default.plot +
   #  #theme(axis.text.x = element_text(angle = 45, hjust = 0.5))
   #    ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(n.dodge = 2))
-  
+
   # remove legend?
   if (show.legend) {
     default.plot <- default.plot +
@@ -1525,7 +1527,7 @@ temporal_contributions <- function(mydata,
     box.plot <- box.plot +
       ggplot2::theme(legend.position = "none")
   }
-  
+
   output <- list(
     "plot" = default.plot,
     "box.plot" = box.plot,

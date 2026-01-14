@@ -39,6 +39,7 @@ compare_obs_mod(
   xlab = "Observed",
   auto.text = TRUE,
   asp.ratio.1 = FALSE,
+  n.col = 2,
   geomtextpath = tibble(labels = list(`0.5` = "0.5", `1.0` = "1.0", `2.0` = "2.0"), hjust
     = list(`0.5` = 0.95, `1.0` = 0.95, `2.0` = 0.95))
 )
@@ -150,6 +151,8 @@ the \sQuote{2} in NO2.}
 
 \item{asp.ratio.1}{Output the plot with an aspect ratio of 1. For this to
 work the minimum and maximum of x and y axis are used.}
+
+\item{n.col}{The number of columns used in the facetted plot.}
 
 \item{geomtextpath}{This variable contains specific settings for the optional
 package geomtextpath. When plotting the mod.lines, the geomtextpath

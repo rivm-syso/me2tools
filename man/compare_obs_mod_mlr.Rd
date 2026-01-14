@@ -39,7 +39,8 @@ compare_obs_mod_mlr(
   ylab = "Modelled",
   xlab = "Observed",
   auto.text = TRUE,
-  asp.ratio.1 = FALSE
+  asp.ratio.1 = FALSE,
+  n.col = 2
 )
 }
 \arguments{
@@ -162,6 +163,8 @@ the \sQuote{2} in NO2.}
 
 \item{asp.ratio.1}{Output the plot with an aspect ratio of 1. For this to
 work the minimum and maximum of x and y axis are used.}
+
+\item{n.col}{The number of columns used in the facetted plot.}
 }
 \value{
 me2tools list containing the ggplot2 for the regression of the
