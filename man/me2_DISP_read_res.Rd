@@ -22,10 +22,10 @@ corresponding to either dQmax = [4, 8, 16, 32].}
 FALSE}
 
 \item{species}{A vector containing the names of the species for the rows in
-the F-matrix. If these species names are outputted in the ME-2 output as 
-the second column (a column of row numbers being the first), then these 
-values are used when \code{species = NA}. If this second column with names 
-is not available, all species are named as \dQuote{species_xx}, with xx 
+the F-matrix. If these species names are outputted in the ME-2 output as
+the second column (a column of row numbers being the first), then these
+values are used when \code{species = NA}. If this second column with names
+is not available, all species are named as \dQuote{species_xx}, with xx
 being an unique number starting at 1.}
 }
 \value{
@@ -35,8 +35,8 @@ being an unique number starting at 1.}
   \code{F_format}, the aggregated DISP data in the same format as the
   F_matrix; \code{diag} the diagnostic line from the file, containing the error code (0
   is no error, 6 or 9 indicates that the run was aborted) and the largest
-  drop of Q; and \code{swaps}, the swap counts for each dQmax level (4, 8, 
-  15, 25). If retained, e.g., using 
+  drop of Q; and \code{swaps}, the swap counts for each dQmax level (4, 8,
+  15, 25). If retained, e.g., using
   \code{output <- me2_BSDISP_read_res(file)}, this output can be used to
   recover the data, reproduce, or undertake further analysis.
 
@@ -44,18 +44,18 @@ being an unique number starting at 1.}
   including \code{print}, \code{plot} and \code{summary}.
 }
 \description{
-Files stored after a DISP run are named with a user-specific prefix, shown 
-here as an asterisk (*). Three output files (*_DISP.dat,  *_DISP.txt and 
-*_DISP.rsd) are stored after a DISP run. The function \code{me2_DISP_read_F} 
-reads all the factor profiles in the text file and \code{me2_DISP_read_G} 
-reads all the factor contributions. The residuals, stored in the 
-*_DISP.rsd file, can be read using \code{ me2_read_residuals}. Besides these 
-three files, four other files are produced as output, corresponding to 
-dQmax = [4, 8, 16, 32] and are *_DISPres1.txt, *_DISPres2.txt, 
-*_DISPres3.txt and *_DISPres4.txt. These files contain the minimum and 
-maximum DISP results for a specific dQmax and any of these files can be read 
-using this function. Each of these files have the same format, containing 
-minimum and maximum DISP values in concentration units and as percentage of 
+Files stored after a DISP run are named with a user-specific prefix, shown
+here as an asterisk (*). Three output files (*_DISP.dat,  *_DISP.txt and
+*_DISP.rsd) are stored after a DISP run. The function \code{me2_DISP_read_F}
+reads all the factor profiles in the text file and \code{me2_DISP_read_G}
+reads all the factor contributions. The residuals, stored in the
+*_DISP.rsd file, can be read using \code{ me2_read_residuals}. Besides these
+three files, four other files are produced as output, corresponding to
+dQmax = [4, 8, 16, 32] and are *_DISPres1.txt, *_DISPres2.txt,
+*_DISPres3.txt and *_DISPres4.txt. These files contain the minimum and
+maximum DISP results for a specific dQmax and any of these files can be read
+using this function. Each of these files have the same format, containing
+minimum and maximum DISP values in concentration units and as percentage of
 species units. These are all read and stored in the output.
 }
 \section{Adding species to min/max}{
@@ -91,7 +91,7 @@ Please note that the above will only work when the data is read with the
 }
 
 \seealso{
-\code{\link{me2_read_F}}, \code{\link{me2_BS_read_F}}, 
-\code{\link{me2_DISP_read_F}}, \code{\link{me2_read_all}}, 
+\code{\link{me2_read_F}}, \code{\link{me2_BS_read_F}},
+\code{\link{me2_DISP_read_F}}, \code{\link{me2_read_all}},
 \code{\link{me2_read_dat}}
 }

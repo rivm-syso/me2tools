@@ -2,9 +2,9 @@
 #'
 #' Function to plot PMF factor profiles using data from PMFR (using
 #' [pmfr::read_pmf_factor_profiles()] and [pmfr::tidy_pmf_profiles()] or from
-#' the metools package using [me2_read_F()] in the same way as in EPA-PMF.
+#' the metools package using `me2_read_F()` in the same way as in EPA-PMF.
 #'
-#' @param F_matrix Tibble from [me2_read_F()] containing
+#' @param F_matrix Tibble from `me2_read_F()` containing
 #'   the results for the F_matrix. In order to use this function only the
 #'   results from a single run should be provided.
 #' @param by Grouping variable that can be used to plot multiple analysis into a
@@ -335,7 +335,7 @@ epa_plot_profile <- function(F_matrix,
       filter(dupe == TRUE)
   } else {
     test_dups <- F_matrix %>%
-      group_by(!!sym(facet.var), factor_profile, run_type, species,!!sym(by)) %>%
+      group_by(!!sym(facet.var), factor_profile, run_type, species, !!sym(by)) %>%
       mutate(dupe = n() > 1) %>%
       filter(dupe == TRUE)
   }
@@ -377,7 +377,7 @@ epa_plot_profile <- function(F_matrix,
   }
 
   if (!identical(facet.string.wrap, NA) &
-      (!class(facet.string.wrap) %in% c("numeric"))) {
+    (!class(facet.string.wrap) %in% c("numeric"))) {
     cli::cli_abort(
       c(
         "Invalid value for {.var facet.string.wrap} :",
@@ -402,19 +402,20 @@ epa_plot_profile <- function(F_matrix,
     dplyr::mutate(
       value = dplyr::if_else(
         factor_profile == "concentration_of_species",
-        log10(dplyr::if_else(value < 10 ^ y_min, 10 ^ y_min, value)),
+        log10(dplyr::if_else(value < 10^y_min, 10^y_min, value)),
         as.double(value)
       )
     ) %>%
-    dplyr::mutate_if(is.numeric, list( ~ na_if(., Inf))) %>%
-    dplyr::mutate_if(is.numeric, list( ~ na_if(.,-Inf))) %>%
+    dplyr::mutate_if(is.numeric, list(~ na_if(., Inf))) %>%
+    dplyr::mutate_if(is.numeric, list(~ na_if(., -Inf))) %>%
     dplyr::mutate(value = tidyr::replace_na(value, y_min))
 
   if (nrow(df) == 0) {
     cli::cli_abort(
       c("No data selected to plot:",
         "i" = "The F-matrix seems to be empty.",
-        "x" = "Did you select the correct data for {.var F_matrix}?")
+        "x" = "Did you select the correct data for {.var F_matrix}?"
+      )
     )
   }
 
@@ -492,8 +493,10 @@ epa_plot_profile <- function(F_matrix,
       } else {
         # check for "concentration_of_species" in combination with run_type
         test.df <- df %>%
-          filter(run_type == check_var,
-                 factor_profile == "concentration_of_species")
+          filter(
+            run_type == check_var,
+            factor_profile == "concentration_of_species"
+          )
         if (nrow(test.df) == 0) {
           cli::cli_abort(
             c(
@@ -508,8 +511,10 @@ epa_plot_profile <- function(F_matrix,
     # check for percentage of species if we need to plot those
     if (cp.run.type == "DISP_avg") {
       test.df <- df %>%
-        filter(run_type == "DISP_avg",
-               factor_profile == "percentage_of_species_sum")
+        filter(
+          run_type == "DISP_avg",
+          factor_profile == "percentage_of_species_sum"
+        )
       if (nrow(test.df) == 0) {
         cli::cli_abort(
           c(
@@ -537,13 +542,16 @@ epa_plot_profile <- function(F_matrix,
         cli::cli_abort(
           c("BS results not found:",
             "i" = "The F-matrix does not contain a {.var run_type} column containing {check_var}.",
-            "x" = "Did you provide the BS results with the {.var F_matrix}?")
+            "x" = "Did you provide the BS results with the {.var F_matrix}?"
+          )
         )
       } else {
         # check for "concentration_of_species" in combination with run_type
         test.df <- df %>%
-          filter(run_type == check_var,
-                 factor_profile == "concentration_of_species")
+          filter(
+            run_type == check_var,
+            factor_profile == "concentration_of_species"
+          )
         if (nrow(test.df) == 0) {
           cli::cli_abort(
             c(
@@ -558,8 +566,10 @@ epa_plot_profile <- function(F_matrix,
     # check for percentage of species if we need to plot those
     if (cp.run.type == "BS_median") {
       test.df <- df %>%
-        filter(run_type == "BS_median",
-               factor_profile == "percentage_of_species_sum")
+        filter(
+          run_type == "BS_median",
+          factor_profile == "percentage_of_species_sum"
+        )
       if (nrow(test.df) == 0) {
         cli::cli_abort(
           c(
@@ -594,8 +604,10 @@ epa_plot_profile <- function(F_matrix,
       } else {
         # check for "concentration_of_species" in combination with run_type
         test.df <- df %>%
-          filter(run_type == check_var,
-                 factor_profile == "concentration_of_species")
+          filter(
+            run_type == check_var,
+            factor_profile == "concentration_of_species"
+          )
         if (nrow(test.df) == 0) {
           cli::cli_abort(
             c(
@@ -610,8 +622,10 @@ epa_plot_profile <- function(F_matrix,
     # check for percentage of species if we need to plot those
     if (cp.run.type == "BSDISP_avg") {
       test.df <- df %>%
-        filter(run_type == "BSDISP_avg",
-               factor_profile == "percentage_of_species_sum")
+        filter(
+          run_type == "BSDISP_avg",
+          factor_profile == "percentage_of_species_sum"
+        )
       if (nrow(test.df) == 0) {
         cli::cli_abort(
           c(
@@ -838,9 +852,10 @@ epa_plot_profile <- function(F_matrix,
         values_from = value
       )
     # join with original data
-    df = left_join(df,
-                   disp.df,
-                   by = join_by(factor_profile, factor, numeric_x))
+    df <- left_join(df,
+      disp.df,
+      by = join_by(factor_profile, factor, numeric_x)
+    )
 
     rm(disp.df)
   }
@@ -883,15 +898,21 @@ epa_plot_profile <- function(F_matrix,
           fill = f_by,
         ),
       ) +
-      ggplot2::scale_fill_manual(values = myColors.vector,
-                                 name = NULL,
-                                 guide = guide_legend(order = 1)) +
-      ggplot2::scale_alpha_manual(values = myAlpha.vector,
-                                  name = NULL,
-                                  guide = guide_legend(order = 1)) +
-      ggplot2::scale_color_manual(values = myColors.vector,
-                                  name = NULL,
-                                  guide = guide_legend(order = 1)) +
+      ggplot2::scale_fill_manual(
+        values = myColors.vector,
+        name = NULL,
+        guide = guide_legend(order = 1)
+      ) +
+      ggplot2::scale_alpha_manual(
+        values = myAlpha.vector,
+        name = NULL,
+        guide = guide_legend(order = 1)
+      ) +
+      ggplot2::scale_color_manual(
+        values = myColors.vector,
+        name = NULL,
+        guide = guide_legend(order = 1)
+      ) +
       ggnewscale::new_scale("color") +
       ggnewscale::new_scale("fill") +
       ggplot2::geom_point(
@@ -908,15 +929,21 @@ epa_plot_profile <- function(F_matrix,
           color = p_by,
         )
       ) +
-      ggplot2::scale_color_manual(values = myPColor.vector,
-                                  name = NULL,
-                                  guide = guide_legend(order = 2)) +
-      ggplot2::scale_shape_manual(values = myPShape.vector,
-                                  name = NULL,
-                                  guide = guide_legend(order = 2)) +
-      ggplot2::scale_size_manual(values = myPSize.vector,
-                                 name = NULL,
-                                 guide = guide_legend(order = 2))
+      ggplot2::scale_color_manual(
+        values = myPColor.vector,
+        name = NULL,
+        guide = guide_legend(order = 2)
+      ) +
+      ggplot2::scale_shape_manual(
+        values = myPShape.vector,
+        name = NULL,
+        guide = guide_legend(order = 2)
+      ) +
+      ggplot2::scale_size_manual(
+        values = myPSize.vector,
+        name = NULL,
+        guide = guide_legend(order = 2)
+      )
 
     # plot lollipop lines
     if (lollipops) {
@@ -936,13 +963,12 @@ epa_plot_profile <- function(F_matrix,
           alpha = 0.5
         )
     }
-
   } else {
     ############################################################################
     ## Apply grouping using by variable
     ############################################################################
 
-    plot <- ggplot2::ggplot(df)  +
+    plot <- ggplot2::ggplot(df) +
       ggplot2::scale_y_continuous(
         limits = c(y_min, max(breaks_log)),
         breaks = breaks_log,
@@ -974,15 +1000,21 @@ epa_plot_profile <- function(F_matrix,
         ),
         position = position_dodge(width = 0.9, preserve = "total"),
       ) +
-      ggplot2::scale_fill_manual(values = myColors.vector,
-                                 name = NULL,
-                                 guide = guide_legend(order = 1)) +
-      ggplot2::scale_alpha_manual(values = myAlpha.vector,
-                                  name = NULL,
-                                  guide = guide_legend(order = 1)) +
-      ggplot2::scale_color_manual(values = myColors.vector,
-                                  name = NULL,
-                                  guide = guide_legend(order = 1)) +
+      ggplot2::scale_fill_manual(
+        values = myColors.vector,
+        name = NULL,
+        guide = guide_legend(order = 1)
+      ) +
+      ggplot2::scale_alpha_manual(
+        values = myAlpha.vector,
+        name = NULL,
+        guide = guide_legend(order = 1)
+      ) +
+      ggplot2::scale_color_manual(
+        values = myColors.vector,
+        name = NULL,
+        guide = guide_legend(order = 1)
+      ) +
       ggnewscale::new_scale("color") +
       ggnewscale::new_scale("fill") +
       ggplot2::geom_point(
@@ -1001,15 +1033,21 @@ epa_plot_profile <- function(F_matrix,
         ),
         position = position_dodge(width = 0.9)
       ) +
-      ggplot2::scale_color_manual(values = myPColor.vector,
-                                  name = NULL,
-                                  guide = guide_legend(order = 2)) +
-      ggplot2::scale_shape_manual(values = myPShape.vector,
-                                  name = NULL,
-                                  guide = guide_legend(order = 2)) +
-      ggplot2::scale_size_manual(values = myPSize.vector,
-                                 name = NULL,
-                                 guide = guide_legend(order = 2))
+      ggplot2::scale_color_manual(
+        values = myPColor.vector,
+        name = NULL,
+        guide = guide_legend(order = 2)
+      ) +
+      ggplot2::scale_shape_manual(
+        values = myPShape.vector,
+        name = NULL,
+        guide = guide_legend(order = 2)
+      ) +
+      ggplot2::scale_size_manual(
+        values = myPSize.vector,
+        name = NULL,
+        guide = guide_legend(order = 2)
+      )
 
     # plot lollipop lines
     if (lollipops) {
@@ -1031,7 +1069,6 @@ epa_plot_profile <- function(F_matrix,
           position = position_dodge(width = 0.9)
         )
     }
-
   }
 
   # plot error bars
@@ -1056,9 +1093,11 @@ epa_plot_profile <- function(F_matrix,
         width = errorbar.width,
         linewidth = errorbar.linewidth,
       ) +
-      ggplot2::scale_color_manual(values = myEBColor.vector,
-                                  name = NULL,
-                                  guide = guide_legend(order = 3))
+      ggplot2::scale_color_manual(
+        values = myEBColor.vector,
+        name = NULL,
+        guide = guide_legend(order = 3)
+      )
 
     if (cp.run.type == "base_run") {
       # add point for the average/median
@@ -1077,9 +1116,11 @@ epa_plot_profile <- function(F_matrix,
           ),
           shape = 18,
         ) +
-        ggplot2::scale_size_manual(values = myEPSize.vector,
-                                   name = NULL,
-                                   guide = guide_legend(order = 3))
+        ggplot2::scale_size_manual(
+          values = myEPSize.vector,
+          name = NULL,
+          guide = guide_legend(order = 3)
+        )
     }
   }
 
@@ -1087,23 +1128,26 @@ epa_plot_profile <- function(F_matrix,
   if (facet.parse.label) {
     if (identical(facet.string.wrap, NA)) {
       plot <- plot +
-        ggplot2::facet_grid( as.formula(paste(facet.var, "~ .")),
-                            labeller = label_parsed)
+        ggplot2::facet_grid(as.formula(paste(facet.var, "~ .")),
+          labeller = label_parsed
+        )
     } else {
       plot <- plot +
-        ggplot2::facet_grid(rows = vars(
-          stringr::str_wrap(
-            string = .data[[facet.var]],
-            width = facet.string.wrap,
-            whitespace_only = FALSE
-          )
-        ),
-        labeller = label_parsed)
+        ggplot2::facet_grid(
+          rows = vars(
+            stringr::str_wrap(
+              string = .data[[facet.var]],
+              width = facet.string.wrap,
+              whitespace_only = FALSE
+            )
+          ),
+          labeller = label_parsed
+        )
     }
   } else {
     if (identical(facet.string.wrap, NA)) {
       plot <- plot +
-        ggplot2::facet_grid( as.formula(paste(facet.var, "~ .")))
+        ggplot2::facet_grid(as.formula(paste(facet.var, "~ .")))
     } else {
       plot <- plot +
         ggplot2::facet_grid(rows = vars(
@@ -1137,41 +1181,45 @@ epa_plot_profile <- function(F_matrix,
   x_labels_top <- x_labels
   x_labels_bottom <- x_labels
   # define quick functions
-  odd <- function(x)
+  odd <- function(x) {
     x %% 2 != 0
-  even <- function(x)
+  }
+  even <- function(x) {
     x %% 2 == 0
+  }
   # split the labels
   x_labels_top[odd(seq(1, length(x_labels_top)))] <- NA
   x_labels_bottom[even(seq(1, length(x_labels_bottom)))] <- NA
 
   if ((identical(xlabel.vjust, NA)) &
-      (identical(xlabel.hjust, NA))) {
+    (identical(xlabel.hjust, NA))) {
     # set parameters using guide_axis
     if (xlabel.top.bottom) {
       plot <- plot +
         ggplot2::scale_x_continuous(
           name = xlab,
-          #labels = parse(text = x_labels_top),
+          # labels = parse(text = x_labels_top),
           labels = x_labels_top,
           breaks = sort(unique(df$numeric_x)),
           expand = expansion(mult = expand.mult),
           guide = guide_axis(angle = xlabel.angle, n.dodge = x.n.dodge),
           sec.axis = ggplot2::sec_axis(
-            trans = ~ .,
+            trans = ~.,
             breaks = sort(unique(df$numeric_x)),
-            #labels =  parse(text = x_labels_bottom),
-            labels =  x_labels_bottom,
+            # labels =  parse(text = x_labels_bottom),
+            labels = x_labels_bottom,
             guide = ggplot2::guide_axis(angle = xlabel.angle, n.dodge = x.n.dodge)
           )
         ) +
-        theme(axis.text.x.top = ggplot2::element_text(hjust = 0,
-                                                      vjust = 0.5))
+        theme(axis.text.x.top = ggplot2::element_text(
+          hjust = 0,
+          vjust = 0.5
+        ))
     } else {
       plot <- plot +
         ggplot2::scale_x_continuous(
           name = xlab,
-          #labels = parse(text = x_labels),
+          # labels = parse(text = x_labels),
           labels = x_labels,
           breaks = sort(unique(df$numeric_x)),
           expand = expansion(mult = expand.mult),
@@ -1193,26 +1241,28 @@ epa_plot_profile <- function(F_matrix,
       plot <- plot +
         ggplot2::scale_x_continuous(
           name = xlab,
-          #labels = parse(text = x_labels_top),
+          # labels = parse(text = x_labels_top),
           labels = x_labels_top,
           breaks = sort(unique(df$numeric_x)),
           expand = expansion(mult = expand.mult),
           guide = guide_axis(n.dodge = x.n.dodge),
           sec.axis = ggplot2::sec_axis(
-            trans = ~ .,
+            trans = ~.,
             breaks = sort(unique(df$numeric_x)),
-            #labels =  parse(text = x_labels_bottom),
-            labels =  x_labels_bottom,
+            # labels =  parse(text = x_labels_bottom),
+            labels = x_labels_bottom,
             guide = ggplot2::guide_axis(n.dodge = x.n.dodge)
           )
         ) +
-        theme(axis.text.x.top = ggplot2::element_text(hjust = 0,
-                                                      vjust = 0.5))
+        theme(axis.text.x.top = ggplot2::element_text(
+          hjust = 0,
+          vjust = 0.5
+        ))
     } else {
       plot <- plot +
         ggplot2::scale_x_continuous(
           name = xlab,
-          #labels = parse(text = x_labels),
+          # labels = parse(text = x_labels),
           labels = x_labels,
           breaks = sort(unique(df$numeric_x)),
           expand = expansion(mult = expand.mult),
@@ -1244,30 +1294,36 @@ epa_plot_profile <- function(F_matrix,
   # remove vertical grid lines?
   if (rm.grid.x) {
     plot <- plot +
-      ggplot2::theme(panel.grid.major.x = element_blank(),
-                     panel.grid.minor.x = element_blank())
+      ggplot2::theme(
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()
+      )
   }
 
   # remove facets?
   if (rm.facets) {
     plot <- plot +
-      ggplot2::theme(strip.background = element_blank(),
-                     strip.text = element_blank())
+      ggplot2::theme(
+        strip.background = element_blank(),
+        strip.text = element_blank()
+      )
   }
 
   # run garbage collector
   gc()
-  #if (!identical(dev.list(), NULL)) {
+  # if (!identical(dev.list(), NULL)) {
   #  dev.off()
-  #}
+  # }
 
   ##################################################################
   ##                        Prepare output                        ##
   ##################################################################
 
   # print(metcor.plot)
-  output <- list("plot" = plot,
-                 call = match.call())
+  output <- list(
+    "plot" = plot,
+    call = match.call()
+  )
   class(output) <- "me2tools"
   if (show.plot) {
     plot(output$plot)

@@ -34,7 +34,7 @@ epa_plot_QQexp(
 )
 }
 \arguments{
-\item{residuals}{Tibble from \code{\link[=me2_read_residuals]{me2_read_residuals()}} containing
+\item{residuals}{Tibble from \code{me2_read_residuals()} containing
 the results for the scaled residuals. In order to use this function only
 the results from a single base run should be provided.}
 

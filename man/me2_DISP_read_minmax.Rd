@@ -22,9 +22,9 @@ available all species are named as \dQuote{species_xx}, with xx being an
 unique number starting at 1.}
 }
 \description{
-This function has been renamed to \code{\link[=me2_DISP_read_res]{me2_DISP_read_res()}} and will be
+This function has been renamed to \code{me2_DISP_read_res()} and will be
 deprecated in the near-future.
 }
 \seealso{
-\code{\link[=me2_DISP_read_res]{me2_DISP_read_res()}}
+\code{me2_DISP_read_res()}
 }

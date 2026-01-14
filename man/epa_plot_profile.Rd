@@ -46,7 +46,7 @@ epa_plot_profile(
 )
 }
 \arguments{
-\item{F_matrix}{Tibble from \code{\link[=me2_read_F]{me2_read_F()}} containing
+\item{F_matrix}{Tibble from \code{me2_read_F()} containing
 the results for the F_matrix. In order to use this function only the
 results from a single run should be provided.}
 
@@ -203,7 +203,7 @@ geometries and the call.
 \description{
 Function to plot PMF factor profiles using data from PMFR (using
 \code{\link[pmfr:read_pmf_factor_profiles]{pmfr::read_pmf_factor_profiles()}} and \code{\link[pmfr:tidy_pmf_profiles]{pmfr::tidy_pmf_profiles()}} or from
-the metools package using \code{\link[=me2_read_F]{me2_read_F()}} in the same way as in EPA-PMF.
+the metools package using \code{me2_read_F()} in the same way as in EPA-PMF.
 }
 \section{Input format of the F-matrix}{
 
