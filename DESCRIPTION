@@ -18,7 +18,18 @@ Depends:
 Imports:
     cli,
     openair,
-    tidyverse,
+    dplyr,
+    forcats,
+    ggplot2,
+    lubridate,
+    purrr,
+    readr,
+    rlang,
+    stringr,
+    tibble,
+    tidyr,
+    tidyselect,
+    viridis,
     scales
 License: GPL (>= 3)
 Encoding: UTF-8
