@@ -105,14 +105,14 @@ epa_plot_BSboxplot <- function(BS_results,
   }
 
   BS.base.results <- BS.results %>%
-    filter(
+    dplyr::filter(
       run_type == "BS_base",
       factor_profile == "concentration_of_species"
     )
 
   # prepare data
   BS.results <- BS.results %>%
-    filter(
+    dplyr::filter(
       run_type != "BS_base",
       factor_profile == "concentration_of_species"
     )
@@ -144,7 +144,7 @@ epa_plot_BSboxplot <- function(BS_results,
   }
   if (!"factor" %in% class(BS.results$species)) {
     BS.results <- BS.results %>%
-      mutate(species = factor(paste0("`", species, "`")))
+      dplyr::mutate(species = factor(paste0("`", species, "`")))
   }
 
   x_labels <- levels(BS.results$species)
@@ -152,7 +152,7 @@ epa_plot_BSboxplot <- function(BS_results,
   plot.output <- ggplot2::ggplot(
     BS.results %>%
       dplyr::mutate(value = ifelse(value <= 10^y_min, 10^y_min, value)),
-    aes(species, value),
+    ggplot2::aes(species, value),
     fill = "lightgray"
   ) +
     ggplot2::geom_boxplot(
@@ -180,7 +180,7 @@ epa_plot_BSboxplot <- function(BS_results,
   }
 
   plot.output <- plot.output +
-    scale_y_log10(
+    ggplot2::scale_y_log10(
       breaks = scales::trans_breaks("log10", function(x) 10^x),
       labels = scales::trans_format("log10", scales::math_format(10^.x)),
       limits = c(10^y_min, NA)
@@ -205,8 +205,8 @@ epa_plot_BSboxplot <- function(BS_results,
   if (rm.grid.x) {
     plot.output <- plot.output +
       ggplot2::theme(
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()
+        panel.grid.major.x = ggplot2::element_blank(),
+        panel.grid.minor.x = ggplot2::element_blank()
       )
   }
 

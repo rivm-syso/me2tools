@@ -109,13 +109,13 @@ input_overview  <- function(me2_input,
     tidyr::pivot_longer(cols = -"date",
                         names_to = "species",
                         values_to = "value") %>% 
-    mutate(type = "pmf.concentration")
+    dplyr::mutate(type = "pmf.concentration")
   
   unc.data <- me2_input[[uncertainty]] %>% 
     tidyr::pivot_longer(cols = -"date",
                         names_to = "species",
                         values_to = "value") %>% 
-    mutate(type = "pmf.uncertainty")
+    dplyr::mutate(type = "pmf.uncertainty")
   
   # perform cleanup of species if needed
   # start with initial order
@@ -167,43 +167,43 @@ input_overview  <- function(me2_input,
   
   # set the order of the factors
   conc.data <- conc.data %>% 
-    mutate(species = factor(species, levels = species.order))
+    dplyr::mutate(species = factor(species, levels = species.order))
   
   unc.data <- unc.data %>% 
-    mutate(species = factor(species, levels = species.order))
+    dplyr::mutate(species = factor(species, levels = species.order))
   
   plot.data <- dplyr::bind_rows(conc.data,
                                 unc.data) %>% 
-    pivot_wider(id_cols = c("date", "species"),
+    tidyr::pivot_wider(id_cols = c("date", "species"),
                 names_from = "type",
                 values_from = "value")
   
   epa.summary <- plot.data %>% 
-    group_by(species) %>% 
-    summarize(sn = epa_sn(x=pmf.concentration, x_unc = pmf.uncertainty),
+    dplyr::group_by(species) %>% 
+    dplyr::summarize(sn = epa_sn(x=pmf.concentration, x_unc = pmf.uncertainty),
               min = min(pmf.concentration, na.rm = TRUE),
               P25 = epa_percentile(pmf.concentration, prob = 0.25),
               P50 = epa_percentile(pmf.concentration, prob = 0.50),
               P75 = epa_percentile(pmf.concentration, prob = 0.75),
               max = max(pmf.concentration, na.rm = TRUE),
     ) %>% 
-    mutate(guidance = dplyr::if_else(sn > sn.limits$u_limit, 
+    dplyr::mutate(guidance = dplyr::if_else(sn > sn.limits$u_limit, 
                                      "strong", 
                                      dplyr::if_else(sn < sn.limits$l_limit, 
                                                     "bad", 
                                                     "weak")))
   
-  plot.data <- left_join(plot.data,
+  plot.data <- dplyr::left_join(plot.data,
                          epa.summary,
-                         by = join_by(species)) %>% 
-    mutate(guidance = factor(guidance, levels = c("bad", "weak", "strong")))
+                         by = dplyr::join_by(species)) %>% 
+    dplyr::mutate(guidance = factor(guidance, levels = c("bad", "weak", "strong")))
   
   # apply limit to species.
   if (length(limit.species) == 1) {
     if(!is.na(limit.species)) {
       
       plot.data <- plot.data %>% 
-        filter(species %in% limit.species)
+        dplyr::filter(species %in% limit.species)
       
       if (nrow(plot.data) == 0) {
         cli::cli_abort(c(
@@ -215,7 +215,7 @@ input_overview  <- function(me2_input,
     }
   } else {
     plot.data <- plot.data %>% 
-      filter(species %in% limit.species)
+      dplyr::filter(species %in% limit.species)
       
     if (nrow(plot.data) == 0) {
       cli::cli_abort(c(
@@ -226,9 +226,9 @@ input_overview  <- function(me2_input,
     }
   }
 
-  plot.output <- ggplot(data = plot.data, aes(x=pmf.concentration, y=pmf.uncertainty)) +
-    geom_point(aes(color = guidance), size = 1) +
-    scale_color_manual(values=c("bad" = sn.colors[["bad"]], 
+  plot.output <- ggplot2::ggplot(data = plot.data, ggplot2::aes(x=pmf.concentration, y=pmf.uncertainty)) +
+    ggplot2::geom_point(ggplot2::aes(color = guidance), size = 1) +
+    ggplot2::scale_color_manual(values=c("bad" = sn.colors[["bad"]], 
                                 "weak" = sn.colors[["weak"]], 
                                 "strong" = sn.colors[["strong"]]))
   
@@ -242,12 +242,12 @@ input_overview  <- function(me2_input,
   }
   
   plot.output <- plot.output +
-    theme_bw() +
+    ggplot2::theme_bw() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = xlabel.angle, 
                                                        hjust = 1,
                                                        size = x.font.size),
                    legend.position="none",
-                   panel.grid.minor = element_blank())
+                   panel.grid.minor = ggplot2::element_blank())
   
   # generate output
   output <- list(

@@ -118,7 +118,7 @@ me2_DISP_read_res <- function(DISPres_file,
   # add a progress bar
   cli::cli_progress_bar("Reading data", total = length(blocks))
 
-  matrix <- tibble()
+  matrix <- tibble::tibble()
   for (block in blocks) {
     line_start <- start_blocks[[block]]
     line_end <- end_blocks[[block]]
@@ -187,7 +187,7 @@ me2_DISP_read_res <- function(DISPres_file,
 
     ## add PMFR identifier columns
     matrix.tmp <- matrix.tmp %>%
-      mutate(identifier = factor(identifier, levels = identifier)) %>%
+      dplyr::mutate(identifier = factor(identifier, levels = identifier)) %>%
       dplyr::rename(species = identifier) %>%
       tibble::add_column(model_type = "ME-2", .before = "species")
 
@@ -230,7 +230,7 @@ me2_DISP_read_res <- function(DISPres_file,
       names_to = "factor",
       values_to = "value"
     ) %>%
-    arrange(
+    dplyr::arrange(
       factor,
       factor_profile,
       species
@@ -245,7 +245,7 @@ me2_DISP_read_res <- function(DISPres_file,
       names_to = "run_type",
       values_to = "value"
     ) %>%
-    arrange(
+    dplyr::arrange(
       run_type,
       factor_profile,
       factor,
@@ -260,7 +260,7 @@ me2_DISP_read_res <- function(DISPres_file,
         names_from = "factor",
         values_from = "value"
       ) %>%
-      arrange(
+      dplyr::arrange(
         run_type,
         factor_profile,
         species

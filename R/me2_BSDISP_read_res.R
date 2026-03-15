@@ -190,7 +190,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
   ##                 Processing DISP-D_conc data                 ##
   #################################################################
 
-  DISP_D_conc <- tibble()
+  DISP_D_conc <- tibble::tibble()
   disp_d_c_index <- disp_d_c_indices[1]
 
   # add a progress bar
@@ -199,7 +199,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
   for (disp_d_c_index in disp_d_c_indices) {
     # get the f values
     tmp_tibble <- listoutput[[disp_d_c_index]] %>%
-      dplyr::filter(row_number() <= n() - 1) # drop the last row
+      dplyr::filter(dplyr::row_number() <= n() - 1) # drop the last row
 
     # add columnnames
     names(tmp_tibble) <- c(
@@ -229,7 +229,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
             )
         } else {
           tmp_tibble <- tmp_tibble %>%
-            mutate(identifier == species)
+            dplyr::mutate(identifier == species)
         }
       } else {
         cli::cli_abort(c(
@@ -264,7 +264,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
         model_run = run_number_final,
         factor_profile = "concentration_of_species"
       ) %>%
-      select(-run_number_final)
+      dplyr::select(-run_number_final)
 
     if (nrow(DISP_D_conc) == 0) {
       DISP_D_conc <- tmp_tibble
@@ -280,13 +280,13 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
   ##                 Processing DISP-U_conc data                 ##
   #################################################################
 
-  DISP_U_conc <- tibble()
+  DISP_U_conc <- tibble::tibble()
   disp_u_c_index <- disp_u_c_indices[1]
 
   for (disp_u_c_index in disp_u_c_indices) {
     # get the f values
     tmp_tibble <- listoutput[[disp_u_c_index]] %>%
-      dplyr::filter(row_number() <= n() - 1) # drop the last row
+      dplyr::filter(dplyr::row_number() <= n() - 1) # drop the last row
 
     # add columnnames
     names(tmp_tibble) <- c(
@@ -316,7 +316,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
             )
         } else {
           tmp_tibble <- tmp_tibble %>%
-            mutate(identifier == species)
+            dplyr::mutate(identifier == species)
         }
       } else {
         cli::cli_abort(c(
@@ -351,7 +351,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
         model_run = run_number_final,
         factor_profile = "concentration_of_species"
       ) %>%
-      select(-run_number_final)
+      dplyr::select(-run_number_final)
 
     if (nrow(DISP_U_conc) == 0) {
       DISP_U_conc <- tmp_tibble
@@ -367,13 +367,13 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
   ##                 Processing DISP-D_perc data                 ##
   #################################################################
 
-  DISP_D_perc <- tibble()
+  DISP_D_perc <- tibble::tibble()
   disp_d_p_index <- disp_d_p_indices[1]
 
   for (disp_d_p_index in disp_d_p_indices) {
     # get the f values
     tmp_tibble <- listoutput[[disp_d_p_index]] %>%
-      dplyr::filter(row_number() <= n() - 1) # drop the last row
+      dplyr::filter(dplyr::row_number() <= n() - 1) # drop the last row
 
     # add columnnames
     names(tmp_tibble) <- c(
@@ -403,7 +403,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
             )
         } else {
           tmp_tibble <- tmp_tibble %>%
-            mutate(identifier == species)
+            dplyr::mutate(identifier == species)
         }
       } else {
         cli::cli_abort(c(
@@ -437,7 +437,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
         model_run = run_number_final,
         factor_profile = "percentage_of_species"
       ) %>%
-      select(-run_number_final)
+      dplyr::select(-run_number_final)
 
     if (nrow(DISP_D_perc) == 0) {
       DISP_D_perc <- tmp_tibble
@@ -453,13 +453,13 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
   ##                 Processing DISP-U_perc data                 ##
   #################################################################
 
-  DISP_U_perc <- tibble()
+  DISP_U_perc <- tibble::tibble()
   disp_u_p_index <- disp_u_p_indices[1]
 
   for (disp_u_p_index in disp_u_p_indices) {
     # get the f values
     tmp_tibble <- listoutput[[disp_u_p_index]] %>%
-      dplyr::filter(row_number() <= n() - 1) # drop the last row
+      dplyr::filter(dplyr::row_number() <= n() - 1) # drop the last row
 
     # add columnnames
     names(tmp_tibble) <- c(
@@ -489,7 +489,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
             )
         } else {
           tmp_tibble <- tmp_tibble %>%
-            mutate(identifier == species)
+            dplyr::mutate(identifier == species)
         }
       } else {
         cli::cli_abort(c(
@@ -523,7 +523,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
         model_run = run_number_final,
         factor_profile = "percentage_of_species"
       ) %>%
-      select(-run_number_final)
+      dplyr::select(-run_number_final)
 
     if (nrow(DISP_U_perc) == 0) {
       DISP_U_perc <- tmp_tibble
@@ -549,25 +549,25 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
 
   # calculate stats
   bs_disp_data_stats <- bs_disp_data %>%
-    filter(factor_profile == "concentration_of_species") %>%
-    pivot_longer(
+    dplyr::filter(factor_profile == "concentration_of_species") %>%
+    tidyr::pivot_longer(
       cols = -dplyr::all_of(id_variables),
       names_to = "factor",
       values_to = "value"
     ) %>%
-    group_by(factor, species) %>%
-    summarise(
+    dplyr::group_by(factor, species) %>%
+    dplyr::summarise(
       BSDISP_avg = mean(value),
       BSDISP_P05 = epa_percentile(value, prob = 0.05),
       BSDISP_P95 = epa_percentile(value, prob = 0.95)
     ) %>%
-    ungroup(factor, species) %>%
-    pivot_longer(
+    dplyr::ungroup(factor, species) %>%
+    tidyr::pivot_longer(
       cols = c("BSDISP_avg", "BSDISP_P05", "BSDISP_P95"),
       names_to = "run_type",
       values_to = "value"
     ) %>%
-    select(run_type, species, factor, value) %>%
+    dplyr::select(run_type, species, factor, value) %>%
     tibble::add_column(model_type = "ME-2", .before = "run_type") %>%
     tibble::add_column(factor_profile = "concentration_of_species", .before = "run_type") %>%
     tibble::add_column(model_run = base_run, .before = "run_type")

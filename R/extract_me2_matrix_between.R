@@ -35,7 +35,7 @@ extract_me2_matrix_between <- function(text,
       trim_ws = TRUE,
       col_names = FALSE
     )) %>%
-      select(-dplyr::first(names(.)), -dplyr::last(names(.))) %>%
+      dplyr::select(-dplyr::first(names(.)), -dplyr::last(names(.))) %>%
       purrr::set_names(colnames[[1]])
     
     # new method, using the default edition of readr (2)
@@ -46,7 +46,7 @@ extract_me2_matrix_between <- function(text,
                                      col_names = FALSE,
                                      show_col_types = FALSE
     )  %>%
-      select(-dplyr::first(names(.)), -dplyr::last(names(.))) %>%
+      dplyr::select(-dplyr::first(names(.)), -dplyr::last(names(.))) %>%
       purrr::set_names(colnames[[1]]) 
     
     
@@ -59,7 +59,7 @@ extract_me2_matrix_between <- function(text,
       trim_ws = TRUE,
       col_names = FALSE
     )) %>%
-      select(-dplyr::first(names(.))) # drop the first column with only numbers
+      dplyr::select(-dplyr::first(names(.))) # drop the first column with only numbers
 
     colnames <- paste0("factor_", sprintf("%02d", seq(1, ncol(matrix.tmp), 1)))
 
@@ -74,7 +74,7 @@ extract_me2_matrix_between <- function(text,
                                      col_names = FALSE,
                                      show_col_types = FALSE
     )  %>%
-      select(-dplyr::first(names(.))) # drop the first column with only numbers
+      dplyr::select(-dplyr::first(names(.))) # drop the first column with only numbers
     
     matrix.tmp_2 <- matrix.tmp_2 %>%
       purrr::set_names(colnames)

@@ -110,7 +110,7 @@ metcor_export <- function(G_matrix,
   # check for factor
   if (("factor" %in% colnames(G_matrix))) {
     G_matrix <- G_matrix %>%
-      pivot_wider(id_cols = c("model_type",
+      tidyr::pivot_wider(id_cols = c("model_type",
                               "unit",
                               "model_run",
                               "run_type",
@@ -161,21 +161,21 @@ metcor_export <- function(G_matrix,
       "lon"
     )
     factor_names <- names(G_matrix %>%
-      select(-all_of(default_col_names)))
+      dplyr::select(-tidyselect::all_of(default_col_names)))
   }
 
   # check if we need to replace any negative values with 0 from the columns
   # defined in variable factor_names
   if (neg.replace) {
     G_matrix <- G_matrix %>%
-      dplyr::mutate(across(factor_names, ~if_else(.x < 0, 0, .x)))
+      dplyr::mutate(dplyr::across(factor_names, ~dplyr::if_else(.x < 0, 0, .x)))
   }
 
   if(time_format == "0000") {
     # ITIME starts at whole hour
     # FTIME ends one minute earlier to prevent overlap of time periods
     metcor.set <- G_matrix %>%
-      mutate(
+      dplyr::mutate(
         IDATE = format(date, "%Y%m%d"),
         ITIME = format(date, "%H%M"),
         FDATE = format(date + lubridate::minutes(time_res - 1), "%Y%m%d"),
@@ -185,7 +185,7 @@ metcor_export <- function(G_matrix,
     # ITIME starts one minute later to prevent overlap of time periods
     # FTIME ends on the complete time.
     metcor.set <- G_matrix %>%
-      mutate(
+      dplyr::mutate(
         IDATE = format(date, "%Y%m%d"),
         ITIME = format(date + lubridate::minutes(1), "%H%M"),
         FDATE = format(date + lubridate::minutes(time_res), "%Y%m%d"),
@@ -201,16 +201,16 @@ metcor_export <- function(G_matrix,
 
   # perform other actions
   metcor.set <- metcor.set %>%
-    rename(
+    dplyr::rename(
       LATR = lat,
       LONR = lon
     ) %>%
-    select(IDATE, ITIME, FDATE, FTIME, LATR, LONR, all_of(factor_names))
+    dplyr::select(IDATE, ITIME, FDATE, FTIME, LATR, LONR, all_of(factor_names))
 
   # check if we need to remove the rows with NA values
   if (na.rm) {
     metcor.set <- metcor.set %>%
-    filter(complete.cases(.))
+      dplyr::filter(complete.cases(.))
   }
 
   # note: when removing dates using EPA-PMF options there might be NA values

@@ -330,14 +330,14 @@ epa_plot_profile <- function(F_matrix,
   # check if contains duplicates
   if (identical(by, NA)) {
     test_dups <- F_matrix %>%
-      group_by(!!sym(facet.var), factor_profile, run_type, species) %>%
-      mutate(dupe = n() > 1) %>%
-      filter(dupe == TRUE)
+      dplyr::group_by(!!rlang::sym(facet.var), factor_profile, run_type, species) %>%
+      dplyr::mutate(dupe = n() > 1) %>%
+      dplyr::filter(dupe == TRUE)
   } else {
     test_dups <- F_matrix %>%
-      group_by(!!sym(facet.var), factor_profile, run_type, species, !!sym(by)) %>%
-      mutate(dupe = n() > 1) %>%
-      filter(dupe == TRUE)
+      dplyr::group_by(!!rlang::sym(facet.var), factor_profile, run_type, species, !!sym(by)) %>%
+      dplyr::mutate(dupe = n() > 1) %>%
+      dplyr::filter(dupe == TRUE)
   }
   if (nrow(test_dups) > 0) {
     if (identical(by, NA)) {
@@ -394,7 +394,7 @@ epa_plot_profile <- function(F_matrix,
   # check if species is factor
   if (!"factor" %in% class(F_matrix$species)) {
     F_matrix <- F_matrix %>%
-      mutate(species = factor(paste0("`", species, "`")))
+      dplyr::mutate(species = factor(paste0("`", species, "`")))
   }
 
   # create the plot.data
@@ -493,7 +493,7 @@ epa_plot_profile <- function(F_matrix,
       } else {
         # check for "concentration_of_species" in combination with run_type
         test.df <- df %>%
-          filter(
+          dplyr::filter(
             run_type == check_var,
             factor_profile == "concentration_of_species"
           )
@@ -511,7 +511,7 @@ epa_plot_profile <- function(F_matrix,
     # check for percentage of species if we need to plot those
     if (cp.run.type == "DISP_avg") {
       test.df <- df %>%
-        filter(
+        dplyr::filter(
           run_type == "DISP_avg",
           factor_profile == "percentage_of_species_sum"
         )
@@ -548,7 +548,7 @@ epa_plot_profile <- function(F_matrix,
       } else {
         # check for "concentration_of_species" in combination with run_type
         test.df <- df %>%
-          filter(
+          dplyr::filter(
             run_type == check_var,
             factor_profile == "concentration_of_species"
           )
@@ -566,7 +566,7 @@ epa_plot_profile <- function(F_matrix,
     # check for percentage of species if we need to plot those
     if (cp.run.type == "BS_median") {
       test.df <- df %>%
-        filter(
+        dplyr::filter(
           run_type == "BS_median",
           factor_profile == "percentage_of_species_sum"
         )
@@ -604,7 +604,7 @@ epa_plot_profile <- function(F_matrix,
       } else {
         # check for "concentration_of_species" in combination with run_type
         test.df <- df %>%
-          filter(
+          dplyr::filter(
             run_type == check_var,
             factor_profile == "concentration_of_species"
           )
@@ -622,7 +622,7 @@ epa_plot_profile <- function(F_matrix,
     # check for percentage of species if we need to plot those
     if (cp.run.type == "BSDISP_avg") {
       test.df <- df %>%
-        filter(
+        dplyr::filter(
           run_type == "BSDISP_avg",
           factor_profile == "percentage_of_species_sum"
         )
@@ -658,11 +658,11 @@ epa_plot_profile <- function(F_matrix,
 
   # Calculate the upper axis value
   max_conc_log <- df %>%
-    filter(
+    dplyr::filter(
       factor_profile == "concentration_of_species",
       stringr::str_detect(run_type, cp.run.type)
     ) %>%
-    select(value) %>%
+    dplyr::select(value) %>%
     max()
 
   ## calculate the optimum axis
@@ -732,7 +732,7 @@ epa_plot_profile <- function(F_matrix,
     }
 
     if ("factor" %in% class(df$f_by)) {
-      myColors <- tibble(
+      myColors <- tibble::tibble(
         "f_by" = levels(df$f_by),
         "bar.color" = openair::openColours(bar.color, num.facets),
         "bar.alpha" = bar.alpha,
@@ -745,7 +745,7 @@ epa_plot_profile <- function(F_matrix,
         "errorbar.point.size" = errorbar.point.size
       )
     } else {
-      myColors <- tibble(
+      myColors <- tibble::tibble(
         "f_by" = unique(df$f_by),
         "bar.color" = openair::openColours(bar.color, num.facets),
         "bar.alpha" = bar.alpha,
@@ -785,7 +785,7 @@ epa_plot_profile <- function(F_matrix,
         df[[by]] <- forcats::fct_drop(df[[by]])
       }
 
-      myColors <- tibble(
+      myColors <- tibble::tibble(
         "f_by" = levels(df[[by]]),
         "bar.color" = openair::openColours(bar.color, num.by),
         "bar.alpha" = bar.alpha,
@@ -798,7 +798,7 @@ epa_plot_profile <- function(F_matrix,
         "errorbar.point.size" = errorbar.point.size
       )
     } else {
-      myColors <- tibble(
+      myColors <- tibble::tibble(
         "f_by" = unique(df[[by]]),
         "bar.color" = openair::openColours(bar.color, num.by),
         "bar.alpha" = bar.alpha,
@@ -814,25 +814,25 @@ epa_plot_profile <- function(F_matrix,
   }
 
   myColors.vector <- myColors %>%
-    pull(bar.color, f_by) # first = values, second = names
+    dplyr::pull(bar.color, f_by) # first = values, second = names
 
   myAlpha.vector <- myColors %>%
-    pull(bar.alpha, f_by) # first = values, second = names
+    dplyr::pull(bar.alpha, f_by) # first = values, second = names
 
   myPColor.vector <- myColors %>%
-    pull(point.color, p_by) # first = values, second = names
+    dplyr::pull(point.color, p_by) # first = values, second = names
 
   myPShape.vector <- myColors %>%
-    pull(point.shape, p_by) # first = values, second = names
+    dplyr::pull(point.shape, p_by) # first = values, second = names
 
   myPSize.vector <- myColors %>%
-    pull(point.size, p_by) # first = values, second = names
+    dplyr::pull(point.size, p_by) # first = values, second = names
 
   myEBColor.vector <- myColors %>%
-    pull(errorbar.color, eb_by) # first = values, second = names
+    dplyr::pull(errorbar.color, eb_by) # first = values, second = names
 
   myEPSize.vector <- myColors %>%
-    pull(errorbar.point.size, eb_by) # first = values, second = names
+    dplyr::pull(errorbar.point.size, eb_by) # first = values, second = names
 
 
   ##################################################################
@@ -841,20 +841,20 @@ epa_plot_profile <- function(F_matrix,
 
   if (errorbar != "none") {
     disp.df <- df %>%
-      filter(
+      dplyr::filter(
         factor_profile == "concentration_of_species",
         stringr::str_detect(run_type, error_run_type)
       ) %>%
-      select(factor_profile, numeric_x, factor, run_type, value) %>%
-      pivot_wider(
+      dplyr::select(factor_profile, numeric_x, factor, run_type, value) %>%
+      tidyr::pivot_wider(
         id_cols = c(factor_profile, numeric_x, factor),
         names_from = run_type,
         values_from = value
       )
     # join with original data
-    df <- left_join(df,
+    df <- dplyr::left_join(df,
       disp.df,
-      by = join_by(factor_profile, factor, numeric_x)
+      by = dplyr::join_by(factor_profile, factor, numeric_x)
     )
 
     rm(disp.df)
@@ -880,11 +880,11 @@ epa_plot_profile <- function(F_matrix,
           breaks = sec.breaks,
           labels = sec.labels
         ),
-        expand = expansion(mult = c(0, 0.05))
+        expand = ggplot2::expansion(mult = c(0, 0.05))
       ) +
       ggplot2::geom_rect(
         data = df %>%
-          filter(
+          dplyr::filter(
             factor_profile == "concentration_of_species",
             stringr::str_detect(run_type, cp.run.type)
           ),
@@ -901,23 +901,23 @@ epa_plot_profile <- function(F_matrix,
       ggplot2::scale_fill_manual(
         values = myColors.vector,
         name = NULL,
-        guide = guide_legend(order = 1)
+        guide = ggplot2::guide_legend(order = 1)
       ) +
       ggplot2::scale_alpha_manual(
         values = myAlpha.vector,
         name = NULL,
-        guide = guide_legend(order = 1)
+        guide = ggplot2::guide_legend(order = 1)
       ) +
       ggplot2::scale_color_manual(
         values = myColors.vector,
         name = NULL,
-        guide = guide_legend(order = 1)
+        guide = ggplot2::guide_legend(order = 1)
       ) +
       ggnewscale::new_scale("color") +
       ggnewscale::new_scale("fill") +
       ggplot2::geom_point(
         data = df %>%
-          filter(
+          dplyr::filter(
             factor_profile == "percentage_of_species_sum",
             stringr::str_detect(run_type, cp.run.type)
           ),
@@ -932,17 +932,17 @@ epa_plot_profile <- function(F_matrix,
       ggplot2::scale_color_manual(
         values = myPColor.vector,
         name = NULL,
-        guide = guide_legend(order = 2)
+        guide = ggplot2::guide_legend(order = 2)
       ) +
       ggplot2::scale_shape_manual(
         values = myPShape.vector,
         name = NULL,
-        guide = guide_legend(order = 2)
+        guide = ggplot2::guide_legend(order = 2)
       ) +
       ggplot2::scale_size_manual(
         values = myPSize.vector,
         name = NULL,
-        guide = guide_legend(order = 2)
+        guide = ggplot2::guide_legend(order = 2)
       )
 
     # plot lollipop lines
@@ -950,7 +950,7 @@ epa_plot_profile <- function(F_matrix,
       plot <- plot +
         ggplot2::geom_linerange(
           data = df %>%
-            filter(
+            dplyr::filter(
               factor_profile == "percentage_of_species_sum",
               stringr::str_detect(run_type, cp.run.type)
             ),
@@ -981,11 +981,11 @@ epa_plot_profile <- function(F_matrix,
           breaks = sec.breaks,
           labels = sec.labels
         ),
-        expand = expansion(mult = c(0, 0.05))
+        expand = ggplot2::expansion(mult = c(0, 0.05))
       ) +
       ggplot2::geom_rect(
         data = df %>%
-          filter(
+          dplyr::filter(
             factor_profile == "concentration_of_species",
             stringr::str_detect(run_type, cp.run.type)
           ),
@@ -998,28 +998,28 @@ epa_plot_profile <- function(F_matrix,
           col = f_by,
           fill = f_by,
         ),
-        position = position_dodge(width = 0.9, preserve = "total"),
+        position = ggplot2::position_dodge(width = 0.9, preserve = "total"),
       ) +
       ggplot2::scale_fill_manual(
         values = myColors.vector,
         name = NULL,
-        guide = guide_legend(order = 1)
+        guide = ggplot2::guide_legend(order = 1)
       ) +
       ggplot2::scale_alpha_manual(
         values = myAlpha.vector,
         name = NULL,
-        guide = guide_legend(order = 1)
+        guide = ggplot2::guide_legend(order = 1)
       ) +
       ggplot2::scale_color_manual(
         values = myColors.vector,
         name = NULL,
-        guide = guide_legend(order = 1)
+        guide = ggplot2::guide_legend(order = 1)
       ) +
       ggnewscale::new_scale("color") +
       ggnewscale::new_scale("fill") +
       ggplot2::geom_point(
         data = df %>%
-          filter(
+          dplyr::filter(
             factor_profile == "percentage_of_species_sum",
             stringr::str_detect(run_type, cp.run.type)
           ),
@@ -1036,17 +1036,17 @@ epa_plot_profile <- function(F_matrix,
       ggplot2::scale_color_manual(
         values = myPColor.vector,
         name = NULL,
-        guide = guide_legend(order = 2)
+        guide = ggplot2::guide_legend(order = 2)
       ) +
       ggplot2::scale_shape_manual(
         values = myPShape.vector,
         name = NULL,
-        guide = guide_legend(order = 2)
+        guide = ggplot2::guide_legend(order = 2)
       ) +
       ggplot2::scale_size_manual(
         values = myPSize.vector,
         name = NULL,
-        guide = guide_legend(order = 2)
+        guide = ggplot2::guide_legend(order = 2)
       )
 
     # plot lollipop lines
@@ -1054,7 +1054,7 @@ epa_plot_profile <- function(F_matrix,
       plot <- plot +
         ggplot2::geom_linerange(
           data = df %>%
-            filter(
+            dplyr::filter(
               factor_profile == "percentage_of_species_sum",
               stringr::str_detect(run_type, cp.run.type)
             ),
@@ -1066,7 +1066,7 @@ epa_plot_profile <- function(F_matrix,
           ),
           color = point.color,
           alpha = 0.5,
-          position = position_dodge(width = 0.9)
+          position = ggplot2::position_dodge(width = 0.9)
         )
     }
   }
@@ -1080,11 +1080,11 @@ epa_plot_profile <- function(F_matrix,
       ggnewscale::new_scale("size") +
       geom_errorbar(
         data = df %>%
-          filter(
+          dplyr::filter(
             factor_profile == "concentration_of_species",
             stringr::str_detect(run_type, error_run_type)
           ),
-        aes(
+        ggplot2::aes(
           x = numeric_x,
           ymin = !!sym(error_ymin),
           ymax = !!sym(error_ymax),
@@ -1096,7 +1096,7 @@ epa_plot_profile <- function(F_matrix,
       ggplot2::scale_color_manual(
         values = myEBColor.vector,
         name = NULL,
-        guide = guide_legend(order = 3)
+        guide = ggplot2::guide_legend(order = 3)
       )
 
     if (cp.run.type == "base_run") {
@@ -1104,13 +1104,13 @@ epa_plot_profile <- function(F_matrix,
       plot <- plot +
         ggplot2::geom_point(
           data = df %>%
-            filter(
+            dplyr::filter(
               factor_profile == "concentration_of_species",
               stringr::str_detect(run_type, error_run_type)
             ),
           ggplot2::aes(
             x = numeric_x,
-            y = !!sym(error_yavg),
+            y = !!rlang::sym(error_yavg),
             size = eb_by,
             col = eb_by,
           ),
@@ -1119,7 +1119,7 @@ epa_plot_profile <- function(F_matrix,
         ggplot2::scale_size_manual(
           values = myEPSize.vector,
           name = NULL,
-          guide = guide_legend(order = 3)
+          guide = ggplot2::guide_legend(order = 3)
         )
     }
   }
@@ -1164,7 +1164,7 @@ epa_plot_profile <- function(F_matrix,
     ggplot2::ylab(ylab) +
     ggplot2::annotation_logticks(sides = "l") +
     ggplot2::theme_bw() +
-    theme(
+    ggplot2::theme(
       legend.position = "top",
       legend.justification = "right",
       legend.margin = margin(b = -10)
@@ -1201,8 +1201,8 @@ epa_plot_profile <- function(F_matrix,
           # labels = parse(text = x_labels_top),
           labels = x_labels_top,
           breaks = sort(unique(df$numeric_x)),
-          expand = expansion(mult = expand.mult),
-          guide = guide_axis(angle = xlabel.angle, n.dodge = x.n.dodge),
+          expand = ggplot2::expansion(mult = expand.mult),
+          guide = ggplot2::guide_axis(angle = xlabel.angle, n.dodge = x.n.dodge),
           sec.axis = ggplot2::sec_axis(
             trans = ~.,
             breaks = sort(unique(df$numeric_x)),
@@ -1222,7 +1222,7 @@ epa_plot_profile <- function(F_matrix,
           # labels = parse(text = x_labels),
           labels = x_labels,
           breaks = sort(unique(df$numeric_x)),
-          expand = expansion(mult = expand.mult),
+          expand = ggplot2::expansion(mult = expand.mult),
           guide = ggplot2::guide_axis(angle = xlabel.angle, n.dodge = x.n.dodge)
         )
     }
@@ -1244,8 +1244,8 @@ epa_plot_profile <- function(F_matrix,
           # labels = parse(text = x_labels_top),
           labels = x_labels_top,
           breaks = sort(unique(df$numeric_x)),
-          expand = expansion(mult = expand.mult),
-          guide = guide_axis(n.dodge = x.n.dodge),
+          expand = ggplot2::expansion(mult = expand.mult),
+          guide = ggplot2::guide_axis(n.dodge = x.n.dodge),
           sec.axis = ggplot2::sec_axis(
             trans = ~.,
             breaks = sort(unique(df$numeric_x)),
@@ -1265,7 +1265,7 @@ epa_plot_profile <- function(F_matrix,
           # labels = parse(text = x_labels),
           labels = x_labels,
           breaks = sort(unique(df$numeric_x)),
-          expand = expansion(mult = expand.mult),
+          expand = ggplot2::expansion(mult = expand.mult),
           guide = ggplot2::guide_axis(n.dodge = x.n.dodge)
         )
     }
@@ -1281,7 +1281,7 @@ epa_plot_profile <- function(F_matrix,
         axis.line.y.right = ggplot2::element_line(color = point.color),
         axis.text.y.right = ggplot2::element_text(color = point.color),
         axis.title.y.right = ggplot2::element_text(color = point.color),
-        panel.grid.major.x = element_blank()
+        panel.grid.major.x = ggplot2::element_blank()
       )
   }
 
@@ -1295,8 +1295,8 @@ epa_plot_profile <- function(F_matrix,
   if (rm.grid.x) {
     plot <- plot +
       ggplot2::theme(
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()
+        panel.grid.major.x = ggplot2::element_blank(),
+        panel.grid.minor.x = ggplot2::element_blank()
       )
   }
 
@@ -1304,8 +1304,8 @@ epa_plot_profile <- function(F_matrix,
   if (rm.facets) {
     plot <- plot +
       ggplot2::theme(
-        strip.background = element_blank(),
-        strip.text = element_blank()
+        strip.background = ggplot2::element_blank(),
+        strip.text = ggplot2::element_blank()
       )
   }
 

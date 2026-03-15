@@ -118,7 +118,7 @@ epa_plot_QQexp <- function(residuals,
   }
 
   scaled_residuals <- residuals %>%
-    filter(residual_type == "residual_scaled")
+    dplyr::filter(residual_type == "residual_scaled")
 
   if (nrow(scaled_residuals) == 0) {
     cli::cli_abort(c(
@@ -152,7 +152,7 @@ epa_plot_QQexp <- function(residuals,
   ##################################################################
   ##                     Create F Q/Qexp plot                     ##
   ##################################################################
-  Q.Qexp_F <- tibble(
+  Q.Qexp_F <- tibble::tibble(
     "species" = names(scaled_residuals[, 4:ncol(scaled_residuals)]),
     "Q.Qexp" = colSums(scaled_residuals[, 4:ncol(scaled_residuals)]) / (Qexp / num_strong_species)
   )
@@ -164,7 +164,7 @@ epa_plot_QQexp <- function(residuals,
     Q.Qexp_F$species <- factor(Q.Qexp_F$species, levels = Q.Qexp_F$species)
   }
 
-  plot_F <- ggplot2::ggplot(data = Q.Qexp_F, aes(x = species, y = Q.Qexp)) +
+  plot_F <- ggplot2::ggplot(data = Q.Qexp_F, ggplot2::aes(x = species, y = Q.Qexp)) +
     ggplot2::geom_bar(
       stat = "identity",
       col = bar.color,
@@ -182,10 +182,10 @@ epa_plot_QQexp <- function(residuals,
       guide = ggplot2::guide_axis(angle = xlabel.angle, n.dodge = x.n.dodge)
     ) +
     ggplot2::scale_y_continuous(
-      expand = expansion(mult = c(0, 0.05))
+      expand = ggplot2::expansion(mult = c(0, 0.05))
     ) +
-    ylab(ylab) +
-    xlab(NULL) +
+    ggplot2::ylab(ylab) +
+    ggplot2::xlab(NULL) +
     ggplot2::theme_bw() +
     ggplot2::theme(
       legend.position = "top",
@@ -202,12 +202,12 @@ epa_plot_QQexp <- function(residuals,
   ##################################################################
   ##                     Create G Q/Qexp plot                     ##
   ##################################################################
-  Q.Qexp_G <- tibble(
+  Q.Qexp_G <- tibble::tibble(
     "date" = scaled_residuals$date,
     "Q.Qexp" = rowSums(scaled_residuals[, 4:ncol(scaled_residuals)]) / (Qexp / num_samples)
   )
 
-  plot_G <- ggplot2::ggplot(Q.Qexp_G, aes(x = date, y = Q.Qexp)) +
+  plot_G <- ggplot2::ggplot(Q.Qexp_G, ggplot2::aes(x = date, y = Q.Qexp)) +
     ggplot2::geom_point(
       colour = point.color,
       size = point.size,
@@ -219,13 +219,13 @@ epa_plot_QQexp <- function(residuals,
       color = threshold.color,
       linewidth = threshold.size
     ) +
-    ylab(ylab) +
-    xlab(NULL) +
+    ggplot2::ylab(ylab) +
+    ggplot2::xlab(NULL) +
     ggplot2::theme_bw() +
     ggplot2::theme(
       legend.position = "top",
       legend.justification = "right",
-      legend.margin = margin(b = -10)
+      legend.margin = ggplot2::margin(b = -10)
     )
 
 
@@ -241,32 +241,32 @@ epa_plot_QQexp <- function(residuals,
   if (rm.grid.x) {
     plot_F <- plot_F +
       ggplot2::theme(
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()
+        panel.grid.major.x = ggplot2::element_blank(),
+        panel.grid.minor.x = ggplot2::element_blank()
       )
     plot_G <- plot_G +
       ggplot2::theme(
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()
+        panel.grid.major.x = ggplot2::element_blank(),
+        panel.grid.minor.x = ggplot2::element_blank()
       )
   }
 
   if (!identical(date.breaks, NA)) {
     if ("numeric" %in% class(date.breaks)) {
       plot_G <- plot_G +
-        scale_x_datetime(breaks = scales::breaks_pretty(date.breaks))
+        ggplot2::scale_x_datetime(breaks = scales::breaks_pretty(date.breaks))
     } else {
       plot_G <- plot_G +
-        scale_x_datetime(breaks = scales::breaks_width(date.breaks))
+        ggplot2::scale_x_datetime(breaks = scales::breaks_width(date.breaks))
     }
   }
 
   # find the species > threshold
   Q.Qexp_F_threshold <- Q.Qexp_F %>%
-    filter(Q.Qexp > threshold)
+    dplyr::filter(Q.Qexp > threshold)
 
   Q.Qexp_G_threshold <- Q.Qexp_G %>%
-    filter(Q.Qexp > threshold)
+    dplyr::filter(Q.Qexp > threshold)
 
 
   # run garbage collector

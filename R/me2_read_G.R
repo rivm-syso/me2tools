@@ -138,10 +138,10 @@ me2_read_G <- function(me2_txt_file,
             )
         } else {
           g_matrix.tmp <- g_matrix.tmp %>%
-            mutate(identifier == dates)
+            dplyr::mutate(identifier == dates)
         }
         g_matrix.tmp <- g_matrix.tmp %>%
-          mutate(identifier = format(identifier, "%Y-%m-%d %H:%M"))
+          dplyr::mutate(identifier = format(identifier, "%Y-%m-%d %H:%M"))
       } else {
         cli::cli_abort(c(
           "Different lengths:",

@@ -19,7 +19,7 @@ correct_double_counting <- function(F_matrix,
                        neg.rm = TRUE) {
 
   # get only the concentrations as we recalculate the percentages later
-  F.matrix <- F_matrix %>% filter(factor_profile == "concentration_of_species")
+  F.matrix <- F_matrix %>% dplyr::filter(factor_profile == "concentration_of_species")
 
   # determine which factors we need to modify
   model.runs <- unique(F.matrix[c("model_run")])
@@ -29,13 +29,13 @@ correct_double_counting <- function(F_matrix,
     model.run <- model.runs[run.row, ]
 
     F.subset <- F.matrix %>%
-      filter(model_run == model.run$model_run)
+      dplyr::filter(model_run == model.run$model_run)
 
     # calculate the species sum
     species.sum <- F.subset %>%
-      filter(species %in% dc_species) %>%
-      select(-factor_profile) %>%
-      select(contains("factor")) %>%
+      dplyr::filter(species %in% dc_species) %>%
+      dplyr::select(-factor_profile) %>%
+      dplyr::select(contains("factor")) %>%
       colSums()
 
     # subtract species.sum from m.mass
@@ -68,18 +68,18 @@ correct_double_counting <- function(F_matrix,
     }
     ## add additional columns
     species.sum <- dplyr::bind_cols(F.subset %>%
-                                      select(model_type,
+                                      dplyr::select(model_type,
                                              factor_profile,
                                              model_run,
                                              species) %>%
-                                      mutate(factor_profile = "percentage_of_species_sum"),
+                                      dplyr::mutate(factor_profile = "percentage_of_species_sum"),
                                     species.sum)
     factor.sum <- dplyr::bind_cols(F.subset %>%
-                                     select(model_type,
+                                     dplyr::select(model_type,
                                             factor_profile,
                                             model_run,
                                             species) %>%
-                                     mutate(factor_profile = "percentage_of_factor_total"),
+                                     dplyr::mutate(factor_profile = "percentage_of_factor_total"),
                                    factor.sum)
     ## combine to one dataframe
     F.subset <- dplyr::bind_rows(F.subset, species.sum, factor.sum)

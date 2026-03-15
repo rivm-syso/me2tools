@@ -190,7 +190,7 @@ me2_read_dat <- function (me2_dat_file,
             )
         } else {
           tmp_f_tibble <- tmp_f_tibble %>%
-            mutate(identifier == species)
+            dplyr::mutate(identifier == species)
         }
       } else {
         cli::cli_abort(c(
@@ -283,7 +283,7 @@ me2_read_dat <- function (me2_dat_file,
             mutate(identifier == dates)
         }
         tmp_g_tibble <- tmp_g_tibble %>%
-          mutate(identifier = format(identifier, "%Y-%m-%d %H:%M"))
+          dplyr::mutate(identifier = format(identifier, "%Y-%m-%d %H:%M"))
       } else {
         cli::cli_abort(c(
           "Different lengths:",
@@ -312,14 +312,14 @@ me2_read_dat <- function (me2_dat_file,
         } else if (is.character(factor_mass)) {
           # get the F_matrix for the current run_number
           current.F <- F_matrix %>% 
-            filter(factor_profile == "concentration_of_species",
+            dplyr::filter(factor_profile == "concentration_of_species",
                    model_run == run_number,
                    species == factor_mass)
           # check if we have results
           if (nrow(current.F) == 0) {
             # no results, try again with a like statement in the filter
             current.F <- F_matrix %>% 
-              filter(factor_profile == "concentration_of_species",
+              dplyr::filter(factor_profile == "concentration_of_species",
                      model_run == run_number,
                      stringr::str_detect(species, factor_mass))
             if(nrow(current.F) == 0) {

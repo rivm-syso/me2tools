@@ -68,7 +68,7 @@ me2_BS_read_correlations <- function(me2_bs_txt_file,
 
   if (tidy_output) {
     matrix.tmp <- matrix.tmp %>%
-      pivot_longer(cols = !c("model_run", "Qmain", "Qaux", "Q_XX"),
+      tidyr::pivot_longer(cols = !c("model_run", "Qmain", "Qaux", "Q_XX"),
                    names_to = "factor",
                    values_to = "corr")
   }

@@ -65,12 +65,12 @@ match_factor_order <- function(base,
   # First work with F
   if (presented.matrix == "F.matrix") {
     base <- base  %>%
-      filter(factor_profile == !!F.profile) %>%
-      select_if(~sum(!is.na(.)) > 0)
+      dplyr::filter(factor_profile == !!F.profile) %>%
+      dplyr::select_if(~sum(!is.na(.)) > 0)
 
     source <- source  %>%
-      filter(factor_profile == !!F.profile) %>%
-      select_if(~sum(!is.na(.)) > 0)
+      dplyr::filter(factor_profile == !!F.profile) %>%
+      dplyr::select_if(~sum(!is.na(.)) > 0)
 
     # check if there are difference in species.
     diff.base.source <- setdiff(base$species, source$species)
@@ -105,21 +105,21 @@ match_factor_order <- function(base,
 
     # arrange by species
     base <- base %>%
-      arrange(species)
+      dplyr::arrange(species)
     source <- source %>%
-      arrange(species)
+      dplyr::arrange(species)
 
   }
 
 
   if (presented.matrix == "G.matrix") {
     base <- base  %>%
-      filter(unit == !!G.unit) %>%
-      select_if(~sum(!is.na(.)) > 0)
+      dplyr::filter(unit == !!G.unit) %>%
+      dplyr::select_if(~sum(!is.na(.)) > 0)
 
     source <- source  %>%
-      filter(unit == !!G.unit) %>%
-      select_if(~sum(!is.na(.)) > 0)
+      dplyr::filter(unit == !!G.unit) %>%
+      dplyr::select_if(~sum(!is.na(.)) > 0)
 
     # check if there are difference in species.
     diff.base.source <- setdiff(base$date, source$date)
@@ -153,8 +153,8 @@ match_factor_order <- function(base,
     }
 
     # arrange by date
-    base <- base %>% arrange(date)
-    source <- source %>% arrange(date)
+    base <- base %>% dplyr::arrange(date)
+    source <- source %>% dplyr::arrange(date)
   }
 
   # rename the source factors
@@ -163,13 +163,13 @@ match_factor_order <- function(base,
 
   # calculate the correlations
   cor_matrix <- stats::cor(source %>%
-                      select(-contains("factor_profile")) %>%
-                      select(contains("factor_")) %>%
-                      select_if(~sum(!is.na(.)) > 0),
+                      dplyr::select(-contains("factor_profile")) %>%
+                      dplyr::select(contains("factor_")) %>%
+                      dplyr::select_if(~sum(!is.na(.)) > 0),
                     base %>%
-                      select(-contains("factor_profile")) %>%
-                      select(contains("factor_")) %>%
-                      select_if(~sum(!is.na(.)) > 0)
+                      dplyr::select(-contains("factor_profile")) %>%
+                      dplyr::select(contains("factor_")) %>%
+                      dplyr::select_if(~sum(!is.na(.)) > 0)
   )
 
   # create output

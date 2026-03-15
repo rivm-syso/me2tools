@@ -92,7 +92,7 @@ epa_plot_contribution <- function(G_matrix,
   }
   
   G_matrix <- G_matrix  %>%
-    filter(unit == unit)
+    dplyr::filter(unit == unit)
   
   if (nrow(G_matrix) == 0) {
     cli::cli_abort(c(
@@ -123,10 +123,10 @@ epa_plot_contribution <- function(G_matrix,
   if(!identical(date.breaks, NA)) {
     if ("numeric" %in% class(date.breaks)) {
       plot.output <- plot.output +
-        scale_x_datetime(breaks = scales::breaks_pretty(date.breaks))
+        ggplot2::scale_x_datetime(breaks = scales::breaks_pretty(date.breaks))
     } else {
       plot.output <- plot.output +
-        scale_x_datetime(breaks = scales::breaks_width(date.breaks))
+        ggplot2::scale_x_datetime(breaks = scales::breaks_width(date.breaks))
     }
   }
 
@@ -137,7 +137,7 @@ epa_plot_contribution <- function(G_matrix,
                                               hjust = 1,
                                               size = x.font.size),
           legend.position="none",
-          panel.grid.minor = element_blank()) +
+          panel.grid.minor = ggplot2::element_blank()) +
     ylab(ylab) +
     xlab(xlab)
   
@@ -147,8 +147,8 @@ epa_plot_contribution <- function(G_matrix,
   if (rm.grid.x) {
     plot.output <- plot.output +
       ggplot2::theme(
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()
+        panel.grid.major.x = ggplot2::element_blank(),
+        panel.grid.minor.x = ggplot2::element_blank()
       )
   }
   

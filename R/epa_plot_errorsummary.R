@@ -156,7 +156,7 @@ epa_plot_errorsummary <- function(F_matrix,
   # check if species is factor
   if (!"factor" %in% class(F_matrix$species)) {
     F_matrix <- F_matrix %>%
-      mutate(species = factor(paste0("`", species, "`")))
+      dplyr::mutate(species = factor(paste0("`", species, "`")))
   }
   
   
@@ -169,11 +169,11 @@ epa_plot_errorsummary <- function(F_matrix,
   df <- F_matrix %>% 
     dplyr::filter(factor_profile == "concentration_of_species") %>% 
     tidyr::separate(run_type, c("group_type", "plot_type"), "_") %>% 
-    dplyr::mutate(plot_type = str_replace(plot_type, "run", "mean")) %>% 
-    dplyr::mutate(plot_type = str_replace(plot_type, "avg", "mean")) %>% 
-    dplyr::mutate(plot_type = str_replace(plot_type, "median", "mean")) %>% 
-    dplyr::mutate(plot_type = str_replace(plot_type, "P95", "max")) %>% 
-    dplyr::mutate(plot_type = str_replace(plot_type, "P05", "min")) %>% 
+    dplyr::mutate(plot_type = stringr::str_replace(plot_type, "run", "mean")) %>% 
+    dplyr::mutate(plot_type = stringr::str_replace(plot_type, "avg", "mean")) %>% 
+    dplyr::mutate(plot_type = stringr::str_replace(plot_type, "median", "mean")) %>% 
+    dplyr::mutate(plot_type = stringr::str_replace(plot_type, "P95", "max")) %>% 
+    dplyr::mutate(plot_type = stringr::str_replace(plot_type, "P05", "min")) %>% 
     tidyr::pivot_wider(id_cols = dplyr::all_of(id_variables),
                        names_from = "plot_type",
                        values_from = "value")
@@ -193,14 +193,14 @@ epa_plot_errorsummary <- function(F_matrix,
   
   # get the segment data
   segments <- df %>%
-    filter(group_type != "base")
+    dplyr::filter(group_type != "base")
   
   if (nrow(segments)==0) {
     stop("Did you provide error estimates?")
   }
   
   segments <- segments %>%
-    mutate(mean = ifelse(mean <= 10^y_min, 10^y_min, mean),
+    dplyr::mutate(mean = ifelse(mean <= 10^y_min, 10^y_min, mean),
            min = ifelse(min <= 10^y_min, 10^y_min, min),
            max = ifelse(max <= 10^y_min, 10^y_min, max),
            group_type = factor(group_type, levels = c("BS", "BSDISP", "DISP"))) %>% 
@@ -225,7 +225,7 @@ epa_plot_errorsummary <- function(F_matrix,
   for (group.type in group.types) {
     # with three segments, we need to correct the mid point
     tmp.plot.data <- segments %>% 
-      filter(group_type == group.type)
+      dplyr::filter(group_type == group.type)
     
     if (num.segments == 3) {
       if (index == 1) {
@@ -283,15 +283,15 @@ epa_plot_errorsummary <- function(F_matrix,
   
   # add the base line
   base.line <- df %>%
-    filter(group_type == "base") %>% 
-    mutate(mean = ifelse(mean <= 10^y_min, 10^y_min, mean),
+    dplyr::filter(group_type == "base") %>% 
+    dplyr::mutate(mean = ifelse(mean <= 10^y_min, 10^y_min, mean),
            group_type = factor(group_type, 
                                levels = c("BS", "BSDISP", "DISP"))) %>% 
     droplevels(.) # drop unused levels
   
   
   plot.output <- plot.output +
-    geom_errorbar(
+    ggplot2::geom_errorbar(
       data = base.line, aes(
         x = numeric_x,
         ymin = mean,
@@ -334,17 +334,17 @@ epa_plot_errorsummary <- function(F_matrix,
   
   
   plot.output <- plot.output +
-    scale_y_log10(
+    ggplot2::scale_y_log10(
       breaks = scales::trans_breaks("log10", function(x) 10^x),
       labels = scales::trans_format("log10", scales::math_format(10^.x)),
       limits = c(10^y_min,NA)
     ) +
     ggplot2::theme_bw() +
-    annotation_logticks(sides = 'l') +
+    ggplot2::annotation_logticks(sides = 'l') +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = xlabel.angle, 
                                                        hjust = 1,
                                                        size = x.font.size),
-          panel.grid.minor = element_blank())
+          panel.grid.minor = ggplot2::element_blank())
   
   if ((identical(xlabel.vjust, NA)) &
       (identical(xlabel.hjust, NA))) {
@@ -355,8 +355,8 @@ epa_plot_errorsummary <- function(F_matrix,
           #labels = parse(text = x_labels_top),
           labels = x_labels_top,
           breaks = sort(unique(base.line$numeric_x)),
-          expand = expansion(mult = expand.mult),
-          guide = guide_axis(angle = xlabel.angle, 
+          expand = ggplot2::expansion(mult = expand.mult),
+          guide = ggplot2::guide_axis(angle = xlabel.angle, 
                              n.dodge = x.n.dodge),
           sec.axis = ggplot2::sec_axis(
             trans = ~ .,
@@ -376,7 +376,7 @@ epa_plot_errorsummary <- function(F_matrix,
           #labels = parse(text = x_labels),
           labels = x_labels,
           breaks = sort(unique(base.line$numeric_x)),
-          expand = expansion(mult = expand.mult),
+          expand = ggplot2::expansion(mult = expand.mult),
           guide = ggplot2::guide_axis(angle = xlabel.angle, 
                                       n.dodge = x.n.dodge)
         )
@@ -389,8 +389,8 @@ epa_plot_errorsummary <- function(F_matrix,
           #labels = parse(text = x_labels_top),
           labels = x_labels_top,
           breaks = sort(unique(base.line$numeric_x)),
-          expand = expansion(mult = expand.mult),
-          guide = guide_axis(angle = xlabel.angle, 
+          expand = ggplot2::expansion(mult = expand.mult),
+          guide = ggplot2::guide_axis(angle = xlabel.angle, 
                              n.dodge = x.n.dodge),
           sec.axis = ggplot2::sec_axis(
             trans = ~ .,
@@ -400,7 +400,7 @@ epa_plot_errorsummary <- function(F_matrix,
             guide = ggplot2::guide_axis(n.dodge = x.n.dodge)
           )
         ) +
-        theme(axis.text.x.top = ggplot2::element_text(hjust = xlabel.hjust,
+        ggplot2::theme(axis.text.x.top = ggplot2::element_text(hjust = xlabel.hjust,
                                                       vjust = xlabel.vjust))
     } else {
       plot.output <- plot.output +
@@ -409,7 +409,7 @@ epa_plot_errorsummary <- function(F_matrix,
           #labels = parse(text = x_labels),
           labels = x_labels,
           breaks = sort(unique(base.line$numeric_x)),
-          expand = expansion(mult = expand.mult),
+          expand = ggplot2::expansion(mult = expand.mult),
           guide = ggplot2::guide_axis(n.dodge = x.n.dodge)
         )
     }
@@ -424,8 +424,8 @@ epa_plot_errorsummary <- function(F_matrix,
   }
 
   plot.output <- plot.output +
-    ylab(ylab)  +
-    scale_fill_manual(
+    ggplot2::ylab(ylab)  +
+    ggplot2::scale_fill_manual(
       labels = c("BS" = bar.labels[["BS"]],
                  "BSDISP" = bar.labels[["BSDISP"]],
                  "DISP" = bar.labels[["DISP"]],
@@ -438,7 +438,7 @@ epa_plot_errorsummary <- function(F_matrix,
                  "BSDISP",
                  "DISP",
                  "base")) +
-    scale_color_manual(
+    ggplot2::scale_color_manual(
       labels = c("BS" = bar.labels[["BS"]],
                  "BSDISP" = bar.labels[["BSDISP"]],
                  "DISP" = bar.labels[["DISP"]],
@@ -451,11 +451,11 @@ epa_plot_errorsummary <- function(F_matrix,
                  "BSDISP",
                  "DISP",
                  "base")) +
-      guides(color = guide_legend(order = 1,
+      guides(color = ggplot2::guide_legend(order = 1,
                                   title = NULL),
-             fill = guide_legend(order = 2,
+             fill = ggplot2::guide_legend(order = 2,
                                   title = NULL))+
-    theme(legend.position = "top",
+    ggplot2::theme(legend.position = "top",
           legend.justification = "right",
           legend.margin=margin(b=-10)) 
   
@@ -469,8 +469,8 @@ epa_plot_errorsummary <- function(F_matrix,
   if (rm.grid.x) {
     plot.output <- plot.output +
       ggplot2::theme(
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()
+        panel.grid.major.x = ggplot2::element_blank(),
+        panel.grid.minor.x = ggplot2::element_blank()
       )
   }
   

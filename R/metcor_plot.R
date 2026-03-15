@@ -321,8 +321,8 @@ metcor_plot <- function(metcor.raster,
     )
 
     # find the peak in the lat and lon distribution
-    x_center <- stats::density(metcor.raster.tibble$x)$x[which.max(density(metcor.raster.tibble$x)$y)]
-    y_center <- stats::density(metcor.raster.tibble$y)$x[which.max(density(metcor.raster.tibble$y)$y)]
+    x_center <- stats::density(metcor.raster.tibble$x)$x[which.max(stats::density(metcor.raster.tibble$x)$y)]
+    y_center <- stats::density(metcor.raster.tibble$y)$x[which.max(stats::density(metcor.raster.tibble$y)$y)]
     # create a simple feature from this
     zoom_to_xy <- sf::st_transform(sf::st_sfc(sf::st_point(c(x_center, y_center)),
       crs = terra::crs(metcor.raster)
