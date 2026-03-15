@@ -22,6 +22,7 @@ Depends:
 Imports:
     cli,
     openair,
+	magrittr,
     dplyr,
     forcats,
     ggplot2,

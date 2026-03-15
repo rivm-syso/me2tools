@@ -136,7 +136,7 @@ compare_obs_mod <- function(data,
                             auto.text = TRUE,
                             asp.ratio.1 = FALSE,
                             n.col = 2,
-                            geomtextpath = tibble(
+                            geomtextpath = tibble::tibble(
                               "labels" = list(
                                 "0.5" = "0.5",
                                 "1.0" = "1.0",
@@ -339,7 +339,7 @@ compare_obs_mod <- function(data,
       level = PI.level
     ))
 
-    regression.out <- tibble(
+    regression.out <- tibble::tibble(
       x = n_data,
       fit = conf_int[, 1],
       conf_lwr = conf_int[, 2],
@@ -354,7 +354,7 @@ compare_obs_mod <- function(data,
     )
   } else {
     # models per group, so calculate all the other vars by group as well
-    regression.out <- tibble()
+    regression.out <- tibble::tibble()
 
     for (lm.index in seq(1, nrow(modelLM), 1)) {
       n_data <- seq(min(modelLM[lm.index, ]$data[[1]]$x, na.rm = TRUE),
@@ -373,7 +373,7 @@ compare_obs_mod <- function(data,
         level = PI.level
       ))
 
-      regression.out.tmp <- tibble(
+      regression.out.tmp <- tibble::tibble(
         group = modelLM[lm.index, ][[group]],
         x = n_data,
         fit = conf_int[, 1],
@@ -394,7 +394,7 @@ compare_obs_mod <- function(data,
     }
     # rename the group variable so it works with the rest of the plot
     regression.out <- regression.out %>%
-      rename(!!rlang::sym(group) := group)
+      dplyr::rename(!!rlang::sym(group) := group)
 
     scatter <- ggplot2::ggplot(
       regr_data,

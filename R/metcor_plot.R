@@ -315,7 +315,7 @@ metcor_plot <- function(metcor.raster,
     }
 
     # turn raster into tibble
-    metcor.raster.tibble <- as_tibble(metcor.raster,
+    metcor.raster.tibble <- tibble::as_tibble(metcor.raster,
       xy = TRUE,
       na.rm = TRUE
     )
@@ -483,7 +483,7 @@ metcor_plot <- function(metcor.raster,
         ))
       }
       metcor.plot.options$raster$discrete.breaks <- classInt::classIntervals(
-        var = stats::na.omit(as.vector(values(metcor.raster))),
+        var = stats::na.omit(as.vector(terra::values(metcor.raster))),
         n = metcor.plot.options$raster$discrete.breaks,
         style = "equal"
       )
@@ -722,7 +722,7 @@ metcor_plot <- function(metcor.raster,
         show.legend = TRUE
       )) +
       ggplot2::scale_fill_manual(
-        values = setNames(
+        values = stats::setNames(
           metcor.plot.options$raster$discrete.colors,
           terra::levels(metcor.raster.discrete$label)[[1]]$label # set the labels from the raster
         ),
@@ -839,7 +839,7 @@ metcor_plot <- function(metcor.raster,
     # alpha transparency applied, so the text gets transparent as well
     metcor.plot <- metcor.plot +
       ggtext::geom_richtext(
-        aes(x = annotate.x,
+        ggplot2::aes(x = annotate.x,
         y = annotate.y,
         vjust = metcor.plot.options$annotation$vjust,
         hjust = metcor.plot.options$annotation$hjust),
@@ -854,7 +854,7 @@ metcor_plot <- function(metcor.raster,
         label.r = unit(0.25, "lines")
       ) +
       ggtext::geom_richtext(
-        aes(x = annotate.x,
+        ggplot2::aes(x = annotate.x,
         y = annotate.y,
         vjust = metcor.plot.options$annotation$vjust,
         hjust = metcor.plot.options$annotation$hjust),

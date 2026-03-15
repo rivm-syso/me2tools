@@ -296,23 +296,23 @@ temporal_contributions <- function(mydata,
     ############################################################################
     if (identical(facet, NA)) {
       if (identical(group, NA)) {
-        myColors <- tibble("f_by" = "concentration",
+        myColors <- tibble::tibble("f_by" = "concentration",
                            "myColor" = openair::openColours(cols, nfacet))
       } else {
         if ("factor" %in% class(mydata[[group]])) {
-          myColors <- tibble("f_by" = levels(mydata[[group]]),
+          myColors <- tibble::tibble("f_by" = levels(mydata[[group]]),
                              "myColor" = openair::openColours(cols, ngroup))
         } else {
-          myColors <- tibble("f_by" = unique(mydata[[group]]),
+          myColors <- tibble::tibble("f_by" = unique(mydata[[group]]),
                              "myColor" = openair::openColours(cols, ngroup))
         }
       }
     } else {
       if ("factor" %in% class(mydata[[facet]])) {
-        myColors <- tibble("f_by" = levels(mydata[[facet]]),
+        myColors <- tibble::tibble("f_by" = levels(mydata[[facet]]),
                            "myColor" = openair::openColours(cols, nfacet))
       } else {
-        myColors <- tibble("f_by" = unique(mydata[[facet]]),
+        myColors <- tibble::tibble("f_by" = unique(mydata[[facet]]),
                            "myColor" = openair::openColours(cols, nfacet))
       }
     }
@@ -322,11 +322,11 @@ temporal_contributions <- function(mydata,
     ############################################################################
 
     if ("factor" %in% class(mydata[[by]])) {
-      myColors <- tibble("f_by" = levels(mydata[[by]]),
+      myColors <- tibble::tibble("f_by" = levels(mydata[[by]]),
                          "myColor" = openair::openColours(cols,
                                                         length(levels(mydata[[by]]))))
     } else {
-      myColors <- tibble("f_by" = unique(mydata[[by]]),
+      myColors <- tibble::tibble("f_by" = unique(mydata[[by]]),
                          "myColor" = openair::openColours(cols,
                                                         length(unique(mydata[[by]]))))
     }
@@ -334,13 +334,13 @@ temporal_contributions <- function(mydata,
 
   # boxplot colors:
   myColors <- myColors %>%
-    mutate(boxplotColor = grDevices::adjustcolor(myColor, alpha.f = box.alpha))
+    dplyr::mutate(boxplotColor = grDevices::adjustcolor(myColor, alpha.f = box.alpha))
 
   myColors.vector <- myColors %>%
-    pull(myColor, f_by) # first = values, second = names
+    dplyr::pull(myColor, f_by) # first = values, second = names
 
   boxplotColor.vector <- myColors %>%
-    pull(boxplotColor, f_by) # first = values, second = names
+    dplyr::pull(boxplotColor, f_by) # first = values, second = names
 
   #myColors <- openair::openColours(cols, nfacet)
   #boxplotColor <- grDevices::adjustcolor(myColors, alpha.f = box.alpha)
@@ -359,7 +359,7 @@ temporal_contributions <- function(mydata,
       ##                    No facet and no group                    ##
       #################################################################
       box.plot <- ggplot2::ggplot(mydata,
-                                  ggplot2::aes(x = !!sym(type), y = !!sym(factor))) +
+                                  ggplot2::aes(x = !!rlang::sym(type), y = !!rlang::sym(factor))) +
         ggplot2::geom_boxplot(outlier.shape = NA, na.rm = TRUE) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "none")
@@ -370,7 +370,7 @@ temporal_contributions <- function(mydata,
       # since we have type variable, we need to apply this as well.
       # The output data has now a GROUP variable that we can use.
       box.data <- box.data %>%
-        mutate(!!sym(type) := factor(group))
+        dplyr::mutate(!!rlang::sym(type) := factor(group))
       # in order to make this work, we need to set the correct group names
       # to the panel.
       if ("factor" %in% class(mydata[[type]])) {
@@ -386,15 +386,15 @@ temporal_contributions <- function(mydata,
       if (length(whisk.lim) == 2) {
         additional.data <- mydata %>%
           dplyr::select(!!vars,!!factor) %>%
-          dplyr::group_by(dplyr::across(all_of(vars))) %>%
+          dplyr::group_by(dplyr::across(tidyselect::all_of(vars))) %>%
           dplyr::summarise(
             n_wllimit = stats::quantile(
-              !!sym(factor),
+              !!rlang::sym(factor),
               probs = min(whisk.lim),
               na.rm = na.rm
             ),
             n_wulimit = stats::quantile(
-              !!sym(factor),
+              !!rlang::sym(factor),
               probs = max(whisk.lim),
               na.rm = na.rm
             ),
@@ -402,8 +402,8 @@ temporal_contributions <- function(mydata,
           )
         # combine with the boxplot data
         box.data <- box.data %>%
-          left_join(., additional.data, by = vars) %>%
-          rename(
+          dplyr::left_join(., additional.data, by = vars) %>%
+          dplyr::rename(
             ymin_old = ymin,
             ymax_old = ymax,
             ymin = n_wllimit,
@@ -420,7 +420,7 @@ temporal_contributions <- function(mydata,
       # now we can construct the plots.
       default.plot <- ggplot2::ggplot(data = box.data,
                                       ggplot2::aes(
-                                        x = !!sym(type),
+                                        x = !!rlang::sym(type),
                                         y = middle,
                                         group = 1
                                       ))
@@ -459,13 +459,13 @@ temporal_contributions <- function(mydata,
       # make sure
       #test.data <- mydata %>%
       #  dplyr::select(!!vars, !!factor)
-      #default.plot + geom_boxplot(mapping = ggplot2::aes(x = !!sym(type), y = !!sym(factor), group = !!sym(type), alpha = 0.2), outlier.shape = NA, data = test.data)
+      #default.plot + geom_boxplot(mapping = ggplot2::aes(x = !!rlang::sym(type), y = !!rlang::sym(factor), group = !!rlang::sym(type), alpha = 0.2), outlier.shape = NA, data = test.data)
 
       # boxplot (replacing intial boxplot used to get data)
       box.plot <- ggplot2::ggplot(
         box.data,
         ggplot2::aes(
-          x = !!sym(type),
+          x = !!rlang::sym(type),
           ymin = ymin,
           lower = lower,
           middle = middle,
@@ -482,7 +482,7 @@ temporal_contributions <- function(mydata,
         ggplot2::theme_bw()
 
       # create the colors
-      iqrColor <- adjustcolor(myColors.vector,
+      iqrColor <- grDevices::adjustcolor(myColors.vector,
                               alpha.f = box.alpha)
       # add colored segments to plot
       box.plot <- box.plot +
@@ -572,13 +572,13 @@ temporal_contributions <- function(mydata,
       # we have to apply grouping here.
       box.plot <- ggplot2::ggplot(mydata,
                                   ggplot2::aes(
-                                    x = !!sym(type),
-                                    y = !!sym(factor),
-                                    fill = !!sym(group)
+                                    x = !!rlang::sym(type),
+                                    y = !!rlang::sym(factor),
+                                    fill = !!rlang::sym(group)
                                   )) +
         ggplot2::geom_boxplot(outlier.shape = NA,
                               na.rm = TRUE,
-                              position = position_dodge(width = 0.9),
+                              position = ggplot2::position_dodge(width = 0.9),
                               width = box.width) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "none")
@@ -589,16 +589,16 @@ temporal_contributions <- function(mydata,
       # since we have type variable, we need to apply this as well.
       # The output data has now a GROUP variable that we can use.
       box.data <- box.data %>%
-        mutate(!!sym(type) := factor(group),!!sym(group) := factor(group))
+        dplyr::mutate(!!rlang::sym(type) := factor(group),!!rlang::sym(group) := factor(group))
       # in order to make this work, we need to set the correct group names
       # to the panel. Since we have grouped data we need to find the number
       # of items for each type.
 
       type_items <- mydata %>%
-        select(!!sym(type),!!sym(group)) %>%
+        dplyr::select(!!rlang::sym(type),!!rlang::sym(group)) %>%
         unique() %>%
-        group_by(!!sym(type)) %>%
-        tally()
+        dplyr::group_by(!!rlang::sym(type)) %>%
+        dplyr::tally()
 
       types <- c() # emtpy to start with
       groups <- c() # emtpy to start with
@@ -613,8 +613,8 @@ temporal_contributions <- function(mydata,
 
       for (type_level in levels(mydata[[type]])) {
         group_count <- as.numeric(type_items %>%
-                                    filter(!!sym(type) == type_level) %>%
-                                    select(n))
+                                    dplyr::filter(!!rlang::sym(type) == type_level) %>%
+                                    dplyr::select(n))
         types <- c(types, replicate(group_count, type_level))
         # add groups
         for (item in seq(1, group_count, 1)) {
@@ -642,15 +642,15 @@ temporal_contributions <- function(mydata,
       if (length(whisk.lim) == 2) {
         additional.data <- mydata %>%
           dplyr::select(!!vars,!!factor) %>%
-          dplyr::group_by(dplyr::across(all_of(vars))) %>%
+          dplyr::group_by(dplyr::across(tidyselect::all_of(vars))) %>%
           dplyr::summarise(
             n_wllimit = stats::quantile(
-              !!sym(factor),
+              !!rlang::sym(factor),
               probs = min(whisk.lim),
               na.rm = na.rm
             ),
             n_wulimit = stats::quantile(
-              !!sym(factor),
+              !!rlang::sym(factor),
               probs = max(whisk.lim),
               na.rm = na.rm
             ),
@@ -658,8 +658,8 @@ temporal_contributions <- function(mydata,
           )
         # combine with the boxplot data
         box.data <- box.data %>%
-          left_join(., additional.data, by = vars) %>%
-          rename(
+          dplyr::left_join(., additional.data, by = vars) %>%
+          dplyr::rename(
             ymin_old = ymin,
             ymax_old = ymax,
             ymin = n_wllimit,
@@ -677,30 +677,30 @@ temporal_contributions <- function(mydata,
       # now we can construct the plots.
       #default.plot <- ggplot2::ggplot(
       #  data = box.data,
-      #  ggplot2::aes(x = !!sym(type), y = middle)
+      #  ggplot2::aes(x = !!rlang::sym(type), y = middle)
       #) +
-      #  ggplot2::geom_ribbon(ggplot2::aes(ymin = ymin, ymax = ymax, fill = myColors, group = !!sym(group)), colour = NA, alpha = 0.25) +
-      #  ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, fill = myColors, group = !!sym(group)), colour = NA, alpha = 0.25) +
-      #  ggplot2::geom_line(ggplot2::aes(group = !!sym(group)),colour = myColors, size = line.size) +
-      #  ggplot2::geom_point(ggplot2::aes(group = !!sym(group)),colour = myColors, size = point.size) +
+      #  ggplot2::geom_ribbon(ggplot2::aes(ymin = ymin, ymax = ymax, fill = myColors, group = !!rlang::sym(group)), colour = NA, alpha = 0.25) +
+      #  ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, fill = myColors, group = !!rlang::sym(group)), colour = NA, alpha = 0.25) +
+      #  ggplot2::geom_line(ggplot2::aes(group = !!rlang::sym(group)),colour = myColors, size = line.size) +
+      #  ggplot2::geom_point(ggplot2::aes(group = !!rlang::sym(group)),colour = myColors, size = point.size) +
       #  ggplot2::theme_bw() +
       #  ggplot2::theme(legend.position = "none")
       default.plot = ggplot2::ggplot() +
         ggplot2::theme_void() +
-        ggplot2::geom_text(aes(0,0,label='N/A')) +
+        ggplot2::geom_text(ggplot2::aes(0,0,label='N/A')) +
         ggplot2::xlab(NULL)
 
       # boxplot (replacing intial boxplot used to get data)
       box.plot <- ggplot2::ggplot(
         box.data,
         ggplot2::aes(
-          x = !!sym(type),
+          x = !!rlang::sym(type),
           ymin = ymin,
           lower = lower,
           middle = middle,
           upper = upper,
           ymax = ymax,
-          fill = !!sym(group)
+          fill = !!rlang::sym(group)
         )
       ) +
         ggplot2::geom_boxplot(
@@ -708,7 +708,7 @@ temporal_contributions <- function(mydata,
           color = NA,
           outlier.shape = NA,
           na.rm = TRUE,
-          position = position_dodge(width = 0.9),
+          position = ggplot2::position_dodge(width = 0.9),
           width = box.width
         ) +
         ggplot2::scale_fill_manual(values = replicate(length(group_levels), NA),
@@ -725,8 +725,8 @@ temporal_contributions <- function(mydata,
             y = lower,
             xend = xmax,
             yend = lower,
-            color = !!sym(group),
-            group = !!sym(group)
+            color = !!rlang::sym(group),
+            group = !!rlang::sym(group)
           ),
           na.rm = TRUE,
           key_glyph = draw_key_boxplot
@@ -738,8 +738,8 @@ temporal_contributions <- function(mydata,
             y = lower,
             xend = xmin,
             yend = upper,
-            color = !!sym(group),
-            group = !!sym(group)
+            color = !!rlang::sym(group),
+            group = !!rlang::sym(group)
           ),
           na.rm = TRUE
         ) +
@@ -750,8 +750,8 @@ temporal_contributions <- function(mydata,
             y = lower,
             xend = xmax,
             yend = upper,
-            color = !!sym(group),
-            group = !!sym(group)
+            color = !!rlang::sym(group),
+            group = !!rlang::sym(group)
           ),
           na.rm = TRUE
         ) +
@@ -762,8 +762,8 @@ temporal_contributions <- function(mydata,
             y = upper,
             xend = xmax,
             yend = upper,
-            color = !!sym(group),
-            group = !!sym(group)
+            color = !!rlang::sym(group),
+            group = !!rlang::sym(group)
           ),
           na.rm = TRUE
         ) +
@@ -774,8 +774,8 @@ temporal_contributions <- function(mydata,
             y = middle,
             xend = xmax,
             yend = middle,
-            color = !!sym(group),
-            group = !!sym(group)
+            color = !!rlang::sym(group),
+            group = !!rlang::sym(group)
           ),
           size = 1.2,
           na.rm = TRUE
@@ -787,7 +787,7 @@ temporal_contributions <- function(mydata,
             y = upper,
             xend = x,
             yend = ymax,
-            group = !!sym(group)
+            group = !!rlang::sym(group)
           ),
           color = "black",
           na.rm = TRUE
@@ -799,7 +799,7 @@ temporal_contributions <- function(mydata,
             y = ymin,
             xend = x,
             yend = lower,
-            group = !!sym(group)
+            group = !!rlang::sym(group)
           ),
           color = "black",
           na.rm = TRUE
@@ -828,9 +828,9 @@ temporal_contributions <- function(mydata,
       # we first create a white boxplot
       box.plot <- ggplot2::ggplot(mydata,
                                   ggplot2::aes(
-                                    x = !!sym(type),
-                                    y = !!sym(factor),
-                                    color = !!sym(facet)
+                                    x = !!rlang::sym(type),
+                                    y = !!rlang::sym(factor),
+                                    color = !!rlang::sym(facet)
                                   )) +
         ggplot2::geom_boxplot(
           color = "black",
@@ -844,13 +844,13 @@ temporal_contributions <- function(mydata,
       # we first create a white boxplot
       box.plot <- ggplot2::ggplot(mydata,
                                   ggplot2::aes(
-                                    x = !!sym(type),
-                                    y = !!sym(factor),
-                                    color = !!sym(by)
+                                    x = !!rlang::sym(type),
+                                    y = !!rlang::sym(factor),
+                                    color = !!rlang::sym(by)
                                   )) +
         ggplot2::geom_boxplot(outliers = FALSE,
                               na.rm = TRUE,
-                              position = position_dodge(width = 0.9),
+                              position = ggplot2::position_dodge(width = 0.9),
                               width=box.width) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "none")
@@ -905,28 +905,28 @@ temporal_contributions <- function(mydata,
 
     if (nrow(box.data) < (length(type_levels) * nfacet)) {
       # we need to fix some stuff.
-      box.data.type <- tibble(!!sym(type) := factor(rep(type_levels,
+      box.data.type <- tibble::tibble(!!rlang::sym(type) := factor(rep(type_levels,
                                                         each = length(facet_levels)),
                                                     levels = type_levels),
-                              !!sym(facet) := factor(rep(facet_levels,
+                              !!rlang::sym(facet) := factor(rep(facet_levels,
                                                          times = length(type_levels)),
                                                      levels = facet_levels),
                               PANEL = factor(rep(seq(1,nfacet,1), times = length(type_levels)))) %>%
-        left_join(.,
-                  tibble(!!sym(type) := factor(type_levels)) %>%
+        dplyr::left_join(.,
+                  tibble::tibble(!!rlang::sym(type) := factor(type_levels)) %>%
                     tibble::rowid_to_column("group"),
-                  by = join_by(!!sym(type))) %>%
-        arrange(PANEL, group)
+                  by = dplyr::join_by(!!rlang::sym(type))) %>%
+        dplyr::arrange(PANEL, group)
 
       # get some params
       x_diff <- box.data[1,]$x - box.data[1,]$xmin
       bar_width <- box.data[1,]$new_width
 
       # join to construct the complete data set
-      box.data <- left_join(box.data.type,
+      box.data <- dplyr::left_join(box.data.type,
                 box.data,
-                by = join_by(group, PANEL)) %>%
-        mutate(x = group,
+                by = dplyr::join_by(group, PANEL)) %>%
+        dplyr::mutate(x = group,
                flipped_aes = FALSE,
                xmin = x - x_diff,
                xmax = x + x_diff,
@@ -945,7 +945,7 @@ temporal_contributions <- function(mydata,
       # since we have group variable, we need to apply this as well.
       # The output data has now a PANEL variable that we can use.
       box.data <- box.data %>%
-        mutate(!!sym(type) := factor(group),!!sym(facet) := factor(PANEL))
+        dplyr::mutate(!!rlang::sym(type) := factor(group),!!rlang::sym(facet) := factor(PANEL))
     }
 
     # in order to make this work, we need to set the correct type and facet names
@@ -999,16 +999,16 @@ temporal_contributions <- function(mydata,
       # here we fix the coloring when there is only 1 set
       # first find if there are facets with only one set.
       facet_one_item <- mydata %>%
-        distinct(!!sym(facet), !!sym(by)) %>%
-        group_by(!!sym(facet)) %>%
-        tally() %>%
-        filter(n == 1)
+        dplyr::distinct(!!rlang::sym(facet), !!rlang::sym(by)) %>%
+        dplyr::group_by(!!rlang::sym(facet)) %>%
+        dplyr::tally() %>%
+        dplyr::filter(n == 1)
 
       # if there are facets with one set, then process them correctly
       if (nrow(facet_one_item) > 0) {
         set_one_item <- mydata  %>%
-          distinct(!!sym(facet), !!sym(by)) %>%
-          filter(!!sym(facet) == facet_one_item[[facet]])
+          dplyr::distinct(!!rlang::sym(facet), !!rlang::sym(by)) %>%
+          dplyr::filter(!!rlang::sym(facet) == facet_one_item[[facet]])
         # loop over results and fix the set
         for (i_fix in seq(1,nrow(set_one_item),1)) {
           box.data[[by]][box.data[[facet]]==set_one_item[[facet]][i_fix]] <- set_one_item[[by]][i_fix]
@@ -1021,15 +1021,15 @@ temporal_contributions <- function(mydata,
     if (length(whisk.lim) == 2) {
       additional.data <- mydata %>%
         dplyr::select(!!vars,!!factor) %>%
-        dplyr::group_by(dplyr::across(all_of(vars))) %>%
+        dplyr::group_by(dplyr::across(tidyselect::all_of(vars))) %>%
         dplyr::summarise(
           n_wllimit = stats::quantile(
-            !!sym(factor),
+            !!rlang::sym(factor),
             probs = min(whisk.lim),
             na.rm = TRUE
           ),
           n_wulimit = stats::quantile(
-            !!sym(factor),
+            !!rlang::sym(factor),
             probs = max(whisk.lim),
             na.rm = TRUE
           ),
@@ -1041,21 +1041,21 @@ temporal_contributions <- function(mydata,
 
 
       # combine with the boxplot data
-      box.data <- left_join(box.data %>%
-                    mutate(!!sym(type) := as.character(!!sym(type)),
-                           !!sym(facet) := as.character(!!sym(facet))),
+      box.data <- dplyr::left_join(box.data %>%
+                    dplyr::mutate(!!rlang::sym(type) := as.character(!!rlang::sym(type)),
+                           !!rlang::sym(facet) := as.character(!!rlang::sym(facet))),
                   additional.data %>%
-                    mutate(!!sym(type) := as.character(!!sym(type)),
-                           !!sym(facet) := as.character(!!sym(facet))),
-                  by = join_by(!!sym(type), !!sym(facet))) %>%
-        rename(
+                    dplyr::mutate(!!rlang::sym(type) := as.character(!!rlang::sym(type)),
+                           !!rlang::sym(facet) := as.character(!!rlang::sym(facet))),
+                  by = dplyr::join_by(!!rlang::sym(type), !!rlang::sym(facet))) %>%
+        dplyr::rename(
           ymin_old = ymin,
           ymax_old = ymax,
           ymin = n_wllimit,
           ymax = n_wulimit
         ) %>%
-        mutate(!!sym(type) := factor(!!sym(type), levels = type_levels),
-               !!sym(facet) := factor(!!sym(facet), levels = facet_levels))
+        dplyr::mutate(!!rlang::sym(type) := factor(!!rlang::sym(type), levels = type_levels),
+               !!rlang::sym(facet) := factor(!!rlang::sym(facet), levels = facet_levels))
 
       cli::cli_warn(
         c(
@@ -1068,7 +1068,7 @@ temporal_contributions <- function(mydata,
       # now we can construct the plots.
       default.plot <- ggplot2::ggplot(data = box.data,
                                       ggplot2::aes(
-                                        x = !!sym(type),
+                                        x = !!rlang::sym(type),
                                         y = middle,
                                         group = 1
                                       ))
@@ -1077,7 +1077,7 @@ temporal_contributions <- function(mydata,
           ggplot2::geom_ribbon(ggplot2::aes(
             ymin = ymin,
             ymax = ymax,
-            fill = !!sym(facet)),
+            fill = !!rlang::sym(facet)),
             alpha = ribbon.alpha[[1]])
       }
       if (ribbon.iqr.show) {
@@ -1085,15 +1085,15 @@ temporal_contributions <- function(mydata,
           ggplot2::geom_ribbon(ggplot2::aes(
             ymin = lower,
             ymax = upper,
-            fill = !!sym(facet)
+            fill = !!rlang::sym(facet)
           ),
           alpha = ribbon.alpha[[2]])
       }
 
       default.plot <- default.plot +
-        ggplot2::geom_line(ggplot2::aes(color = !!sym(facet)),
+        ggplot2::geom_line(ggplot2::aes(color = !!rlang::sym(facet)),
                            size = line.size) +
-        ggplot2::geom_point(ggplot2::aes(color = !!sym(facet)),
+        ggplot2::geom_point(ggplot2::aes(color = !!rlang::sym(facet)),
                             size = point.size) +
         ggplot2::scale_fill_manual(values = myColors.vector) +
         ggplot2::scale_color_manual(values = myColors.vector) +
@@ -1101,16 +1101,16 @@ temporal_contributions <- function(mydata,
     } else {
       default.plot <- ggplot2::ggplot(data = box.data,
                                       ggplot2::aes(
-                                        x = !!sym(type),
+                                        x = !!rlang::sym(type),
                                         y = middle,
-                                        group = !!sym(by)
+                                        group = !!rlang::sym(by)
                                       ))
       if (ribbon.minmax.show) {
         default.plot <- default.plot +
           ggplot2::geom_ribbon(ggplot2::aes(
             ymin = ymin,
             ymax = ymax,
-            fill = !!sym(by)
+            fill = !!rlang::sym(by)
           ),
           alpha = ribbon.alpha[[1]])
       }
@@ -1119,15 +1119,15 @@ temporal_contributions <- function(mydata,
           ggplot2::geom_ribbon(ggplot2::aes(
             ymin = lower,
             ymax = upper,
-            fill = !!sym(by)
+            fill = !!rlang::sym(by)
           ),
           alpha = ribbon.alpha[[2]])
       }
 
       default.plot <- default.plot +
-        ggplot2::geom_line(ggplot2::aes(color = !!sym(by)),
+        ggplot2::geom_line(ggplot2::aes(color = !!rlang::sym(by)),
                            linewidth = line.size) +
-        ggplot2::geom_point(ggplot2::aes(color = !!sym(by)),
+        ggplot2::geom_point(ggplot2::aes(color = !!rlang::sym(by)),
                             size = point.size) +
         ggplot2::theme_bw()
 
@@ -1154,13 +1154,13 @@ temporal_contributions <- function(mydata,
       if (facet.parse.label) {
         default.plot <- default.plot +
           ggplot2::facet_grid(
-            rows = vars(!!sym(facet)),
+            rows = vars(!!rlang::sym(facet)),
             scales = facet.scales,
             labeller = label_parsed
           )
       } else {
         default.plot <- default.plot +
-          ggplot2::facet_grid(rows = vars(!!sym(facet)), scales = facet.scales)
+          ggplot2::facet_grid(rows = vars(!!rlang::sym(facet)), scales = facet.scales)
       }
     } else {
       # parse facet labels
@@ -1186,7 +1186,7 @@ temporal_contributions <- function(mydata,
       box.plot <- ggplot2::ggplot(
         box.data,
         ggplot2::aes(
-          x = !!sym(type),
+          x = !!rlang::sym(type),
           ymin = ymin,
           lower = lower,
           middle = middle,
@@ -1202,12 +1202,12 @@ temporal_contributions <- function(mydata,
     } else {
       # update box.data
       box.data <- box.data %>%
-        mutate(group_var = paste(!!sym(type),!!sym(facet),!!sym(by), sep = "_"))
+        dplyr::mutate(group_var = paste(!!rlang::sym(type),!!rlang::sym(facet),!!rlang::sym(by), sep = "_"))
       # create plot
       box.plot <- ggplot2::ggplot(
         box.data,
         ggplot2::aes(
-          x = !!sym(type),
+          x = !!rlang::sym(type),
           ymin = ymin,
           lower = lower,
           middle = middle,
@@ -1217,9 +1217,9 @@ temporal_contributions <- function(mydata,
         )
       ) +
         ggplot2::geom_boxplot(
-          ggplot2::aes(color = !!sym(by)),
+          ggplot2::aes(color = !!rlang::sym(by)),
           stat = "identity",
-          position = position_dodge(width = 0.9),
+          position = ggplot2::position_dodge(width = 0.9),
           width = box.width
         ) +
         ggplot2::theme_bw()
@@ -1231,13 +1231,13 @@ temporal_contributions <- function(mydata,
       if (facet.parse.label) {
         box.plot <- box.plot +
           ggplot2::facet_grid(
-            rows = vars(!!sym(facet)),
+            rows = vars(!!rlang::sym(facet)),
             scales = facet.scales,
             labeller = label_parsed
           )
       } else {
         box.plot <- box.plot +
-          ggplot2::facet_grid(rows = vars(!!sym(facet)), scales = facet.scales)
+          ggplot2::facet_grid(rows = vars(!!rlang::sym(facet)), scales = facet.scales)
       }
     } else {
       # parse facet labels
@@ -1259,7 +1259,7 @@ temporal_contributions <- function(mydata,
 
     if (identical(by, NA)) {
       # create the colors. Here we can have different colors per factor
-      iqrColor_all <- adjustcolor(myColors.vector, alpha.f = box.alpha)
+      iqrColor_all <- grDevices::adjustcolor(myColors.vector, alpha.f = box.alpha)
       names(iqrColor_all) <- names(myColors.vector)
 
       iqrColor <- iqrColor_all[box.data[[facet]]]
@@ -1397,9 +1397,9 @@ temporal_contributions <- function(mydata,
       } else {
         # remove the label
         default.plot <- default.plot +
-          theme(axis.title.x = element_blank())
+          ggplot2::theme(axis.title.x = ggplot2::element_blank())
         box.plot <- box.plot +
-          theme(axis.title.x = element_blank())
+          ggplot2::theme(axis.title.x = ggplot2::element_blank())
       }
     }
   }
@@ -1418,9 +1418,9 @@ temporal_contributions <- function(mydata,
       } else {
         # remove the label
         default.plot <- default.plot +
-          ggplot2::theme(axis.title.y = element_blank())
+          ggplot2::theme(axis.title.y = ggplot2::element_blank())
         box.plot <- box.plot +
-          ggplot2::theme(axis.title.y = element_blank())
+          ggplot2::theme(axis.title.y = ggplot2::element_blank())
       }
     }
   }
@@ -1508,17 +1508,17 @@ temporal_contributions <- function(mydata,
   # remove legend?
   if (show.legend) {
     default.plot <- default.plot +
-      theme(
+      ggplot2::theme(
         legend.position = "top",
         legend.justification = legend.justification,
-        legend.margin = margin(b = -10),
+        legend.margin = ggplot2::margin(b = -10),
         legend.text.align = 0
       )
     box.plot <- box.plot +
-      theme(
+      ggplot2::theme(
         legend.position = "top",
         legend.justification = legend.justification,
-        legend.margin = margin(b = -10),
+        legend.margin = ggplot2::margin(b = -10),
         legend.text.align = 0
       )
   } else {

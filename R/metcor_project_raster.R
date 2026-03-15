@@ -37,14 +37,14 @@ metcor_project_raster <- function(raster,
   
   # check input
   if (!"SpatRaster" %in% class(raster)) {
-    cli_abort(c(
+    cli::cli_abort(c(
       "{.var raster} must be of a class {.cls SpatRaster}:",
       "x" = "You've supplied a {.cls {class(raster)}} raster."
     ))
   }
 
   if (projection != "ESRI:102017") {
-    cli_abort(c(
+    cli::cli_abort(c(
       "Invalid {.var projection}:",
       "i" = "Only 'ESRI:102017' is currently supported.",
       "x" = "You've supplied: {projection}."

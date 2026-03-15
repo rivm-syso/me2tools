@@ -190,7 +190,7 @@ compare_obs_mod_mlr <- function(measurements,
 
   fixed_G <- TRUE
   # Check if measurements has the same length as G_matrix
-  if (nrow(measurements) != nrow(G_matrix %>% filter(unit == "normalised"))) {
+  if (nrow(measurements) != nrow(G_matrix %>% dplyr::filter(unit == "normalised"))) {
     if (!mod[[1]] %in% names(G_matrix)) {
       # check if data happens to be in the longer format
       if ("factor" %in% names(G_matrix)) {
@@ -203,7 +203,7 @@ compare_obs_mod_mlr <- function(measurements,
         )
         G_matrix <- G_matrix %>%
           tidyr::pivot_wider(
-            id_cols = all_of(id_cols),
+            id_cols = tidyselect::all_of(id_cols),
             names_from = "factor",
             values_from = "value"
           )
@@ -315,7 +315,7 @@ compare_obs_mod_mlr <- function(measurements,
     # Use the mass to calculate concentrations (and if we renormalised, then use that)
     concentration.data <- G_matrix %>%
       dplyr::filter(unit == "normalised") %>%
-      dplyr::select(all_of(mod))
+      dplyr::select(tidyselect::all_of(mod))
 
     # check if the number of columns are equal
     if (ncol(concentration.data) != length(factor_mass)) {
@@ -334,7 +334,7 @@ compare_obs_mod_mlr <- function(measurements,
     ## add additional columns
     concentration.data <- dplyr::bind_cols(
       G_matrix %>%
-        select(
+        dplyr::select(
           model_type,
           unit,
           model_run,
@@ -357,11 +357,11 @@ compare_obs_mod_mlr <- function(measurements,
       dplyr::filter(unit == "concentration") %>%
       dplyr::mutate(pred = rowSums(G_matrix %>%
         dplyr::filter(unit == "concentration") %>%
-        dplyr::select(all_of(mod)))) %>%
+        dplyr::select(tidyselect::all_of(mod)))) %>%
       dplyr::select(tidyselect::all_of(c("date", "pred"))),
     by = "date"
   ) %>%
-    dplyr::rename(x := !!sym(obs),
+    dplyr::rename(x := !!rlang::sym(obs),
       y = pred
     )
 

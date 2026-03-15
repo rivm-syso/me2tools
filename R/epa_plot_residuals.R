@@ -86,10 +86,10 @@ epa_plot_residuals <- function(me2_residuals,
     species.order <- names(me2_residuals[4:length(me2_residuals)])
 
         me2_residuals <- me2_residuals %>% 
-      pivot_longer(cols = -c("residual_type", "model_run", "date"),
+      tidyr::pivot_longer(cols = -c("residual_type", "model_run", "date"),
                    names_to = "species",
                    values_to = "value") %>% 
-      mutate(species = factor(species, levels = species.order))
+      dplyr::mutate(species = factor(species, levels = species.order))
     
   }
   
@@ -116,17 +116,17 @@ epa_plot_residuals <- function(me2_residuals,
   
   # filter on residual_scaled
   plot.data <- me2_residuals %>% 
-    filter(residual_type == "residual_scaled")
+    dplyr::filter(residual_type == "residual_scaled")
   
   # generate list outside the limits
   outside.limits <- plot.data %>% 
-    filter(!between(value, min(residual.limits), max(residual.limits)))
+    dplyr::filter(!between(value, min(residual.limits), max(residual.limits)))
   
   # apply limit to species.
   if (length(limit.species) == 1) {
     if(!is.na(limit.species)) {
       plot.data <- plot.data %>% 
-        filter(species %in% limit.species)
+        dplyr::filter(species %in% limit.species)
       
       if (nrow(plot.data) == 0) {
         cli::cli_abort(c(
@@ -138,7 +138,7 @@ epa_plot_residuals <- function(me2_residuals,
     }
   } else {
     plot.data <- plot.data %>% 
-      filter(species %in% limit.species)
+      dplyr::filter(species %in% limit.species)
     
     if (nrow(plot.data) == 0) {
       cli::cli_abort(c(
@@ -151,11 +151,11 @@ epa_plot_residuals <- function(me2_residuals,
 
   # create plot
   plot.output <- ggplot2::ggplot(data = plot.data,
-                  aes(x=value)) +
-  geom_histogram(alpha = bin.alpha, 
+                  ggplot2::aes(x=value)) +
+  ggplot2::geom_histogram(alpha = bin.alpha, 
                  bins = bin.number, 
                  fill = bin.color) +
-  geom_vline(xintercept=residual.limits, 
+  ggplot2::geom_vline(xintercept=residual.limits, 
              colour = guide.color, 
              linetype = guide.linetype, 
              linewidth = guide.linewidth)
@@ -170,7 +170,7 @@ epa_plot_residuals <- function(me2_residuals,
   }
   
   plot.output <- plot.output +
-    theme_bw() +
+    ggplot2::theme_bw() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = xlabel.angle, 
                                                        hjust = 1,
                                                        size = x.font.size),
@@ -181,37 +181,37 @@ epa_plot_residuals <- function(me2_residuals,
 
   # create a boxplot
   boxplot.output <- ggplot2::ggplot(data = plot.data,
-                                    aes(x=species, y = value)) +
-    geom_hline(yintercept=residual.limits, 
+                                    ggplot2::aes(x=species, y = value)) +
+    ggplot2::geom_hline(yintercept=residual.limits, 
                linetype=guide.linetype,
                linewidth = guide.linewidth,
                color = guide.color) +
-    geom_boxplot(fill = bin.color,
+    ggplot2::geom_boxplot(fill = bin.color,
                  alpha = bin.alpha) +
-    theme_bw() +
+    ggplot2::theme_bw() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = xlabel.angle, 
                                                        hjust = 1,
                                                        size = x.font.size),
                    legend.position="none",
-                   panel.grid.minor = element_blank()) +
+                   panel.grid.minor = ggplot2::element_blank()) +
     ggplot2::ylab(xlab) +
     ggplot2::xlab("Species")
   
   # violin plot
   violinplot.output <- ggplot2::ggplot(data = plot.data,
-                                    aes(x=species, y = value)) +
-    geom_hline(yintercept=residual.limits, 
+                                    ggplot2::aes(x=species, y = value)) +
+    ggplot2::geom_hline(yintercept=residual.limits, 
                linetype=guide.linetype,
                linewidth = guide.linewidth,
                color = guide.color) +
-    geom_violin(fill = bin.color,
+    ggplot2::geom_violin(fill = bin.color,
                 alpha = bin.alpha) +
-    theme_bw() +
+    ggplot2::theme_bw() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = xlabel.angle, 
                                                        hjust = 1,
                                                        size = x.font.size),
                    legend.position="none",
-                   panel.grid.minor = element_blank()) +
+                   panel.grid.minor = ggplot2::element_blank()) +
     ggplot2::ylab(xlab) +
     ggplot2::xlab("Species")
   

@@ -36,14 +36,14 @@ tidy_me2_factors <- function(F_matrix,
 
   ## add PMFR identifier columns
   F_matrix <- F_matrix %>%
-    mutate(identifier = factor(identifier, levels = identifier)) %>%
+    dplyr::mutate(identifier = factor(identifier, levels = identifier)) %>%
     dplyr::rename(species = identifier) %>%
     tibble::add_column(model_type = "ME-2", .before = "species") %>%
     tibble::add_column(factor_profile = "concentration_of_species", .before = "species") %>%
     tibble::add_column(model_run = run_number, .before = "species")
 
   ## create percentage matrixes
-  factor.data <- F_matrix %>% select(contains("factor"), -factor_profile)
+  factor.data <- F_matrix %>% dplyr::select(tidyselect::contains("factor"), -factor_profile)
   species.sum <- factor.data
   factor.sum <- factor.data
   for (num.factors in seq(1, ncol(factor.data), 1)) {
@@ -56,24 +56,24 @@ tidy_me2_factors <- function(F_matrix,
   ## add additional columns
   species.sum <- dplyr::bind_cols(
     F_matrix %>%
-      select(
+      dplyr::select(
         model_type,
         factor_profile,
         model_run,
         species
       ) %>%
-      mutate(factor_profile = "percentage_of_species_sum"),
+      dplyr::mutate(factor_profile = "percentage_of_species_sum"),
     species.sum
   )
   factor.sum <- dplyr::bind_cols(
     F_matrix %>%
-      select(
+      dplyr::select(
         model_type,
         factor_profile,
         model_run,
         species
       ) %>%
-      mutate(factor_profile = "percentage_of_factor_total"),
+      dplyr::mutate(factor_profile = "percentage_of_factor_total"),
     factor.sum
   )
   ## combine to one dataframe
@@ -100,9 +100,9 @@ tidy_me2_factors <- function(F_matrix,
     # Make the table longer
     F_matrix <- F_matrix %>%
       tidyr::pivot_longer(-dplyr::all_of(id_variables), names_to = "factor") %>%
-      arrange(factor,
-              factor_profile,
-              species)
+      dplyr::arrange(factor,
+                     factor_profile,
+                     species)
 
   }
 
