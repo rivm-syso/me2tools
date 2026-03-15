@@ -49,17 +49,17 @@ tidy_me2_contributions <- function(G_matrix,
       dplyr::rename(date = identifier)
 
     if (!is.na(lubridate::ymd_hm(G_matrix$date[1]))) {
-      G_matrix <- G_matrix %>% mutate(date = lubridate::ymd_hm(date, tz = tz))
+      G_matrix <- G_matrix %>% dplyr::mutate(date = lubridate::ymd_hm(date, tz = tz))
     } else if (!is.na(lubridate::ymd_hms(G_matrix$date[1]))) {
-      G_matrix <- G_matrix %>% mutate(date = lubridate::ymd_hms(date, tz = tz))
+      G_matrix <- G_matrix %>% dplyr::mutate(date = lubridate::ymd_hms(date, tz = tz))
     } else if (!is.na(lubridate::dmy_hm(G_matrix$date[1]))) {
-      G_matrix <- G_matrix %>% mutate(date = lubridate::dmy_hm(date, tz = tz))
+      G_matrix <- G_matrix %>% dplyr::mutate(date = lubridate::dmy_hm(date, tz = tz))
     } else if (!is.na(lubridate::dmy_hms(G_matrix$date[1]))) {
-      G_matrix <- G_matrix %>% mutate(date = lubridate::dmy_hms(date, tz = tz))
+      G_matrix <- G_matrix %>% dplyr::mutate(date = lubridate::dmy_hms(date, tz = tz))
     } else if (!is.na(lubridate::ymd(G_matrix$date[1]))) {
-      G_matrix <- G_matrix %>% mutate(date = lubridate::ymd(date, tz = tz))
+      G_matrix <- G_matrix %>% dplyr::mutate(date = lubridate::ymd(date, tz = tz))
     } else if (!is.na(lubridate::dmy(G_matrix$date[1]))) {
-      G_matrix <- G_matrix %>% mutate(date = lubridate::dmy(date, tz = tz))
+      G_matrix <- G_matrix %>% dplyr::mutate(date = lubridate::dmy(date, tz = tz))
     } else {
       cli::cli_abort(c(
         "Unknown date format:",
@@ -79,11 +79,11 @@ tidy_me2_contributions <- function(G_matrix,
   if (identical(rescale_unity, TRUE)) {
     # get the current normalised values
     scaled.data <- G_matrix %>%
-      filter(unit == "normalised") %>%
-      select(contains("factor"))
+      dplyr::filter(unit == "normalised") %>%
+      dplyr::select(dplyr::contains("factor"))
     # rename the original normalised values
     G_matrix <- G_matrix %>%
-      mutate(unit = ifelse(unit == "normalised", "normalised_original", unit))
+      dplyr::mutate(unit = ifelse(unit == "normalised", "normalised_original", unit))
 
     scaling.factors <- scaled.data %>%
       colMeans()
@@ -93,14 +93,14 @@ tidy_me2_contributions <- function(G_matrix,
     for (num.factor in seq(1, ncol(scaled.data), 1)) {
       scaled.data[, num.factor] <- scaled.data[, num.factor] * scaling.factors[num.factor]
     }
-    scaled.data <- dplyr::bind_cols(G_matrix %>% select(model_type, unit, model_run, date) %>%
-      mutate(unit = "normalised"), scaled.data)
+    scaled.data <- dplyr::bind_cols(G_matrix %>% dplyr::select(model_type, unit, model_run, date) %>%
+      dplyr::mutate(unit = "normalised"), scaled.data)
     G_matrix <- dplyr::bind_rows(G_matrix, scaled.data)
   } else {
     # check and warn if not scaled to unity
     scaling.factors <- G_matrix %>%
-      filter(unit == "normalised") %>%
-      select(contains("factor")) %>%
+      dplyr::filter(unit == "normalised") %>%
+      dplyr::select(dplyr::contains("factor")) %>%
       colMeans()
     all.eqNum <- function(...) as.numeric(sub(".*:", "", all.equal(...)))
     if (all.equal(mean(scaling.factors), 1)==TRUE) {
@@ -122,8 +122,8 @@ tidy_me2_contributions <- function(G_matrix,
   if (!identical(factor_mass, NA)) {
     # Use the mass to calculate concentrations (and if we renormalised, then use that)
     concentration.data <- G_matrix %>%
-      filter(unit == "normalised") %>%
-      select(contains("factor"))
+      dplyr::filter(unit == "normalised") %>%
+      dplyr::select(dplyr::contains("factor"))
 
     # check if the number of columns are equal
     if (ncol(concentration.data) != length(factor_mass)) {
@@ -141,11 +141,11 @@ tidy_me2_contributions <- function(G_matrix,
     }
     ## add additional columns
     concentration.data <- dplyr::bind_cols(G_matrix %>%
-                                             select(model_type,
+                                             dplyr::select(model_type,
                                                     unit,
                                                     model_run,
                                                     date) %>%
-                                             mutate(unit = "concentration"),
+                                             dplyr::mutate(unit = "concentration"),
                                            concentration.data)
     ## combine to one dataframe
     G_matrix <- dplyr::bind_rows(G_matrix, concentration.data)
@@ -164,10 +164,10 @@ tidy_me2_contributions <- function(G_matrix,
 
     G_matrix <- G_matrix %>%
       tidyr::pivot_longer(-dplyr::all_of(id_variables), names_to = "factor") %>%
-      group_by(model_run,
+      dplyr::group_by(model_run,
                unit,
                date) %>%
-      ungroup()
+      dplyr::ungroup()
 
 
   }

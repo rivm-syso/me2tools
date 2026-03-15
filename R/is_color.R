@@ -11,7 +11,7 @@
 #'
 is_color <- function(x) {
   vapply(x, function(X) {
-    tryCatch(is.matrix(col2rgb(X)), 
+    tryCatch(is.matrix(grDevices::col2rgb(X)), 
              error = function(e) FALSE)
   }, logical(1))
 }

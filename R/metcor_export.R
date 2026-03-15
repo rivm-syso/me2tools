@@ -205,12 +205,12 @@ metcor_export <- function(G_matrix,
       LATR = lat,
       LONR = lon
     ) %>%
-    dplyr::select(IDATE, ITIME, FDATE, FTIME, LATR, LONR, all_of(factor_names))
+    dplyr::select(IDATE, ITIME, FDATE, FTIME, LATR, LONR, tidyselect::all_of(factor_names))
 
   # check if we need to remove the rows with NA values
   if (na.rm) {
     metcor.set <- metcor.set %>%
-      dplyr::filter(complete.cases(.))
+      dplyr::filter(stats::complete.cases(.))
   }
 
   # note: when removing dates using EPA-PMF options there might be NA values

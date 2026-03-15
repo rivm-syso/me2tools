@@ -22,7 +22,7 @@ epa_sn <- function(x, x_unc, na.rm = TRUE) {
   
   if (na.rm) {
     data <- data %>% 
-      na.omit()
+      stats::na.omit()
   }
 
   data <- data %>% 

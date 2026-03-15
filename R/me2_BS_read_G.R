@@ -174,7 +174,7 @@ me2_BS_read_G <- function(me2_bs_txt_file,
   index_Gmap_end <- stringr::str_which(text_filter, block_boundaries$end_Gmap)
   # the first block does not have the end string, so we need to add a dummy
   index_Gmap_end <- c(index_Gmap_start[1]+1, index_Gmap_end)
-  Gmapping <- tibble()
+  Gmapping <- tibble::tibble()
   
   # add a progress bar
   cli::cli_progress_bar("Reading data", total = length(index_start))
@@ -203,7 +203,7 @@ me2_BS_read_G <- function(me2_bs_txt_file,
             )
         } else {
           g_matrix.tmp <- g_matrix.tmp %>%
-            mutate(identifier == dates)
+            dplyr::mutate(identifier == dates)
         }
       } else {
         cli::cli_abort(c(
@@ -228,7 +228,7 @@ me2_BS_read_G <- function(me2_bs_txt_file,
 
 
     # get mass_factors
-    num_factors <- ncol(g_matrix.tmp %>% select(contains("factor_")))
+    num_factors <- ncol(g_matrix.tmp %>% dplyr::select(dplyr::contains("factor_")))
     if (length(factor_mass) == 1) {
       if (!is.na(factor_mass)) {
         cli::cli_abort(c(
@@ -330,9 +330,9 @@ me2_BS_read_G <- function(me2_bs_txt_file,
                           values_to = "value")
   }
   
-  g_matrix_threshold <- left_join(g_matrix_threshold, 
+  g_matrix_threshold <- dplyr::left_join(g_matrix_threshold, 
                                   factor.correlations %>% 
-                                    select(model_run, factor, corr),
+                                    dplyr::select(model_run, factor, corr),
                                   by = c("model_run", "factor")) %>% 
     filter(corr >= corr_threshold)
   

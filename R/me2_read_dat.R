@@ -161,7 +161,7 @@ me2_read_dat <- function (me2_dat_file,
   #################################################################
   ##                      Processing F data                      ##
   #################################################################
-  F_matrix <- tibble()
+  F_matrix <- tibble::tibble()
   run_number <- 1
   for(f_index in f_indices) {
     # get the f values
@@ -239,8 +239,8 @@ me2_read_dat <- function (me2_dat_file,
   #################################################################
 
 
-  G_matrix <- tibble()
-  all_factor_mass <- tibble()
+  G_matrix <- tibble::tibble()
+  all_factor_mass <- tibble::tibble()
   run_number <- 1
   
   for(g_index in g_indices) {
@@ -260,7 +260,7 @@ me2_read_dat <- function (me2_dat_file,
     
     if (run_number == 1) {
       # first run, create the overview variable for factor mass
-      overview.fm <- read_csv("\n", 
+      overview.fm <- readr::read_csv("\n", 
                               col_names = c("model_run", factor.names), 
                               col_types = strrep("d", length(factor.names)+1))
     }
@@ -280,7 +280,7 @@ me2_read_dat <- function (me2_dat_file,
             )
         } else {
           tmp_g_tibble <- tmp_g_tibble %>%
-            mutate(identifier == dates)
+            dplyr::mutate(identifier == dates)
         }
         tmp_g_tibble <- tmp_g_tibble %>%
           dplyr::mutate(identifier = format(identifier, "%Y-%m-%d %H:%M"))

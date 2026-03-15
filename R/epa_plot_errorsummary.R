@@ -218,7 +218,7 @@ epa_plot_errorsummary <- function(F_matrix,
   
   # define plot
   plot.output <- ggplot2::ggplot()
-  plot.data <- tibble()
+  plot.data <- tibble::tibble()
   
   group.type <- group.types[1]
   index <- 1
@@ -301,7 +301,7 @@ epa_plot_errorsummary <- function(F_matrix,
       width = bar.width,
       #color = bar.colors[["base"]],
       linewidth = 1,
-      position = position_dodge(.9)
+      position = ggplot2::position_dodge(.9)
     )
   
   if (facet.parse.label) {
@@ -367,7 +367,7 @@ epa_plot_errorsummary <- function(F_matrix,
                                         n.dodge = x.n.dodge)
           )
         ) +
-        theme(axis.text.x.top = ggplot2::element_text(hjust = 0,
+        ggplot2::theme(axis.text.x.top = ggplot2::element_text(hjust = 0,
                                                       vjust = 0.5))
     } else {
       plot.output <- plot.output +
@@ -451,13 +451,13 @@ epa_plot_errorsummary <- function(F_matrix,
                  "BSDISP",
                  "DISP",
                  "base")) +
-      guides(color = ggplot2::guide_legend(order = 1,
+      ggplot2::guides(color = ggplot2::guide_legend(order = 1,
                                   title = NULL),
              fill = ggplot2::guide_legend(order = 2,
                                   title = NULL))+
     ggplot2::theme(legend.position = "top",
           legend.justification = "right",
-          legend.margin=margin(b=-10)) 
+          legend.margin=ggplot2::margin(b=-10)) 
   
   # remove legend?
   if(!show.legend) {

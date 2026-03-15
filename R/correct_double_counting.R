@@ -35,7 +35,7 @@ correct_double_counting <- function(F_matrix,
     species.sum <- F.subset %>%
       dplyr::filter(species %in% dc_species) %>%
       dplyr::select(-factor_profile) %>%
-      dplyr::select(contains("factor")) %>%
+      dplyr::select(dplyr::contains("factor")) %>%
       colSums()
 
     # subtract species.sum from m.mass
@@ -59,7 +59,7 @@ correct_double_counting <- function(F_matrix,
     }
 
     ## create percentage matrixes
-    factor.data <- F.subset %>% select(contains("factor"), -factor_profile)
+    factor.data <- F.subset %>% dplyr::select(dplyr::contains("factor"), -factor_profile)
     species.sum <- factor.data
     factor.sum <- factor.data
     for (num.factors in seq(1, ncol(factor.data), 1)) {

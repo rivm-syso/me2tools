@@ -335,7 +335,7 @@ epa_plot_profile <- function(F_matrix,
       dplyr::filter(dupe == TRUE)
   } else {
     test_dups <- F_matrix %>%
-      dplyr::group_by(!!rlang::sym(facet.var), factor_profile, run_type, species, !!sym(by)) %>%
+      dplyr::group_by(!!rlang::sym(facet.var), factor_profile, run_type, species, !!rlang::sym(by)) %>%
       dplyr::mutate(dupe = n() > 1) %>%
       dplyr::filter(dupe == TRUE)
   }
@@ -705,7 +705,7 @@ epa_plot_profile <- function(F_matrix,
 
   # scale the percentages to the secondary axis
   df <- df %>%
-    dplyr::mutate(value = if_else(
+    dplyr::mutate(value = dplyr::if_else(
       factor_profile == "percentage_of_species_sum",
       (value / 100) * (length(seq(
         y_min, max(breaks_log), 1
@@ -1031,7 +1031,7 @@ epa_plot_profile <- function(F_matrix,
           color = p_by,
           group = f_by
         ),
-        position = position_dodge(width = 0.9)
+        position = ggplot2::position_dodge(width = 0.9)
       ) +
       ggplot2::scale_color_manual(
         values = myPColor.vector,
@@ -1078,7 +1078,7 @@ epa_plot_profile <- function(F_matrix,
       ggnewscale::new_scale("fill") +
       ggnewscale::new_scale("shape") +
       ggnewscale::new_scale("size") +
-      geom_errorbar(
+      ggplot2::geom_errorbar(
         data = df %>%
           dplyr::filter(
             factor_profile == "concentration_of_species",
@@ -1086,8 +1086,8 @@ epa_plot_profile <- function(F_matrix,
           ),
         ggplot2::aes(
           x = numeric_x,
-          ymin = !!sym(error_ymin),
-          ymax = !!sym(error_ymax),
+          ymin = !!rlang::sym(error_ymin),
+          ymax = !!rlang::sym(error_ymax),
           color = eb_by,
         ),
         width = errorbar.width,
@@ -1128,13 +1128,13 @@ epa_plot_profile <- function(F_matrix,
   if (facet.parse.label) {
     if (identical(facet.string.wrap, NA)) {
       plot <- plot +
-        ggplot2::facet_grid(as.formula(paste(facet.var, "~ .")),
+        ggplot2::facet_grid(stats::as.formula(paste(facet.var, "~ .")),
           labeller = label_parsed
         )
     } else {
       plot <- plot +
         ggplot2::facet_grid(
-          rows = vars(
+          rows = dplyr::vars(
             stringr::str_wrap(
               string = .data[[facet.var]],
               width = facet.string.wrap,
@@ -1147,10 +1147,10 @@ epa_plot_profile <- function(F_matrix,
   } else {
     if (identical(facet.string.wrap, NA)) {
       plot <- plot +
-        ggplot2::facet_grid(as.formula(paste(facet.var, "~ .")))
+        ggplot2::facet_grid(stats::as.formula(paste(facet.var, "~ .")))
     } else {
       plot <- plot +
-        ggplot2::facet_grid(rows = vars(
+        ggplot2::facet_grid(rows = dplyr::vars(
           stringr::str_wrap(
             string = .data[[facet.var]],
             width = facet.string.wrap,
@@ -1211,7 +1211,7 @@ epa_plot_profile <- function(F_matrix,
             guide = ggplot2::guide_axis(angle = xlabel.angle, n.dodge = x.n.dodge)
           )
         ) +
-        theme(axis.text.x.top = ggplot2::element_text(
+        ggplot2::theme(axis.text.x.top = ggplot2::element_text(
           hjust = 0,
           vjust = 0.5
         ))
@@ -1233,7 +1233,7 @@ epa_plot_profile <- function(F_matrix,
         axis.line.y.right = ggplot2::element_line(color = point.color),
         axis.text.y.right = ggplot2::element_text(color = point.color),
         axis.title.y.right = ggplot2::element_text(color = point.color),
-        panel.grid.major.x = element_blank()
+        panel.grid.major.x = ggplot2::element_blank()
       )
   } else {
     # set parameters using theme
@@ -1254,7 +1254,7 @@ epa_plot_profile <- function(F_matrix,
             guide = ggplot2::guide_axis(n.dodge = x.n.dodge)
           )
         ) +
-        theme(axis.text.x.top = ggplot2::element_text(
+        ggplot2::theme(axis.text.x.top = ggplot2::element_text(
           hjust = 0,
           vjust = 0.5
         ))

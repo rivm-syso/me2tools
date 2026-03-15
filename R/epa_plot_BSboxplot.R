@@ -163,8 +163,8 @@ epa_plot_BSboxplot <- function(BS_results,
     ) +
     ggplot2::geom_point(
       data = BS.base.results %>%
-        mutate(value = ifelse(value <= 10^y_min, 10^y_min, value)),
-      aes(x = species, y = value),
+        dplyr::mutate(value = ifelse(value <= 10^y_min, 10^y_min, value)),
+      ggplot2::aes(x = species, y = value),
       color = base.color,
       fill = base.color,
       size = base.size,
@@ -186,7 +186,7 @@ epa_plot_BSboxplot <- function(BS_results,
       limits = c(10^y_min, NA)
     ) +
     ggplot2::theme_bw() +
-    annotation_logticks(sides = "l") +
+    ggplot2::annotation_logticks(sides = "l") +
     ggplot2::theme(
       axis.text.x = ggplot2::element_text(
         angle = xlabel.angle,
@@ -194,9 +194,9 @@ epa_plot_BSboxplot <- function(BS_results,
         size = x.font.size
       ),
       legend.position = "none",
-      panel.grid.minor = element_blank()
+      panel.grid.minor = ggplot2::element_blank()
     ) +
-    scale_x_discrete(xlab,
+    ggplot2::scale_x_discrete(xlab,
       labels = parse(text = x_labels)
     ) +
     ylab(ylab)

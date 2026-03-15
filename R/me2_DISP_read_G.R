@@ -154,7 +154,7 @@ me2_DISP_read_G <- function(me2_disp_txt_file,
           )
       } else {
         g_matrix <- g_matrix %>%
-          mutate(identifier == dates)
+          dplyr::mutate(identifier == dates)
       }
     } else {
       cli::cli_abort(c(
@@ -179,7 +179,7 @@ me2_DISP_read_G <- function(me2_disp_txt_file,
 
 
   # get mass_factors
-  num_factors <- ncol(g_matrix %>% select(contains("factor_")))
+  num_factors <- ncol(g_matrix %>% dplyr::select(dplyr::contains("factor_")))
   if (length(factor_mass) == 1) {
     if (!is.na(factor_mass)) {
       cli::cli_abort(c(

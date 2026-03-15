@@ -225,7 +225,7 @@ temporal_contributions <- function(mydata,
   if (!(type %in% type_cutData)) {
     # check if in dataframe
     if (!(type %in% names(mydata))) {
-      cli_abort(
+      cli::cli_abort(
         c(
           "Must have a valid {.var type}:",
           "i" = "{.var type} does not exists in 'cutData' or in the data.",
@@ -286,7 +286,7 @@ temporal_contributions <- function(mydata,
     } else {
       vars <- c(group, facet, type)
     }
-    nfacet <- length(na.omit(unique(mydata[[facet]]))) ## number of facets
+    nfacet <- length(stats::na.omit(unique(mydata[[facet]]))) ## number of facets
   }
 
   # create the colors

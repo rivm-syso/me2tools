@@ -71,14 +71,14 @@ me2_read_MT_input <- function(file,
   )
 
   input.data <- input.data.org %>%
-    rename(
+    dplyr::rename(
       date.start.org = Datestart.,
       time.start.org = Time,
       date.end.org = Dateend.,
       time.end.org = Time.1,
       tzone = Tzone
     ) %>%
-    select(-X0) # row number
+    dplyr::select(-X0) # row number
 
 
   date_start <- lubridate::ymd(
@@ -130,10 +130,10 @@ me2_read_MT_input <- function(file,
 
   # all in list
   input <- list("org" = input.data.org, "conc" = input.data.org, "unc" = input.data.org)
-  input$conc <- input.data %>% select(
-    -contains(unc_identifier)
+  input$conc <- input.data %>% dplyr::select(
+    -dplyr::contains(unc_identifier)
   )
-  input$unc <- input.data %>% select(
+  input$unc <- input.data %>% dplyr::select(
     date,
     date_end,
     date.start.org,
@@ -144,7 +144,7 @@ me2_read_MT_input <- function(file,
     Begin,
     Length,
     End,
-    contains(unc_identifier)
+    dplyr::contains(unc_identifier)
   )
   # remove _std
   names(input$unc) <- names(input$conc)

@@ -120,7 +120,7 @@ epa_plot_residuals <- function(me2_residuals,
   
   # generate list outside the limits
   outside.limits <- plot.data %>% 
-    dplyr::filter(!between(value, min(residual.limits), max(residual.limits)))
+    dplyr::filter(!dplyr::between(value, min(residual.limits), max(residual.limits)))
   
   # apply limit to species.
   if (length(limit.species) == 1) {
@@ -175,7 +175,7 @@ epa_plot_residuals <- function(me2_residuals,
                                                        hjust = 1,
                                                        size = x.font.size),
                    legend.position="none",
-                   panel.grid.minor = element_blank()) +
+                   panel.grid.minor = ggplot2::element_blank()) +
     ggplot2::ylab(ylab) +
     ggplot2::xlab(xlab)
 
@@ -219,20 +219,20 @@ epa_plot_residuals <- function(me2_residuals,
   if (rm.grid.x) {
     plot.output <- plot.output +
       ggplot2::theme(
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()
+        panel.grid.major.x = ggplot2::element_blank(),
+        panel.grid.minor.x = ggplot2::element_blank()
       )
     
     boxplot.output <- boxplot.output +
       ggplot2::theme(
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()
+        panel.grid.major.x = ggplot2::element_blank(),
+        panel.grid.minor.x = ggplot2::element_blank()
       )
     
     violinplot.output <- violinplot.output +
       ggplot2::theme(
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()
+        panel.grid.major.x = ggplot2::element_blank(),
+        panel.grid.minor.x = ggplot2::element_blank()
       )
   }  
     

@@ -210,7 +210,7 @@ me2_BS_read_F <- function(me2_bs_txt_file,
   
   index_Fmap_start <- stringr::str_which(text_filter, block_boundaries$start_Fmap)
   index_Fmap_end <- stringr::str_which(text_filter, block_boundaries$end_Fmap)
-  Fmapping <- tibble()
+  Fmapping <- tibble::tibble()
   
   # add a progress bar
   cli::cli_progress_bar("Reading data", total = length(index_start))
@@ -313,15 +313,15 @@ me2_BS_read_F <- function(me2_bs_txt_file,
                                 factor.correlations %>% 
                                   select(model_run, factor, corr),
                                 by = c("model_run", "factor")) %>% 
-    filter(corr >= corr_threshold,
+    dplyr::filter(corr >= corr_threshold,
            factor_profile == "concentration_of_species") %>% 
     #group_by(factor, species) %>%
-    summarise(BS_median = median(value),
+    dplyr::summarise(BS_median = median(value),
               BS_P05 = epa_percentile(value, prob = 0.05),
               BS_P95 = epa_percentile(value, prob = 0.95),
               .by = c(factor, species)) %>%
     #ungroup(factor, species) %>% 
-    pivot_longer(cols = c("BS_median", "BS_P05", "BS_P95"),
+    tidyr::pivot_longer(cols = c("BS_median", "BS_P05", "BS_P95"),
                  names_to = "run_type",
                  values_to = "value") %>% 
     select(run_type, species, factor, value) %>% 

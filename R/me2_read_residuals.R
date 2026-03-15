@@ -85,7 +85,7 @@ me2_read_residuals <- function(me2_res_file,
       read_run[base_run] <- TRUE
     }
 
-    res_matrix <- tibble()
+    res_matrix <- tibble::tibble()
     for (run.number in seq(1, length(index_start), 1)) {
       # only read the data we want to read.
       if(read_run[run.number]) {
@@ -95,7 +95,7 @@ me2_read_residuals <- function(me2_res_file,
                                                                trim_ws = TRUE,
                                                                col_names = FALSE
         )) %>%
-          select(-dplyr::last(names(.))) %>%
+          dplyr::select(-dplyr::last(names(.))) %>%
           tibble::add_column(residual_type = "residual_scaled", .before = "X1") %>%
           tibble::add_column(model_run = run.number, .before = "X1")
         
@@ -214,7 +214,7 @@ me2_read_residuals <- function(me2_res_file,
       to = length(start_blocks),
       by = 2
     )
-    res_matrix <- tibble()
+    res_matrix <- tibble::tibble()
     
     # define a boolean for each runnumber that can be used to test if the 
     # results should be read.
@@ -243,7 +243,7 @@ me2_read_residuals <- function(me2_res_file,
                                                                trim_ws = TRUE,
                                                                col_names = FALSE
         ))  %>%
-          select(-dplyr::first(names(.))) %>%
+          dplyr::select(-dplyr::first(names(.))) %>%
           tibble::add_column(residual_type = "residual", .before = "X2") %>%
           tibble::add_column(model_run = run.number, .before = "X2")
         
@@ -352,7 +352,7 @@ me2_read_residuals <- function(me2_res_file,
                                                                trim_ws = TRUE,
                                                                col_names = FALSE
         ))  %>%
-          select(-dplyr::first(names(.))) %>%
+          dplyr::select(-dplyr::first(names(.))) %>%
           tibble::add_column(residual_type = "residual_scaled", .before = "X2") %>%
           tibble::add_column(model_run = run.number, .before = "X2")
         
@@ -452,10 +452,10 @@ me2_read_residuals <- function(me2_res_file,
     species.order <- names(res_matrix[4:length(res_matrix)])
     
     res_matrix <- res_matrix %>% 
-      pivot_longer(cols = -c("residual_type", "model_run", "date"),
+      tidyr::pivot_longer(cols = -c("residual_type", "model_run", "date"),
                    names_to = "species",
                    values_to = "value") %>% 
-      mutate(species = factor(species, levels = species.order))
+      dplyr::mutate(species = factor(species, levels = species.order))
   }
 
   return(res_matrix)

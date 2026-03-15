@@ -163,12 +163,12 @@ match_factor_order <- function(base,
 
   # calculate the correlations
   cor_matrix <- stats::cor(source %>%
-                      dplyr::select(-contains("factor_profile")) %>%
-                      dplyr::select(contains("factor_")) %>%
+                      dplyr::select(-dplyr::contains("factor_profile")) %>%
+                      dplyr::select(dplyr::contains("factor_")) %>%
                       dplyr::select_if(~sum(!is.na(.)) > 0),
                     base %>%
-                      dplyr::select(-contains("factor_profile")) %>%
-                      dplyr::select(contains("factor_")) %>%
+                      dplyr::select(-dplyr::contains("factor_profile")) %>%
+                      dplyr::select(dplyr::contains("factor_")) %>%
                       dplyr::select_if(~sum(!is.na(.)) > 0)
   )
 

@@ -190,7 +190,7 @@ epa_plot_QQexp <- function(residuals,
     ggplot2::theme(
       legend.position = "top",
       legend.justification = "right",
-      legend.margin = margin(b = -10),
+      legend.margin = ggplot2::margin(b = -10),
       axis.text.x = ggplot2::element_text(
         size = x.font.size,
         hjust = xlabel.hjust,

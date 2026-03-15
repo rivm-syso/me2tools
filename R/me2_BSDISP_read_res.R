@@ -254,7 +254,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
 
     # cleanup
     tmp_tibble <- tidy_me2_factors(
-      F_matrix = tmp_tibble %>% select(-dummy),
+      F_matrix = tmp_tibble %>% dplyr::select(-dummy),
       run_number = -999,
       dc_species = dc_species
     ) %>%
@@ -341,7 +341,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
 
     # cleanup
     tmp_tibble <- tidy_me2_factors(
-      F_matrix = tmp_tibble %>% select(-dummy),
+      F_matrix = tmp_tibble %>% dplyr::select(-dummy),
       run_number = -999,
       dc_species = dc_species
     ) %>%
@@ -428,7 +428,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
 
     # cleanup
     tmp_tibble <- tidy_me2_factors(
-      F_matrix = tmp_tibble %>% select(-dummy),
+      F_matrix = tmp_tibble %>% dplyr::select(-dummy),
       run_number = -999
     ) %>%
       dplyr::filter(factor_profile == "concentration_of_species") %>%
@@ -514,7 +514,7 @@ me2_BSDISP_read_res <- function(BSDISPres_file,
 
     # cleanup
     tmp_tibble <- tidy_me2_factors(
-      F_matrix = tmp_tibble %>% select(-dummy),
+      F_matrix = tmp_tibble %>% dplyr::select(-dummy),
       run_number = -999
     ) %>%
       dplyr::filter(factor_profile == "concentration_of_species") %>%
