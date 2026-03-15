@@ -40,8 +40,8 @@ compare_obs_mod(
   auto.text = TRUE,
   asp.ratio.1 = FALSE,
   n.col = 2,
-  geomtextpath = tibble(labels = list(`0.5` = "0.5", `1.0` = "1.0", `2.0` = "2.0"), hjust
-    = list(`0.5` = 0.95, `1.0` = 0.95, `2.0` = 0.95))
+  geomtextpath = tibble::tibble(labels = list(`0.5` = "0.5", `1.0` = "1.0", `2.0` =
+    "2.0"), hjust = list(`0.5` = 0.95, `1.0` = 0.95, `2.0` = 0.95))
 )
 }
 \arguments{
