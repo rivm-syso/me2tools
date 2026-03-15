@@ -8,6 +8,8 @@
 
 .onAttach <- function(lib, pkg, ...){
 
+  version <- utils::packageVersion(pkg) |> as.character()
+
   core <- data.frame(
     "package" = c(
       "cli",
@@ -18,13 +20,14 @@
   )
   core$system_location <- ""
   core$message <- ""
-  
+ 
   header <- cli::col_black(
     cli::rule(
       left = cli::style_bold("Attaching core packages"),
-      right = paste0("me2tools ", packageVersion("me2tools"))
+      right = paste0("me2tools ", version)
     )
   )
+
   
   # loop over core packages
   for (i_core in seq_len(nrow(core))) {
@@ -166,7 +169,7 @@ if (getRversion() >= "2.15.1") {
     "group_type", ".x", "dummy","run_number_final", "corr", "fit", "eq.label",
     "adj.rr.label", "residual_type", "pmf.concentration", "pmf.uncertainty", 
     "sn", "guidance", "Q.Qexp", "dupe", "f_by", "p_by", "eb_by" , "boxplotColor", 
-    "group_var", "myColor"
+    "group_var", "myColor", "unit", "label", "n", "label_parsed", "draw_key_boxplot"
   )
   
   # Squash the notes
