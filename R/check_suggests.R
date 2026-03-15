@@ -39,7 +39,7 @@ me2_check_suggests <- function() {
             "Install them with:\n",
             "install.packages(c(", paste(shQuote(missing), collapse = ", "), "))")
   } else {
-    message("All suggested packages are installed. ✅")
+    message("All suggested packages are installed. \u2705")
   }
 
   invisible(missing)
