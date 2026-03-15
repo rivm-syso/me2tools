@@ -15,14 +15,16 @@ Authors@R: c(
 	person(given = "Pleuni", 
            family = "Bongers", 
            email = "pleuni.bongers@rivm.nl", 
-           role = c("ctb")))
+           role = c("ctb"),
+		   comment = c(ORCID = "0009-0000-1417-3883"))
+	)
 Description: Read the outcome of the Multilineair Engine version 2 (ME-2) into R. Also export, import and plot the MetCor results.
 Depends:
-    R (>= 3.5.0)
+    R (>= 4.1.0)
 Imports:
     cli,
     openair,
-	magrittr,
+    magrittr,
     dplyr,
     forcats,
     ggplot2,
